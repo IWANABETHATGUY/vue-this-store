@@ -5,14 +5,9 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as path from 'path';
-import * as fs from 'fs';
-import {
-  getFileContent,
-  getStoreEntryRelativePath,
-  getAstOfCode,
-  getStateKeysFromStore,
-} from './util';
+// import { vueStoreStateProviderFunciton } from './provider';
+import { setStoreInfo } from './loop';
+import { generateWatcher } from './watcher';
 
 export function activate(context: vscode.ExtensionContext) {
   let rootPath = vscode.workspace.rootPath;
@@ -20,25 +15,11 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('no folder is opened');
     return;
   }
-  let entry: string = path.resolve(rootPath, 'src/main.js');
-
-  if (!fs.existsSync(entry)) {
-    console.error("you don't have the entry file");
-    return;
-  }
-  let entryFileContent: string = getFileContent(entry);
-  let entryFileContentAst = getAstOfCode(entryFileContent);
-  let storeRelativePath: string = getStoreEntryRelativePath(
-    entryFileContentAst,
-  );
-
-  let storeContent: string = getFileContent(
-    path.dirname(entry),
-    storeRelativePath,
-  );
-
-  let stateKeysList: string[] = getStateKeysFromStore(storeContent);
-
+  let [storeAbsolutePath, stateKeysList] = setStoreInfo(rootPath);
+  let watcher = generateWatcher(storeAbsolutePath);
+  watcher.on('change', () => {
+    stateKeysList = setStoreInfo(rootPath)[1];
+  });
   let provider1 = vscode.languages.registerCompletionItemProvider('plaintext', {
     provideCompletionItems(
       document: vscode.TextDocument,
@@ -92,9 +73,8 @@ export function activate(context: vscode.ExtensionContext) {
       ];
     },
   });
-
-  const vueStoreStateProvider = vscode.languages.registerCompletionItemProvider(
-    'vue',
+  let stateProvider = vscode.languages.registerCompletionItemProvider(
+    { language: 'vue' },
     {
       provideCompletionItems(
         document: vscode.TextDocument,
@@ -121,6 +101,5 @@ export function activate(context: vscode.ExtensionContext) {
     },
     '.', // triggered whenever a '.' is being typed
   );
-
-  context.subscriptions.push(provider1, vueStoreStateProvider);
+  context.subscriptions.push(provider1, stateProvider);
 }

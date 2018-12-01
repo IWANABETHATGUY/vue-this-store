@@ -23,12 +23,19 @@ import * as path from 'path';
 export function getAstOfCode(code: string) {
   return parse(code, { sourceType: 'module' });
 }
+export function getAbsolutePath(base: string, relative: string = ''): string {
+  let ext = path.extname(base);
+  if (ext && relative.length) {
+    base = path.dirname(base);
+  }
+  return path.resolve(base, relative);
+}
 
 export function getFileContent(
   basePath: string,
   relativePath: string = '',
 ): string {
-  let absolutStorePath: string = path.resolve(basePath, relativePath);
+  let absolutStorePath: string = getAbsolutePath(basePath, relativePath);
 
   let statObj = fs.statSync(absolutStorePath);
   if (statObj.isDirectory()) {

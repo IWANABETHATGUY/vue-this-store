@@ -4,12 +4,27 @@ const parser_1 = require("@babel/parser");
 const traverse_1 = require("@babel/traverse");
 const fs = require("fs");
 const path = require("path");
+/**
+ * 传入文件内容返回对应ast
+ *
+ * @export
+ * @param {string} code
+ * @returns
+ */
 function getAstOfCode(code) {
     return parser_1.parse(code, { sourceType: 'module' });
 }
 exports.getAstOfCode = getAstOfCode;
+function getAbsolutePath(base, relative = '') {
+    let ext = path.extname(base);
+    if (ext && relative.length) {
+        base = path.dirname(base);
+    }
+    return path.resolve(base, relative);
+}
+exports.getAbsolutePath = getAbsolutePath;
 function getFileContent(basePath, relativePath = '') {
-    let absolutStorePath = path.resolve(basePath, relativePath);
+    let absolutStorePath = getAbsolutePath(basePath, relativePath);
     let statObj = fs.statSync(absolutStorePath);
     if (statObj.isDirectory()) {
         absolutStorePath = path.resolve(absolutStorePath, 'index.js');
@@ -23,11 +38,24 @@ function getFileContent(basePath, relativePath = '') {
     return '';
 }
 exports.getFileContent = getFileContent;
+/**
+ * 转换store入口文件得到store中的所有state的key
+ *
+ * @export
+ * @param {string} storeContent
+ * @returns {string[]}
+ */
 function getStateKeysFromStore(storeContent) {
     let ast = getAstOfCode(storeContent);
     return getStatekeysFromAst(ast);
 }
 exports.getStateKeysFromStore = getStateKeysFromStore;
+/**
+ * 通过ast获取store中的所有statekey
+ *
+ * @param {any} ast
+ * @returns {string[]}
+ */
 function getStatekeysFromAst(ast) {
     let stateList = [];
     traverse_1.default(ast, {
@@ -51,6 +79,13 @@ function getStatekeysFromAst(ast) {
     });
     return stateList;
 }
+/**
+ * 获取store入口文件中的相对路径
+ *
+ * @export
+ * @param {any} ast
+ * @returns {string}
+ */
 function getStoreEntryRelativePath(ast) {
     let moduleMap = {};
     let localVueIdentifier = '';
@@ -89,6 +124,13 @@ function getStoreEntryRelativePath(ast) {
     return storeRelativeEntry;
 }
 exports.getStoreEntryRelativePath = getStoreEntryRelativePath;
+/**
+ * 辅助函数用来判断第二个参数传入的对象中的内容是否在a中都一样，如果一样返回true，否则返回false
+ *
+ * @param {object} a
+ * @param {object} b
+ * @returns
+ */
 function looksLike(a, b) {
     return (a &&
         b &&
@@ -101,6 +143,12 @@ function looksLike(a, b) {
             return isPrimitive(bVal) ? bVal === aVal : looksLike(aVal, bVal);
         }));
 }
+/**
+ * 判断一个对象是否是基本类型
+ *
+ * @param {any} val
+ * @returns
+ */
 function isPrimitive(val) {
     return val == null || /^[sbn]/.test(typeof val);
 }

@@ -4,25 +4,20 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
-const path = require("path");
-const fs = require("fs");
-const util_1 = require("./util");
+// import { vueStoreStateProviderFunciton } from './provider';
+const loop_1 = require("./loop");
+const watcher_1 = require("./watcher");
 function activate(context) {
     let rootPath = vscode.workspace.rootPath;
     if (rootPath === undefined) {
         console.log('no folder is opened');
         return;
     }
-    let entry = path.resolve(rootPath, 'src/main.js');
-    if (!fs.existsSync(entry)) {
-        console.error("you don't have the entry file");
-        return;
-    }
-    let entryFileContent = util_1.getFileContent(entry);
-    let entryFileContentAst = util_1.getAstOfCode(entryFileContent);
-    let storeRelativePath = util_1.getStoreEntryRelativePath(entryFileContentAst);
-    let storeContent = util_1.getFileContent(path.dirname(entry), storeRelativePath);
-    let stateKeysList = util_1.getStateKeysFromStore(storeContent);
+    let [storeAbsolutePath, stateKeysList] = loop_1.setStoreInfo(rootPath);
+    let watcher = watcher_1.generateWatcher(storeAbsolutePath);
+    watcher.on('change', () => {
+        stateKeysList = loop_1.setStoreInfo(rootPath)[1];
+    });
     let provider1 = vscode.languages.registerCompletionItemProvider('plaintext', {
         provideCompletionItems(document, position, token, context) {
             // a simple completion item which inserts `Hello World!`
@@ -59,7 +54,7 @@ function activate(context) {
             ];
         },
     });
-    const vueStoreStateProvider = vscode.languages.registerCompletionItemProvider('vue', {
+    let stateProvider = vscode.languages.registerCompletionItemProvider({ language: 'vue' }, {
         provideCompletionItems(document, position) {
             // get all text until the `position` and check if it reads `console.`
             // and iff so then complete if `log`, `warn`, and `error`
@@ -76,7 +71,7 @@ function activate(context) {
             });
         },
     }, '.');
-    context.subscriptions.push(provider1, vueStoreStateProvider);
+    context.subscriptions.push(provider1, stateProvider);
 }
 exports.activate = activate;
 //# sourceMappingURL=extension.js.map

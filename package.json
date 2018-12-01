@@ -27,6 +27,7 @@
     "postinstall": "node ./node_modules/vscode/bin/install"
   },
   "devDependencies": {
+    "@types/chokidar": "^1.7.5",
     "@types/node": "^10.12.11",
     "tslint": "^5.11.0",
     "typescript": "^3.2.1",
@@ -35,6 +36,7 @@
   "dependencies": {
     "@babel/parser": "^7.1.6",
     "@babel/traverse": "^7.1.6",
-    "@babel/types": "^7.1.6"
+    "@babel/types": "^7.1.6",
+    "chokidar": "^2.0.4"
   }
 }
