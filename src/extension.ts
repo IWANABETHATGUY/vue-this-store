@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 // import { vueStoreStateProviderFunciton } from './provider';
 import { setStoreInfo } from './loop';
 import { generateWatcher } from './watcher';
+import { storeStateProvider } from './provider';
 
 export function activate(context: vscode.ExtensionContext) {
   let rootPath = vscode.workspace.rootPath;
@@ -17,8 +18,11 @@ export function activate(context: vscode.ExtensionContext) {
   }
   let [storeAbsolutePath, stateKeysList] = setStoreInfo(rootPath);
   let watcher = generateWatcher(storeAbsolutePath);
+  let stateProvider = new storeStateProvider(stateKeysList);
+
   watcher.on('change', () => {
     stateKeysList = setStoreInfo(rootPath)[1];
+    stateProvider.setStateKeysList(stateKeysList);
   });
   let provider1 = vscode.languages.registerCompletionItemProvider('plaintext', {
     provideCompletionItems(
@@ -73,33 +77,9 @@ export function activate(context: vscode.ExtensionContext) {
       ];
     },
   });
-  let stateProvider = vscode.languages.registerCompletionItemProvider(
-    { language: 'vue' },
-    {
-      provideCompletionItems(
-        document: vscode.TextDocument,
-        position: vscode.Position,
-      ) {
-        // get all text until the `position` and check if it reads `console.`
-        // and iff so then complete if `log`, `warn`, and `error`
-        let linePrefix = document
-          .lineAt(position)
-          .text.substr(0, position.character);
-        let trimLinePrefix = linePrefix.trim();
-        let reg = /(return this)?(.$store)?state/;
-        if (!reg.test(trimLinePrefix)) {
-          return undefined;
-        }
 
-        return stateKeysList.map(stateKey => {
-          return new vscode.CompletionItem(
-            stateKey,
-            vscode.CompletionItemKind.Property,
-          );
-        });
-      },
-    },
-    '.', // triggered whenever a '.' is being typed
+  context.subscriptions.push(
+    provider1,
+    vscode.languages.registerCompletionItemProvider('vue', stateProvider, '.'),
   );
-  context.subscriptions.push(provider1, stateProvider);
 }

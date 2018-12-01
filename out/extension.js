@@ -7,6 +7,7 @@ const vscode = require("vscode");
 // import { vueStoreStateProviderFunciton } from './provider';
 const loop_1 = require("./loop");
 const watcher_1 = require("./watcher");
+const provider_1 = require("./provider");
 function activate(context) {
     let rootPath = vscode.workspace.rootPath;
     if (rootPath === undefined) {
@@ -15,8 +16,10 @@ function activate(context) {
     }
     let [storeAbsolutePath, stateKeysList] = loop_1.setStoreInfo(rootPath);
     let watcher = watcher_1.generateWatcher(storeAbsolutePath);
+    let stateProvider = new provider_1.storeStateProvider(stateKeysList);
     watcher.on('change', () => {
         stateKeysList = loop_1.setStoreInfo(rootPath)[1];
+        stateProvider.setStateKeysList(stateKeysList);
     });
     let provider1 = vscode.languages.registerCompletionItemProvider('plaintext', {
         provideCompletionItems(document, position, token, context) {
@@ -54,24 +57,7 @@ function activate(context) {
             ];
         },
     });
-    let stateProvider = vscode.languages.registerCompletionItemProvider({ language: 'vue' }, {
-        provideCompletionItems(document, position) {
-            // get all text until the `position` and check if it reads `console.`
-            // and iff so then complete if `log`, `warn`, and `error`
-            let linePrefix = document
-                .lineAt(position)
-                .text.substr(0, position.character);
-            let trimLinePrefix = linePrefix.trim();
-            let reg = /(return this)?(.$store)?state/;
-            if (!reg.test(trimLinePrefix)) {
-                return undefined;
-            }
-            return stateKeysList.map(stateKey => {
-                return new vscode.CompletionItem(stateKey, vscode.CompletionItemKind.Property);
-            });
-        },
-    }, '.');
-    context.subscriptions.push(provider1, stateProvider);
+    context.subscriptions.push(provider1, vscode.languages.registerCompletionItemProvider('vue', stateProvider, '.'));
 }
 exports.activate = activate;
 //# sourceMappingURL=extension.js.map
