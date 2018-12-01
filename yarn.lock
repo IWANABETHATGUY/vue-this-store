@@ -90,10 +90,10 @@
     lodash "^4.17.10"
     to-fast-properties "^2.0.0"
 
-"@types/node@^6.0.40":
-  version "6.14.2"
-  resolved "http://registry.npm.taobao.org/@types/node/download/@types/node-6.14.2.tgz#40b3dbb1221c7d66802cbcc32fe3b85e54569c77"
-  integrity sha1-QLPbsSIcfWaALLzDL+O4XlRWnHc=
+"@types/node@^10.12.11":
+  version "10.12.11"
+  resolved "http://registry.npm.taobao.org/@types/node/download/@types/node-10.12.11.tgz#715c476c99a5f6898a1ae61caf9825e43c03912e"
+  integrity sha1-cVxHbJml9omKGuYcr5gl5DwDkS4=
 
 ajv@^6.5.5:
   version "6.6.1"
@@ -1933,10 +1933,10 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   resolved "http://registry.npm.taobao.org/tweetnacl/download/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
   integrity sha1-WuaBd/GS1EViadEIr6k/+HQ/T2Q=
 
-typescript@^2.1.4:
-  version "2.9.2"
-  resolved "http://registry.npm.taobao.org/typescript/download/typescript-2.9.2.tgz#1cbf61d05d6b96269244eb6a3bce4bd914e0f00c"
-  integrity sha1-HL9h0F1rliaSROtqO85L2RTg8Aw=
+typescript@^3.2.1:
+  version "3.2.1"
+  resolved "http://registry.npm.taobao.org/typescript/download/typescript-3.2.1.tgz#0b7a04b8cf3868188de914d9568bd030f0c56192"
+  integrity sha1-C3oEuM84aBiN6RTZVovQMPDFYZI=
 
 unc-path-regex@^0.1.2:
   version "0.1.2"
@@ -2091,7 +2091,7 @@ vinyl@^2.0.0, vinyl@^2.0.1, vinyl@^2.0.2:
     remove-trailing-separator "^1.0.1"
     replace-ext "^1.0.0"
 
-vscode@^1.1.17:
+vscode@^1.1.22:
   version "1.1.22"
   resolved "http://registry.npm.taobao.org/vscode/download/vscode-1.1.22.tgz#0e088b43c3328d0330feb5c6db5a7d3d4ba1a231"
   integrity sha1-DgiLQ8MyjQMw/rXG21p9PUuhojE=
@@ -2130,8 +2130,8 @@ yauzl@^2.2.1:
     fd-slicer "~1.1.0"
 
 yazl@^2.2.1:
-  version "2.5.0"
-  resolved "http://registry.npm.taobao.org/yazl/download/yazl-2.5.0.tgz#1ab8de8cd3c3c252986c7fa2f6562784d7288e49"
-  integrity sha1-GrjejNPDwlKYbH+i9lYnhNcojkk=
+  version "2.5.1"
+  resolved "http://registry.npm.taobao.org/yazl/download/yazl-2.5.1.tgz#a3d65d3dd659a5b0937850e8609f22fffa2b5c35"
+  integrity sha1-o9ZdPdZZpbCTeFDoYJ8i//orXDU=
   dependencies:
     buffer-crc32 "~0.2.3"
