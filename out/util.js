@@ -25,6 +25,9 @@ function getAbsolutePath(base, relative = '') {
 exports.getAbsolutePath = getAbsolutePath;
 function getFileContent(basePath, relativePath = '') {
     let absolutStorePath = getAbsolutePath(basePath, relativePath);
+    if (!fs.existsSync(absolutStorePath)) {
+        return { status: -1, fileContent: '' };
+    }
     let statObj = fs.statSync(absolutStorePath);
     if (statObj.isDirectory()) {
         absolutStorePath = path.resolve(absolutStorePath, 'index.js');

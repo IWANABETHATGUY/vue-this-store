@@ -9,7 +9,7 @@ class VueThisStoreStatusBarItem {
             : ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
         this.i = 0;
         this.IntervalId = null;
-        this._barItemTitle = '$Store';
+        this._barItemTitle = 'VueThis$Store';
         this._statusBarItem.show();
         this.setStatus(0);
     }
@@ -35,7 +35,6 @@ class VueThisStoreStatusBarItem {
         this.IntervalId = setInterval(() => {
             let frame = this.frames[(this.i = ++this.i % this.frames.length)];
             this._statusBarItem.text = `${this._barItemTitle}:${frame}`;
-            console.log(this._statusBarItem.text);
         }, 100);
     }
     stopScanning() {

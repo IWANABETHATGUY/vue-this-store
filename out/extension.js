@@ -25,8 +25,11 @@ function activate(context) {
     let stateProvider = new provider_1.storeStateProvider(stateKeysList);
     let mapStateProvider = new provider_1.storeMapStateProvider(stateKeysList);
     watcher.on('change', () => {
-        stateKeysList = loop_1.setStoreInfo(rootPath)[1];
+        storeBarStatusItem.setStatus(0);
+        let [_, stateKeysList, setStoreActionStatus] = loop_1.setStoreInfo(rootPath);
         stateProvider.setStateKeysList(stateKeysList);
+        mapStateProvider.setStateKeysList(stateKeysList);
+        storeBarStatusItem.setStatus(setStoreActionStatus);
     });
     console.timeEnd('generateState');
     context.subscriptions.push(storeBarStatusItem, vscode.languages.registerCompletionItemProvider('vue', stateProvider, '.'), vscode.languages.registerCompletionItemProvider('vue', mapStateProvider, "'", '"'));

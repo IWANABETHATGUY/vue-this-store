@@ -43,7 +43,9 @@ export function getFileContent(
   relativePath: string = '',
 ): getFileContentResult {
   let absolutStorePath: string = getAbsolutePath(basePath, relativePath);
-
+  if (!fs.existsSync(absolutStorePath)) {
+    return { status: -1, fileContent: '' };
+  }
   let statObj = fs.statSync(absolutStorePath);
   if (statObj.isDirectory()) {
     absolutStorePath = path.resolve(absolutStorePath, 'index.js');
@@ -54,7 +56,6 @@ export function getFileContent(
     });
     return { status: 1, fileContent };
   }
-
   return { status: -1, fileContent: '' };
 }
 

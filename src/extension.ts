@@ -31,8 +31,11 @@ export function activate(context: vscode.ExtensionContext) {
   let mapStateProvider = new storeMapStateProvider(stateKeysList);
 
   watcher.on('change', () => {
-    stateKeysList = setStoreInfo(rootPath)[1];
+    storeBarStatusItem.setStatus(0);
+    let [_, stateKeysList, setStoreActionStatus] = setStoreInfo(rootPath);
     stateProvider.setStateKeysList(stateKeysList);
+    mapStateProvider.setStateKeysList(stateKeysList);
+    storeBarStatusItem.setStatus(setStoreActionStatus);
   });
   console.timeEnd('generateState');
   context.subscriptions.push(
