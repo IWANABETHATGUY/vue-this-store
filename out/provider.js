@@ -38,7 +38,7 @@ class storeMapStateProvider {
         let docContent = document.getText();
         let posIndex = 0;
         // console.time('mapState');
-        let reg = /\bmapState\(([\[\{])[\s\S]*?([\}\]])\)/;
+        let reg = /\bmapState\(([\[\{])[\s\S]*?([\}\]]).*?\)/;
         let regRes = reg.exec(docContent);
         if (!regRes) {
             return undefined;
