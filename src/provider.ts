@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
+import { StateInfo } from './type';
 
 // import { stateKeysList } from './extension';
 export class storeStateProvider implements vscode.CompletionItemProvider {
-  private stateKeysList: string[];
-  constructor(stateKeysList: string[]) {
-    this.stateKeysList = stateKeysList;
+  private stateKeysList: StateInfo[];
+  constructor(stateInfoList: StateInfo[]) {
+    this.stateKeysList = stateInfoList;
   }
-  public setStateKeysList(newList: string[]) {
+  public setStateKeysList(newList: StateInfo[]) {
     this.stateKeysList = newList;
   }
   public provideCompletionItems(
@@ -23,18 +24,15 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
       return undefined;
     }
 
-    return this.stateKeysList.map(stateKey => {
-      return new vscode.CompletionItem(
-        stateKey,
+    return this.stateKeysList.map(stateInfo => {
+      let stateCompletion = new vscode.CompletionItem(
+        stateInfo.stateKey,
         vscode.CompletionItemKind.Property,
       );
+      stateCompletion.documentation = new vscode.MarkdownString(
+        `${stateInfo.defination}`,
+      );
+      return stateCompletion;
     });
   }
 }
-// export const storeStateProvider = vscode.languages.registerCompletionItemProvider(
-//   { language: 'vue' },
-//   {
-//
-//   },
-//   '.', // triggered whenever a '.' is being typed
-// );

@@ -10,13 +10,15 @@ function setStoreInfo(rootPath) {
         return;
     }
     let entryFileContent = util_1.getFileContent(entry);
+    if (entryFileContent === '') {
+        return ['', []];
+    }
     let entryFileContentAst = util_1.getAstOfCode(entryFileContent);
     let storeRelativePath = util_1.getStoreEntryRelativePath(entryFileContentAst);
     let storeContent = util_1.getFileContent(entry, storeRelativePath);
-    return [
-        util_1.getAbsolutePath(entry, storeRelativePath),
-        util_1.getStateKeysFromStore(storeContent),
-    ];
+    let stateInfoList = util_1.getStateInfoFromStore(storeContent);
+    let storeAbsolutePath = util_1.getAbsolutePath(entry, storeRelativePath);
+    return [storeAbsolutePath, stateInfoList];
 }
 exports.setStoreInfo = setStoreInfo;
 //# sourceMappingURL=loop.js.map

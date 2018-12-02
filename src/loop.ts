@@ -4,11 +4,12 @@ import {
   getFileContent,
   getStoreEntryRelativePath,
   getAstOfCode,
-  getStateKeysFromStore,
+  getStateInfoFromStore,
   getAbsolutePath,
 } from './util';
+import { StateInfo } from './type';
 
-export function setStoreInfo(rootPath: string): [string, string[]] {
+export function setStoreInfo(rootPath: string): [string, StateInfo[]] {
   let entry: string = path.resolve(rootPath, 'src/main.js');
 
   if (!fs.existsSync(entry)) {
@@ -16,14 +17,16 @@ export function setStoreInfo(rootPath: string): [string, string[]] {
     return;
   }
   let entryFileContent: string = getFileContent(entry);
+  if (entryFileContent === '') {
+    return ['', []];
+  }
   let entryFileContentAst = getAstOfCode(entryFileContent);
   let storeRelativePath: string = getStoreEntryRelativePath(
     entryFileContentAst,
   );
   let storeContent: string = getFileContent(entry, storeRelativePath);
 
-  return [
-    getAbsolutePath(entry, storeRelativePath),
-    getStateKeysFromStore(storeContent),
-  ];
+  let stateInfoList = getStateInfoFromStore(storeContent);
+  let storeAbsolutePath = getAbsolutePath(entry, storeRelativePath);
+  return [storeAbsolutePath, stateInfoList];
 }

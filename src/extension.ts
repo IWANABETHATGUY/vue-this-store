@@ -43,6 +43,7 @@ export function activate(context: vscode.ExtensionContext) {
       snippetCompletion.insertText = new vscode.SnippetString(
         'Good ${1|morning,afternoon,evening|}. It is ${1}, right?',
       );
+
       snippetCompletion.documentation = new vscode.MarkdownString(
         'Inserts a snippet that lets you select the _appropriate_ part of the day for your greeting.',
       );

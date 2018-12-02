@@ -13,6 +13,8 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { StateInfo } from './type';
+
 /**
  * 传入文件内容返回对应ast
  *
@@ -23,6 +25,7 @@ import * as path from 'path';
 export function getAstOfCode(code: string) {
   return parse(code, { sourceType: 'module' });
 }
+
 export function getAbsolutePath(base: string, relative: string = ''): string {
   let ext = path.extname(base);
   if (ext && relative.length) {
@@ -34,7 +37,7 @@ export function getAbsolutePath(base: string, relative: string = ''): string {
 export function getFileContent(
   basePath: string,
   relativePath: string = '',
-): string {
+): string | never {
   let absolutStorePath: string = getAbsolutePath(basePath, relativePath);
 
   let statObj = fs.statSync(absolutStorePath);
@@ -46,7 +49,10 @@ export function getFileContent(
       encoding: 'utf8',
     });
     return storeEntryContent;
+  } else {
+    console.log('file is not exist');
   }
+
   return '';
 }
 
@@ -57,9 +63,10 @@ export function getFileContent(
  * @param {string} storeContent
  * @returns {string[]}
  */
-export function getStateKeysFromStore(storeContent: string): string[] {
+export function getStateInfoFromStore(storeContent: string): StateInfo[] {
   let ast = getAstOfCode(storeContent);
-  return getStatekeysFromAst(ast);
+  let storeContentLines = storeContent.split('\n');
+  return getStateInfosFromAst(ast, storeContentLines);
 }
 
 /**
@@ -68,8 +75,15 @@ export function getStateKeysFromStore(storeContent: string): string[] {
  * @param {any} ast
  * @returns {string[]}
  */
-function getStatekeysFromAst(ast): string[] {
-  let stateList: string[] = [];
+/**
+ *
+ *
+ * @param {any} ast
+ * @param {string[]} storeContent
+ * @returns {StateInfo[]}
+ */
+function getStateInfosFromAst(ast, storeContentLines: string[]): StateInfo[] {
+  let stateInfoList: StateInfo[] = [];
   traverse(ast, {
     VariableDeclarator(path) {
       let isStateLike: boolean = looksLike(path, {
@@ -83,13 +97,20 @@ function getStatekeysFromAst(ast): string[] {
         let node: VariableDeclarator = path.node;
         let init: ObjectExpression = node.init as ObjectExpression;
         let properties: Property[] = init.properties as Property[];
-        stateList = properties.map(property => {
-          return property.key.name;
+        stateInfoList = properties.map(property => {
+          let loc = property.loc;
+          let stateInfo: StateInfo = {
+            stateKey: property.key.name,
+            defination: storeContentLines
+              .slice(loc.start.line - 1, loc.end.line)
+              .join('\n'),
+          };
+          return stateInfo;
         });
       }
     },
   });
-  return stateList;
+  return stateInfoList;
 }
 
 /**

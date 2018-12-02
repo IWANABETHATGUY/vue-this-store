@@ -35,6 +35,9 @@ function getFileContent(basePath, relativePath = '') {
         });
         return storeEntryContent;
     }
+    else {
+        console.log('file is not exist');
+    }
     return '';
 }
 exports.getFileContent = getFileContent;
@@ -45,19 +48,27 @@ exports.getFileContent = getFileContent;
  * @param {string} storeContent
  * @returns {string[]}
  */
-function getStateKeysFromStore(storeContent) {
+function getStateInfoFromStore(storeContent) {
     let ast = getAstOfCode(storeContent);
-    return getStatekeysFromAst(ast);
+    let storeContentLines = storeContent.split('\n');
+    return getStateInfosFromAst(ast, storeContentLines);
 }
-exports.getStateKeysFromStore = getStateKeysFromStore;
+exports.getStateInfoFromStore = getStateInfoFromStore;
 /**
  * 通过ast获取store中的所有statekey
  *
  * @param {any} ast
  * @returns {string[]}
  */
-function getStatekeysFromAst(ast) {
-    let stateList = [];
+/**
+ *
+ *
+ * @param {any} ast
+ * @param {string[]} storeContent
+ * @returns {StateInfo[]}
+ */
+function getStateInfosFromAst(ast, storeContentLines) {
+    let stateInfoList = [];
     traverse_1.default(ast, {
         VariableDeclarator(path) {
             let isStateLike = looksLike(path, {
@@ -71,13 +82,20 @@ function getStatekeysFromAst(ast) {
                 let node = path.node;
                 let init = node.init;
                 let properties = init.properties;
-                stateList = properties.map(property => {
-                    return property.key.name;
+                stateInfoList = properties.map(property => {
+                    let loc = property.loc;
+                    let stateInfo = {
+                        stateKey: property.key.name,
+                        defination: storeContentLines
+                            .slice(loc.start.line - 1, loc.end.line)
+                            .join('\n'),
+                    };
+                    return stateInfo;
                 });
             }
         },
     });
-    return stateList;
+    return stateInfoList;
 }
 /**
  * 获取store入口文件中的相对路径

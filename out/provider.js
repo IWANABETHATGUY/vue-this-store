@@ -3,8 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
 // import { stateKeysList } from './extension';
 class storeStateProvider {
-    constructor(stateKeysList) {
-        this.stateKeysList = stateKeysList;
+    constructor(stateInfoList) {
+        this.stateKeysList = stateInfoList;
     }
     setStateKeysList(newList) {
         this.stateKeysList = newList;
@@ -18,17 +18,12 @@ class storeStateProvider {
         if (!reg.test(trimLinePrefix)) {
             return undefined;
         }
-        return this.stateKeysList.map(stateKey => {
-            return new vscode.CompletionItem(stateKey, vscode.CompletionItemKind.Property);
+        return this.stateKeysList.map(stateInfo => {
+            let stateCompletion = new vscode.CompletionItem(stateInfo.stateKey, vscode.CompletionItemKind.Property);
+            stateCompletion.documentation = new vscode.MarkdownString(`${stateInfo.defination}`);
+            return stateCompletion;
         });
     }
 }
 exports.storeStateProvider = storeStateProvider;
-// export const storeStateProvider = vscode.languages.registerCompletionItemProvider(
-//   { language: 'vue' },
-//   {
-//
-//   },
-//   '.', // triggered whenever a '.' is being typed
-// );
 //# sourceMappingURL=provider.js.map
