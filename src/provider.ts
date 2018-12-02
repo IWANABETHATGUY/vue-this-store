@@ -18,22 +18,72 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
     let linePrefix = document
       .lineAt(position)
       .text.substr(0, position.character);
-    let trimLinePrefix = linePrefix.trim();
-    let reg = /(return this)?(.$store)?state/;
-    if (!reg.test(trimLinePrefix)) {
+    let trimLinePrefixExpressions = linePrefix.trim().split(' ');
+    let lastPrefixExpression =
+      trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
+    let reg = /(return this.)?($store.)?state/;
+    if (!reg.test(lastPrefixExpression)) {
       return undefined;
     }
-
     return this.stateKeysList.map(stateInfo => {
       let stateCompletion = new vscode.CompletionItem(
         stateInfo.stateKey,
         vscode.CompletionItemKind.Property,
       );
       stateCompletion.documentation = new vscode.MarkdownString(
-        '`' + stateInfo.defination + '`',
+        '```' + stateInfo.defination + '```',
       );
       return stateCompletion;
     });
+  }
+}
+
+export class storeMapStateProvider implements vscode.CompletionItemProvider {
+  private stateKeysList: StateInfo[];
+  constructor(stateInfoList: StateInfo[]) {
+    this.stateKeysList = stateInfoList;
+  }
+  public setStateKeysList(newList: StateInfo[]) {
+    this.stateKeysList = newList;
+  }
+  public provideCompletionItems(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+  ): vscode.CompletionItem[] {
+    console.log('trigger mapState');
+    let docContent = document.getText();
+    let posIndex = 0;
+    // console.time('mapState');
+    let reg = /\bmapState\(([\[\{])[\s\S]*?([\}\]])\)/;
+    let regRes = reg.exec(docContent);
+    if (!regRes) {
+      return undefined;
+    }
+    debugger;
+    docContent.split('\n').some((line, index) => {
+      posIndex += line.length + 1;
+      return index >= position.line - 1;
+    });
+    posIndex += position.character;
+    // console.timeEnd('mapState');
+
+    if (
+      posIndex >= regRes.index + 10 &&
+      posIndex < regRes.index + regRes[0].length - 2
+    ) {
+      debugger;
+      return this.stateKeysList.map(stateInfo => {
+        let stateCompletion = new vscode.CompletionItem(
+          stateInfo.stateKey,
+          vscode.CompletionItemKind.Property,
+        );
+        stateCompletion.documentation = new vscode.MarkdownString(
+          '```' + stateInfo.defination + '```',
+        );
+        return stateCompletion;
+      });
+    }
+    return undefined;
   }
 }
 

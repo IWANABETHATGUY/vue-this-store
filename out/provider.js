@@ -13,19 +13,57 @@ class storeStateProvider {
         let linePrefix = document
             .lineAt(position)
             .text.substr(0, position.character);
-        let trimLinePrefix = linePrefix.trim();
-        let reg = /(return this)?(.$store)?state/;
-        if (!reg.test(trimLinePrefix)) {
+        let trimLinePrefixExpressions = linePrefix.trim().split(' ');
+        let lastPrefixExpression = trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
+        let reg = /(return this.)?($store.)?state/;
+        if (!reg.test(lastPrefixExpression)) {
             return undefined;
         }
         return this.stateKeysList.map(stateInfo => {
             let stateCompletion = new vscode.CompletionItem(stateInfo.stateKey, vscode.CompletionItemKind.Property);
-            stateCompletion.documentation = new vscode.MarkdownString('`' + stateInfo.defination + '`');
+            stateCompletion.documentation = new vscode.MarkdownString('```' + stateInfo.defination + '```');
             return stateCompletion;
         });
     }
 }
 exports.storeStateProvider = storeStateProvider;
+class storeMapStateProvider {
+    constructor(stateInfoList) {
+        this.stateKeysList = stateInfoList;
+    }
+    setStateKeysList(newList) {
+        this.stateKeysList = newList;
+    }
+    provideCompletionItems(document, position) {
+        console.log('trigger mapState');
+        let docContent = document.getText();
+        let posIndex = 0;
+        // console.time('mapState');
+        let reg = /\bmapState\(([\[\{])[\s\S]*?([\}\]])\)/;
+        let regRes = reg.exec(docContent);
+        if (!regRes) {
+            return undefined;
+        }
+        debugger;
+        docContent.split('\n').some((line, index) => {
+            posIndex += line.length + 1;
+            return index >= position.line - 1;
+        });
+        posIndex += position.character;
+        // console.timeEnd('mapState');
+        if (posIndex >= regRes.index + 10 &&
+            posIndex < regRes.index + regRes[0].length - 2) {
+            debugger;
+            return this.stateKeysList.map(stateInfo => {
+                let stateCompletion = new vscode.CompletionItem(stateInfo.stateKey, vscode.CompletionItemKind.Property);
+                stateCompletion.documentation = new vscode.MarkdownString('```' + stateInfo.defination + '```');
+                return stateCompletion;
+            });
+        }
+        return undefined;
+    }
+}
+exports.storeMapStateProvider = storeMapStateProvider;
 // TODO: 这些是demo代码，可以提供参考，发布之前要删除
 let provider1 = vscode.languages.registerCompletionItemProvider('plaintext', {
     provideCompletionItems(document, position, token, context) {

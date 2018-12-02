@@ -7,7 +7,7 @@ export function generateWatcher(originpath) {
   if (ext.length > 0) {
     realPath = dirname(originpath);
   }
-  debugger;
+
   const watcher = chokidar.watch(realPath, {
     persistent: true,
   });
