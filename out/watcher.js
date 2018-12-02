@@ -2,8 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const chokidar = require("chokidar");
 const path_1 = require("path");
-function generateWatcher(path) {
-    let realPath = path_1.dirname(path);
+function generateWatcher(originpath) {
+    let ext = path_1.extname(originpath);
+    let realPath = originpath;
+    if (ext.length > 0) {
+        realPath = path_1.dirname(originpath);
+    }
+    debugger;
     const watcher = chokidar.watch(realPath, {
         persistent: true,
     });
