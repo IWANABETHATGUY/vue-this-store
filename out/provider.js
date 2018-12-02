@@ -35,7 +35,6 @@ class storeMapStateProvider {
         this.stateKeysList = newList;
     }
     provideCompletionItems(document, position) {
-        console.log('trigger mapState');
         let docContent = document.getText();
         let posIndex = 0;
         // console.time('mapState');
@@ -44,7 +43,6 @@ class storeMapStateProvider {
         if (!regRes) {
             return undefined;
         }
-        debugger;
         docContent.split('\n').some((line, index) => {
             posIndex += line.length + 1;
             return index >= position.line - 1;
@@ -53,7 +51,6 @@ class storeMapStateProvider {
         // console.timeEnd('mapState');
         if (posIndex >= regRes.index + 10 &&
             posIndex < regRes.index + regRes[0].length - 2) {
-            debugger;
             return this.stateKeysList.map(stateInfo => {
                 let stateCompletion = new vscode.CompletionItem(stateInfo.stateKey, vscode.CompletionItemKind.Property);
                 stateCompletion.documentation = new vscode.MarkdownString('```' + stateInfo.defination + '```');

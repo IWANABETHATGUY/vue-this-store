@@ -17,7 +17,7 @@
     "Other"
   ],
   "activationEvents": [
-    "*"
+    "onLanguage:vue"
   ],
   "main": "./out/extension",
   "scripts": {

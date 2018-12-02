@@ -30,15 +30,12 @@ function getFileContent(basePath, relativePath = '') {
         absolutStorePath = path.resolve(absolutStorePath, 'index.js');
     }
     if (fs.existsSync(absolutStorePath)) {
-        let storeEntryContent = fs.readFileSync(absolutStorePath, {
+        let fileContent = fs.readFileSync(absolutStorePath, {
             encoding: 'utf8',
         });
-        return storeEntryContent;
+        return { status: 1, fileContent };
     }
-    else {
-        console.log('file is not exist');
-    }
-    return '';
+    return { status: -1, fileContent: '' };
 }
 exports.getFileContent = getFileContent;
 /**

@@ -50,7 +50,6 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
     document: vscode.TextDocument,
     position: vscode.Position,
   ): vscode.CompletionItem[] {
-    console.log('trigger mapState');
     let docContent = document.getText();
     let posIndex = 0;
     // console.time('mapState');
@@ -59,7 +58,7 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
     if (!regRes) {
       return undefined;
     }
-    debugger;
+
     docContent.split('\n').some((line, index) => {
       posIndex += line.length + 1;
       return index >= position.line - 1;
@@ -71,7 +70,6 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
       posIndex >= regRes.index + 10 &&
       posIndex < regRes.index + regRes[0].length - 2
     ) {
-      debugger;
       return this.stateKeysList.map(stateInfo => {
         let stateCompletion = new vscode.CompletionItem(
           stateInfo.stateKey,

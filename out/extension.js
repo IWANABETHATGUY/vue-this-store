@@ -8,6 +8,7 @@ const vscode = require("vscode");
 const loop_1 = require("./loop");
 const watcher_1 = require("./watcher");
 const provider_1 = require("./provider");
+const statusBarItem_1 = require("./statusBarItem");
 function activate(context) {
     console.time('generateState');
     let rootPath = vscode.workspace.rootPath;
@@ -15,7 +16,10 @@ function activate(context) {
         console.log('no folder is opened');
         return;
     }
-    let [storeAbsolutePath, stateKeysList] = loop_1.setStoreInfo(rootPath);
+    let storeBarStatusItem = new statusBarItem_1.VueThisStoreStatusBarItem();
+    context.subscriptions.push(storeBarStatusItem);
+    let [storeAbsolutePath, stateKeysList, setStoreActionStatus] = loop_1.setStoreInfo(rootPath);
+    storeBarStatusItem.setStatus(setStoreActionStatus);
     let watcher = watcher_1.generateWatcher(storeAbsolutePath);
     //init provider
     let stateProvider = new provider_1.storeStateProvider(stateKeysList);
@@ -25,7 +29,7 @@ function activate(context) {
         stateProvider.setStateKeysList(stateKeysList);
     });
     console.timeEnd('generateState');
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider('vue', stateProvider, '.'), vscode.languages.registerCompletionItemProvider('vue', mapStateProvider, "'", '"'));
+    context.subscriptions.push(storeBarStatusItem, vscode.languages.registerCompletionItemProvider('vue', stateProvider, '.'), vscode.languages.registerCompletionItemProvider('vue', mapStateProvider, "'", '"'));
 }
 exports.activate = activate;
 //# sourceMappingURL=extension.js.map

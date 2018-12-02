@@ -9,6 +9,7 @@ import * as vscode from 'vscode';
 import { setStoreInfo } from './loop';
 import { generateWatcher } from './watcher';
 import { storeStateProvider, storeMapStateProvider } from './provider';
+import { VueThisStoreStatusBarItem } from './statusBarItem';
 
 export function activate(context: vscode.ExtensionContext) {
   console.time('generateState');
@@ -18,7 +19,12 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('no folder is opened');
     return;
   }
-  let [storeAbsolutePath, stateKeysList] = setStoreInfo(rootPath);
+  let storeBarStatusItem = new VueThisStoreStatusBarItem();
+  context.subscriptions.push(storeBarStatusItem);
+  let [storeAbsolutePath, stateKeysList, setStoreActionStatus] = setStoreInfo(
+    rootPath,
+  );
+  storeBarStatusItem.setStatus(setStoreActionStatus);
   let watcher = generateWatcher(storeAbsolutePath);
   //init provider
   let stateProvider = new storeStateProvider(stateKeysList);
@@ -30,6 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
   });
   console.timeEnd('generateState');
   context.subscriptions.push(
+    storeBarStatusItem,
     vscode.languages.registerCompletionItemProvider('vue', stateProvider, '.'),
     vscode.languages.registerCompletionItemProvider(
       'vue',

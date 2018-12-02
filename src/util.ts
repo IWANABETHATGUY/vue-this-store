@@ -13,8 +13,12 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { StateInfo } from './type';
+import { StateInfo, Status } from './type';
 
+interface getFileContentResult {
+  status: Status;
+  fileContent: string;
+}
 /**
  * 传入文件内容返回对应ast
  *
@@ -37,7 +41,7 @@ export function getAbsolutePath(base: string, relative: string = ''): string {
 export function getFileContent(
   basePath: string,
   relativePath: string = '',
-): string | never {
+): getFileContentResult {
   let absolutStorePath: string = getAbsolutePath(basePath, relativePath);
 
   let statObj = fs.statSync(absolutStorePath);
@@ -45,15 +49,13 @@ export function getFileContent(
     absolutStorePath = path.resolve(absolutStorePath, 'index.js');
   }
   if (fs.existsSync(absolutStorePath)) {
-    let storeEntryContent = fs.readFileSync(absolutStorePath, {
+    let fileContent = fs.readFileSync(absolutStorePath, {
       encoding: 'utf8',
     });
-    return storeEntryContent;
-  } else {
-    console.log('file is not exist');
+    return { status: 1, fileContent };
   }
 
-  return '';
+  return { status: -1, fileContent: '' };
 }
 
 /**
