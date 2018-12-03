@@ -6,7 +6,7 @@
 
 import * as vscode from 'vscode';
 // import { vueStoreStateProviderFunciton } from './provider';
-import { setStoreInfo } from './loop';
+import { getStoreInfo } from './loop';
 import { generateWatcher } from './watcher';
 import { storeStateProvider, storeMapStateProvider } from './provider';
 import { VueThisStoreStatusBarItem } from './statusBarItem';
@@ -21,20 +21,20 @@ export function activate(context: vscode.ExtensionContext) {
   }
   let storeBarStatusItem = new VueThisStoreStatusBarItem();
   context.subscriptions.push(storeBarStatusItem);
-  let [storeAbsolutePath, stateKeysList, setStoreActionStatus] = setStoreInfo(
+  let [storeAbsolutePath, storeInfo, setStoreActionStatus] = getStoreInfo(
     rootPath,
   );
   storeBarStatusItem.setStatus(setStoreActionStatus);
   let watcher = generateWatcher(storeAbsolutePath);
   //init provider
-  let stateProvider = new storeStateProvider(stateKeysList);
-  let mapStateProvider = new storeMapStateProvider(stateKeysList);
+  let stateProvider = new storeStateProvider(storeInfo);
+  let mapStateProvider = new storeMapStateProvider(storeInfo);
 
   watcher.on('change', () => {
     storeBarStatusItem.setStatus(0);
-    let [_, stateKeysList, setStoreActionStatus] = setStoreInfo(rootPath);
-    stateProvider.setStateKeysList(stateKeysList);
-    mapStateProvider.setStateKeysList(stateKeysList);
+    let [_, storeInfo, setStoreActionStatus] = getStoreInfo(rootPath);
+    stateProvider.setStateKeysList(storeInfo);
+    mapStateProvider.setStateKeysList(storeInfo);
     storeBarStatusItem.setStatus(setStoreActionStatus);
   });
   console.timeEnd('generateState');

@@ -1,14 +1,14 @@
 import * as vscode from 'vscode';
-import { StateInfo } from './type';
+import { StateInfo, ModuleInfo } from './type';
 
 // import { stateKeysList } from './extension';
 export class storeStateProvider implements vscode.CompletionItemProvider {
-  private stateKeysList: StateInfo[];
-  constructor(stateInfoList: StateInfo[]) {
-    this.stateKeysList = stateInfoList;
+  private storeInfo: ModuleInfo;
+  constructor(storeInfo: ModuleInfo) {
+    this.storeInfo = storeInfo;
   }
-  public setStateKeysList(newList: StateInfo[]) {
-    this.stateKeysList = newList;
+  public setStateKeysList(newStoreInfo: ModuleInfo) {
+    this.storeInfo = newStoreInfo;
   }
   public provideCompletionItems(
     document: vscode.TextDocument,
@@ -25,7 +25,7 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
     if (!reg.test(lastPrefixExpression)) {
       return undefined;
     }
-    return this.stateKeysList.map(stateInfo => {
+    return this.storeInfo.state.map(stateInfo => {
       let stateCompletion = new vscode.CompletionItem(
         stateInfo.stateKey,
         vscode.CompletionItemKind.Property,
@@ -39,12 +39,12 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
 }
 
 export class storeMapStateProvider implements vscode.CompletionItemProvider {
-  private stateKeysList: StateInfo[];
-  constructor(stateInfoList: StateInfo[]) {
-    this.stateKeysList = stateInfoList;
+  private storeInfo: ModuleInfo;
+  constructor(storeInfo: ModuleInfo) {
+    this.storeInfo = storeInfo;
   }
-  public setStateKeysList(newList: StateInfo[]) {
-    this.stateKeysList = newList;
+  public setStateKeysList(newStoreInfo: ModuleInfo) {
+    this.storeInfo = newStoreInfo;
   }
   public provideCompletionItems(
     document: vscode.TextDocument,
@@ -70,7 +70,7 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
       posIndex >= regRes.index + 10 &&
       posIndex < regRes.index + regRes[0].length - 2
     ) {
-      return this.stateKeysList.map(stateInfo => {
+      return this.storeInfo.state.map(stateInfo => {
         let stateCompletion = new vscode.CompletionItem(
           stateInfo.stateKey,
           vscode.CompletionItemKind.Property,

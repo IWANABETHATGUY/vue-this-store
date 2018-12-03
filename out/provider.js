@@ -3,11 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
 // import { stateKeysList } from './extension';
 class storeStateProvider {
-    constructor(stateInfoList) {
-        this.stateKeysList = stateInfoList;
+    constructor(storeInfo) {
+        this.storeInfo = storeInfo;
     }
-    setStateKeysList(newList) {
-        this.stateKeysList = newList;
+    setStateKeysList(newStoreInfo) {
+        this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position, token) {
         let linePrefix = document
@@ -19,7 +19,7 @@ class storeStateProvider {
         if (!reg.test(lastPrefixExpression)) {
             return undefined;
         }
-        return this.stateKeysList.map(stateInfo => {
+        return this.storeInfo.state.map(stateInfo => {
             let stateCompletion = new vscode.CompletionItem(stateInfo.stateKey, vscode.CompletionItemKind.Property);
             stateCompletion.documentation = new vscode.MarkdownString('```' + stateInfo.defination + '```');
             return stateCompletion;
@@ -28,11 +28,11 @@ class storeStateProvider {
 }
 exports.storeStateProvider = storeStateProvider;
 class storeMapStateProvider {
-    constructor(stateInfoList) {
-        this.stateKeysList = stateInfoList;
+    constructor(storeInfo) {
+        this.storeInfo = storeInfo;
     }
-    setStateKeysList(newList) {
-        this.stateKeysList = newList;
+    setStateKeysList(newStoreInfo) {
+        this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position) {
         let docContent = document.getText();
@@ -51,7 +51,7 @@ class storeMapStateProvider {
         // console.timeEnd('mapState');
         if (posIndex >= regRes.index + 10 &&
             posIndex < regRes.index + regRes[0].length - 2) {
-            return this.stateKeysList.map(stateInfo => {
+            return this.storeInfo.state.map(stateInfo => {
                 let stateCompletion = new vscode.CompletionItem(stateInfo.stateKey, vscode.CompletionItemKind.Property);
                 stateCompletion.documentation = new vscode.MarkdownString('```' + stateInfo.defination + '```');
                 return stateCompletion;

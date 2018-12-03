@@ -48,20 +48,17 @@ exports.getFileContent = getFileContent;
  * @param {string} storeContent
  * @returns {string[]}
  */
-function getStateInfoFromStore(storeContent) {
-    let ast = getAstOfCode(storeContent);
-    let storeContentLines = storeContent.split('\n');
-    return getStateInfosFromAst(ast, storeContentLines);
+function getInfoFromStore(storeEntryContent) {
+    let ast = getAstOfCode(storeEntryContent);
+    let storeEntryContentLines = storeEntryContent.split('\n');
+    let moduleInfo = {
+        state: getStateInfosFromAst(ast, storeEntryContentLines),
+    };
+    return moduleInfo;
 }
-exports.getStateInfoFromStore = getStateInfoFromStore;
-/**
- * 通过ast获取store中的所有statekey
- *
- * @param {any} ast
- * @returns {string[]}
- */
-/**
- *
+exports.getInfoFromStore = getInfoFromStore;
+/*
+ *通过ast获取store中的所有statekey
  *
  * @param {any} ast
  * @param {string[]} storeContent

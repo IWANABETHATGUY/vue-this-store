@@ -13,7 +13,7 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { StateInfo, Status } from './type';
+import { StateInfo, Status, ModuleInfo } from './type';
 
 interface getFileContentResult {
   status: Status;
@@ -66,20 +66,17 @@ export function getFileContent(
  * @param {string} storeContent
  * @returns {string[]}
  */
-export function getStateInfoFromStore(storeContent: string): StateInfo[] {
-  let ast = getAstOfCode(storeContent);
-  let storeContentLines = storeContent.split('\n');
-  return getStateInfosFromAst(ast, storeContentLines);
+export function getInfoFromStore(storeEntryContent: string): ModuleInfo {
+  let ast = getAstOfCode(storeEntryContent);
+  let storeEntryContentLines = storeEntryContent.split('\n');
+  let moduleInfo: ModuleInfo = {
+    state: getStateInfosFromAst(ast, storeEntryContentLines),
+  };
+  return moduleInfo;
 }
 
-/**
- * 通过ast获取store中的所有statekey
- *
- * @param {any} ast
- * @returns {string[]}
- */
-/**
- *
+/*
+ *通过ast获取store中的所有statekey
  *
  * @param {any} ast
  * @param {string[]} storeContent
