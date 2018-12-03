@@ -4,21 +4,22 @@ import {
   getFileContent,
   getStoreEntryRelativePath,
   getAstOfCode,
-  getInfoFromStore,
   getAbsolutePath,
+  getModuleInfoFromABPath,
 } from './util';
-import { StateInfo, ModuleInfo } from './type';
+import { ModuleInfo } from './type';
 
 type setStoreStatus = 1 | -1;
 
 const emptyModule: ModuleInfo = {
   state: [],
+  abPath: '',
 };
-export function getStoreInfo(
+export function startFromEntry(
   rootPath: string,
 ): [string, ModuleInfo, setStoreStatus] {
   let entry: string = path.resolve(rootPath, 'src/main.js');
-
+  emptyModule.abPath = entry;
   if (!fs.existsSync(entry)) {
     console.error("you don't have the entry file");
     return ['', emptyModule, -1];
@@ -34,14 +35,11 @@ export function getStoreInfo(
   let storeRelativePath: string = getStoreEntryRelativePath(
     entryFileContentAst,
   );
-  let {
-    fileContent: storeContent,
-    status: storeContentStatus,
-  } = getFileContent(entry, storeRelativePath);
-  if (storeContent === '') {
-    return ['', emptyModule, storeContentStatus];
-  }
-  let stateInfoList = getInfoFromStore(storeContent);
+
   let storeAbsolutePath = getAbsolutePath(entry, storeRelativePath);
-  return [storeAbsolutePath, stateInfoList, 1];
+  let { status, moduleInfo: storeInfo } = getModuleInfoFromABPath(
+    storeAbsolutePath,
+    'module',
+  );
+  return [storeAbsolutePath, storeInfo, status];
 }

@@ -6,7 +6,7 @@
 
 import * as vscode from 'vscode';
 // import { vueStoreStateProviderFunciton } from './provider';
-import { getStoreInfo } from './loop';
+import { startFromEntry } from './loop';
 import { generateWatcher } from './watcher';
 import { storeStateProvider, storeMapStateProvider } from './provider';
 import { VueThisStoreStatusBarItem } from './statusBarItem';
@@ -21,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
   }
   let storeBarStatusItem = new VueThisStoreStatusBarItem();
   context.subscriptions.push(storeBarStatusItem);
-  let [storeAbsolutePath, storeInfo, setStoreActionStatus] = getStoreInfo(
+  let [storeAbsolutePath, storeInfo, setStoreActionStatus] = startFromEntry(
     rootPath,
   );
   storeBarStatusItem.setStatus(setStoreActionStatus);
@@ -32,7 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   watcher.on('change', () => {
     storeBarStatusItem.setStatus(0);
-    let [_, storeInfo, setStoreActionStatus] = getStoreInfo(rootPath);
+    let [_, storeInfo, setStoreActionStatus] = startFromEntry(rootPath);
     stateProvider.setStateKeysList(storeInfo);
     mapStateProvider.setStateKeysList(storeInfo);
     storeBarStatusItem.setStatus(setStoreActionStatus);

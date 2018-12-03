@@ -4,18 +4,27 @@ import {
   ImportDeclaration,
   NewExpression,
   Identifier,
-  ImportDefaultSpecifier,
   ObjectExpression,
   ObjectProperty,
+  Program,
   VariableDeclarator,
   Property,
-  Program,
+  VariableDeclaration,
+  objectProperty,
 } from '@babel/types';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { StateInfo, Status, ModuleInfo } from './type';
+import {
+  StateInfo,
+  Status,
+  ModuleInfo,
+  ModuleOrPathMap,
+  StoreAstMap,
+} from './type';
+import getXXXInfo from './getXXXInfo';
 
+interface VuexConfig {}
 interface getFileContentResult {
   status: Status;
   fileContent: string;
@@ -39,20 +48,16 @@ export function getAbsolutePath(base: string, relative: string = ''): string {
   return path.resolve(base, relative);
 }
 
-export function getFileContent(
-  basePath: string,
-  relativePath: string = '',
-): getFileContentResult {
-  let absolutStorePath: string = getAbsolutePath(basePath, relativePath);
-  if (!fs.existsSync(absolutStorePath)) {
+export function getFileContent(abPath: string): getFileContentResult {
+  if (!fs.existsSync(abPath)) {
     return { status: -1, fileContent: '' };
   }
-  let statObj = fs.statSync(absolutStorePath);
+  let statObj = fs.statSync(abPath);
   if (statObj.isDirectory()) {
-    absolutStorePath = path.resolve(absolutStorePath, 'index.js');
+    abPath = path.resolve(abPath, 'index.js');
   }
-  if (fs.existsSync(absolutStorePath)) {
-    let fileContent = fs.readFileSync(absolutStorePath, {
+  if (fs.existsSync(abPath)) {
+    let fileContent = fs.readFileSync(abPath, {
       encoding: 'utf8',
     });
     return { status: 1, fileContent };
@@ -61,19 +66,26 @@ export function getFileContent(
 }
 
 /**
- * 转换store入口文件得到store中的所有state的key
+ * 递归获取store中的所有定义
  *
  * @export
  * @param {string} storeContent
  * @returns {string[]}
  */
-export function getInfoFromStore(storeEntryContent: string): ModuleInfo {
-  let ast = getAstOfCode(storeEntryContent);
-  let storeEntryContentLines = storeEntryContent.split('\n');
-  let moduleInfo: ModuleInfo = {
-    state: getStateInfosFromAst(ast, storeEntryContentLines),
-  };
-  return moduleInfo;
+export function getModuleInfoFromABPath(
+  abPath: string,
+  type: 'store' | 'module',
+): { status: Status; moduleInfo: ModuleInfo } {
+  let moduleInfo: ModuleInfo = { state: [], abPath: abPath };
+  let { status: getFileStatus, fileContent } = getFileContent(abPath);
+  if (getFileStatus === -1) {
+    // TODO: 这里后续加上出错的原因，可以将错误原因输出到控制台
+    return { status: -1, moduleInfo };
+  }
+  let ast = getAstOfCode(fileContent);
+  let storeEntryContentLines = fileContent.split('\n');
+  moduleInfo = getStoreInfosFromAst(ast, storeEntryContentLines, abPath);
+  return { status: 1, moduleInfo };
 }
 
 /*
@@ -83,38 +95,113 @@ export function getInfoFromStore(storeEntryContent: string): ModuleInfo {
  * @param {string[]} storeContent
  * @returns {StateInfo[]}
  */
-function getStateInfosFromAst(ast, storeContentLines: string[]): StateInfo[] {
-  let stateInfoList: StateInfo[] = [];
-  traverse;
+export function getStateInfoList(
+  stateObjectAst: ObjectExpression,
+  storeContentLines: string[],
+): StateInfo[] {
+  let stateInfoList: StateInfo[];
+  let init: ObjectExpression = stateObjectAst;
+  let properties: Property[] = init.properties as Property[];
+  stateInfoList = properties.map(property => {
+    let loc = property.loc;
+    let stateInfo: StateInfo = {
+      stateKey: property.key.name,
+      defination: storeContentLines
+        .slice(loc.start.line - 1, loc.end.line)
+        .join('\n'),
+    };
+    return stateInfo;
+  });
+  return stateInfoList;
+}
+
+function getStoreInfosFromAst(
+  ast,
+  storeContentLines: string[],
+  abPath,
+): ModuleInfo {
+  let moduleOrPathMap: ModuleOrPathMap = {};
+  let localVuexIndentifier: string = '';
+  let storeAstMap: StoreAstMap = {};
+  let moduleInfo: ModuleInfo = { state: [], abPath };
   traverse(ast, {
-    VariableDeclarator(path) {
-      let isStateLike: boolean = looksLike(path, {
+    Program(path) {
+      let node: Program = path.node;
+      moduleOrPathMap = getModuleOrPathMap(node);
+      localVuexIndentifier = getLocalFromModuleOrPathMap(
+        moduleOrPathMap,
+        'vuex',
+      );
+      let variableDeclarationList: VariableDeclaration[] = node.body.filter(
+        item =>
+          item.type === 'VariableDeclaration' && item.declarations.length === 1,
+      ) as VariableDeclaration[];
+      variableDeclarationList.forEach(varDeclation => {
+        let firstDeclarator: VariableDeclarator = varDeclation.declarations[0];
+        if (firstDeclarator.init.type !== 'ObjectExpression') {
+          return;
+        }
+        let id = (firstDeclarator.id as Identifier).name;
+        storeAstMap[id] = firstDeclarator.init;
+      });
+    },
+    NewExpression(path) {
+      let isVuexCallLike = looksLike(path, {
         node: {
-          id: {
-            name: 'state',
+          callee: {
+            type: 'MemberExpression',
+            object: {
+              name: localVuexIndentifier,
+            },
+            property: {
+              name: 'Store',
+            },
           },
         },
       });
-      if (isStateLike) {
-        let node: VariableDeclarator = path.node;
-        let init: ObjectExpression = node.init as ObjectExpression;
-        let properties: Property[] = init.properties as Property[];
-        stateInfoList = properties.map(property => {
-          let loc = property.loc;
-          let stateInfo: StateInfo = {
-            stateKey: property.key.name,
-            defination: storeContentLines
-              .slice(loc.start.line - 1, loc.end.line)
-              .join('\n'),
-          };
-          return stateInfo;
+      if (isVuexCallLike) {
+        let node: NewExpression = path.node;
+        let configAst = node.arguments[0] as ObjectExpression;
+        let infoFnGenerator = getXXXInfo({
+          storeAstMap,
+          moduleOrPathMap,
+          abPath,
+          storeContentLines,
+        });
+        configAst.properties.forEach((property: ObjectProperty) => {
+          let key = (property.key as Identifier).name;
+          if (['module', 'state'].indexOf(key) !== -1) {
+            moduleInfo[key] = infoFnGenerator[key](property);
+          }
         });
       }
     },
   });
-  return stateInfoList;
+
+  return moduleInfo;
 }
-function getModuleOrPathMap(node: Program) {
+function getVuexConfig() {}
+function getLocalFromModuleOrPathMap(
+  mOrPMap: ModuleOrPathMap,
+  moduleOrPath: string,
+): string {
+  let localName: string = '';
+  Object.keys(mOrPMap).forEach(key => {
+    if (mOrPMap[key] === moduleOrPath) {
+      localName = key;
+    }
+  });
+  return localName;
+}
+// TODO:  这里是将store|moduel中的
+
+/**
+ * 通过ast获取所有的import内容
+ *
+ * @param {Program} node
+ * @returns 返回一个map内容是specifier以及对应的module或者path内容
+ */
+function getModuleOrPathMap(node: Program): ModuleOrPathMap {
   let importDeclarationList: ImportDeclaration[] = node.body.filter(
     item => item.type === 'ImportDeclaration',
   ) as ImportDeclaration[];
@@ -137,18 +224,14 @@ function getModuleOrPathMap(node: Program) {
  * @returns {string}
  */
 export function getStoreEntryRelativePath(ast): string {
-  let moduleOrPathMap = {};
+  let moduleOrPathMap: ModuleOrPathMap = {};
   let localVueIdentifier: string = '';
   let storeRelativeEntry: string = '';
   traverse(ast, {
     Program(path) {
       let node: Program = path.node;
       moduleOrPathMap = getModuleOrPathMap(node);
-      Object.keys(moduleOrPathMap).forEach(key => {
-        if (moduleOrPathMap[key] === 'vue') {
-          localVueIdentifier = key;
-        }
-      });
+      localVueIdentifier = getLocalFromModuleOrPathMap(moduleOrPathMap, 'vue');
     },
     NewExpression(path) {
       let isVueCallLike = looksLike(path, {
@@ -160,7 +243,6 @@ export function getStoreEntryRelativePath(ast): string {
         },
       });
       if (isVueCallLike) {
-        debugger;
         let node: NewExpression = path.node;
         let config: ObjectExpression = node.arguments[0] as ObjectExpression;
         config.properties.forEach((property: ObjectProperty) => {

@@ -4,6 +4,7 @@ const parser_1 = require("@babel/parser");
 const traverse_1 = require("@babel/traverse");
 const fs = require("fs");
 const path = require("path");
+const getXXXInfo_1 = require("./getXXXInfo");
 /**
  * 传入文件内容返回对应ast
  *
@@ -23,17 +24,16 @@ function getAbsolutePath(base, relative = '') {
     return path.resolve(base, relative);
 }
 exports.getAbsolutePath = getAbsolutePath;
-function getFileContent(basePath, relativePath = '') {
-    let absolutStorePath = getAbsolutePath(basePath, relativePath);
-    if (!fs.existsSync(absolutStorePath)) {
+function getFileContent(abPath) {
+    if (!fs.existsSync(abPath)) {
         return { status: -1, fileContent: '' };
     }
-    let statObj = fs.statSync(absolutStorePath);
+    let statObj = fs.statSync(abPath);
     if (statObj.isDirectory()) {
-        absolutStorePath = path.resolve(absolutStorePath, 'index.js');
+        abPath = path.resolve(abPath, 'index.js');
     }
-    if (fs.existsSync(absolutStorePath)) {
-        let fileContent = fs.readFileSync(absolutStorePath, {
+    if (fs.existsSync(abPath)) {
+        let fileContent = fs.readFileSync(abPath, {
             encoding: 'utf8',
         });
         return { status: 1, fileContent };
@@ -42,21 +42,25 @@ function getFileContent(basePath, relativePath = '') {
 }
 exports.getFileContent = getFileContent;
 /**
- * 转换store入口文件得到store中的所有state的key
+ * 递归获取store中的所有定义
  *
  * @export
  * @param {string} storeContent
  * @returns {string[]}
  */
-function getInfoFromStore(storeEntryContent) {
-    let ast = getAstOfCode(storeEntryContent);
-    let storeEntryContentLines = storeEntryContent.split('\n');
-    let moduleInfo = {
-        state: getStateInfosFromAst(ast, storeEntryContentLines),
-    };
-    return moduleInfo;
+function getModuleInfoFromABPath(abPath, type) {
+    let moduleInfo = { state: [], abPath: abPath };
+    let { status: getFileStatus, fileContent } = getFileContent(abPath);
+    if (getFileStatus === -1) {
+        // TODO: 这里后续加上出错的原因，可以将错误原因输出到控制台
+        return { status: -1, moduleInfo };
+    }
+    let ast = getAstOfCode(fileContent);
+    let storeEntryContentLines = fileContent.split('\n');
+    moduleInfo = getStoreInfosFromAst(ast, storeEntryContentLines, abPath);
+    return { status: 1, moduleInfo };
 }
-exports.getInfoFromStore = getInfoFromStore;
+exports.getModuleInfoFromABPath = getModuleInfoFromABPath;
 /*
  *通过ast获取store中的所有statekey
  *
@@ -64,37 +68,94 @@ exports.getInfoFromStore = getInfoFromStore;
  * @param {string[]} storeContent
  * @returns {StateInfo[]}
  */
-function getStateInfosFromAst(ast, storeContentLines) {
-    let stateInfoList = [];
-    traverse_1.default;
+function getStateInfoList(stateObjectAst, storeContentLines) {
+    let stateInfoList;
+    let init = stateObjectAst;
+    let properties = init.properties;
+    stateInfoList = properties.map(property => {
+        let loc = property.loc;
+        let stateInfo = {
+            stateKey: property.key.name,
+            defination: storeContentLines
+                .slice(loc.start.line - 1, loc.end.line)
+                .join('\n'),
+        };
+        return stateInfo;
+    });
+    return stateInfoList;
+}
+exports.getStateInfoList = getStateInfoList;
+function getStoreInfosFromAst(ast, storeContentLines, abPath) {
+    let moduleOrPathMap = {};
+    let localVuexIndentifier = '';
+    let storeAstMap = {};
+    let moduleInfo = { state: [], abPath };
     traverse_1.default(ast, {
-        VariableDeclarator(path) {
-            let isStateLike = looksLike(path, {
+        Program(path) {
+            let node = path.node;
+            moduleOrPathMap = getModuleOrPathMap(node);
+            localVuexIndentifier = getLocalFromModuleOrPathMap(moduleOrPathMap, 'vuex');
+            let variableDeclarationList = node.body.filter(item => item.type === 'VariableDeclaration' && item.declarations.length === 1);
+            variableDeclarationList.forEach(varDeclation => {
+                let firstDeclarator = varDeclation.declarations[0];
+                if (firstDeclarator.init.type !== 'ObjectExpression') {
+                    return;
+                }
+                let id = firstDeclarator.id.name;
+                storeAstMap[id] = firstDeclarator.init;
+            });
+        },
+        NewExpression(path) {
+            let isVuexCallLike = looksLike(path, {
                 node: {
-                    id: {
-                        name: 'state',
+                    callee: {
+                        type: 'MemberExpression',
+                        object: {
+                            name: localVuexIndentifier,
+                        },
+                        property: {
+                            name: 'Store',
+                        },
                     },
                 },
             });
-            if (isStateLike) {
+            if (isVuexCallLike) {
                 let node = path.node;
-                let init = node.init;
-                let properties = init.properties;
-                stateInfoList = properties.map(property => {
-                    let loc = property.loc;
-                    let stateInfo = {
-                        stateKey: property.key.name,
-                        defination: storeContentLines
-                            .slice(loc.start.line - 1, loc.end.line)
-                            .join('\n'),
-                    };
-                    return stateInfo;
+                let configAst = node.arguments[0];
+                let infoFnGenerator = getXXXInfo_1.default({
+                    storeAstMap,
+                    moduleOrPathMap,
+                    abPath,
+                    storeContentLines,
+                });
+                configAst.properties.forEach((property) => {
+                    let key = property.key.name;
+                    if (['module', 'state'].indexOf(key) !== -1) {
+                        moduleInfo[key] = infoFnGenerator[key](property);
+                    }
                 });
             }
         },
     });
-    return stateInfoList;
+    return moduleInfo;
 }
+function getVuexConfig() { }
+function getLocalFromModuleOrPathMap(mOrPMap, moduleOrPath) {
+    let localName = '';
+    Object.keys(mOrPMap).forEach(key => {
+        if (mOrPMap[key] === moduleOrPath) {
+            localName = key;
+        }
+    });
+    return localName;
+}
+// TODO:  这里是将store|moduel中的
+/**
+ * 通过ast获取所有的import内容
+ *
+ * @param {Program} node
+ * @returns 返回一个map内容是specifier以及对应的module或者path内容
+ */
 function getModuleOrPathMap(node) {
     let importDeclarationList = node.body.filter(item => item.type === 'ImportDeclaration');
     let modulelOrPathMap = importDeclarationList.reduce((acc, cur) => {
@@ -123,11 +184,7 @@ function getStoreEntryRelativePath(ast) {
         Program(path) {
             let node = path.node;
             moduleOrPathMap = getModuleOrPathMap(node);
-            Object.keys(moduleOrPathMap).forEach(key => {
-                if (moduleOrPathMap[key] === 'vue') {
-                    localVueIdentifier = key;
-                }
-            });
+            localVueIdentifier = getLocalFromModuleOrPathMap(moduleOrPathMap, 'vue');
         },
         NewExpression(path) {
             let isVueCallLike = looksLike(path, {
@@ -139,7 +196,6 @@ function getStoreEntryRelativePath(ast) {
                 },
             });
             if (isVueCallLike) {
-                debugger;
                 let node = path.node;
                 let config = node.arguments[0];
                 config.properties.forEach((property) => {

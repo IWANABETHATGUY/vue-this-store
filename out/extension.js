@@ -18,7 +18,7 @@ function activate(context) {
     }
     let storeBarStatusItem = new statusBarItem_1.VueThisStoreStatusBarItem();
     context.subscriptions.push(storeBarStatusItem);
-    let [storeAbsolutePath, storeInfo, setStoreActionStatus] = loop_1.getStoreInfo(rootPath);
+    let [storeAbsolutePath, storeInfo, setStoreActionStatus] = loop_1.startFromEntry(rootPath);
     storeBarStatusItem.setStatus(setStoreActionStatus);
     let watcher = watcher_1.generateWatcher(storeAbsolutePath);
     //init provider
@@ -26,7 +26,7 @@ function activate(context) {
     let mapStateProvider = new provider_1.storeMapStateProvider(storeInfo);
     watcher.on('change', () => {
         storeBarStatusItem.setStatus(0);
-        let [_, storeInfo, setStoreActionStatus] = loop_1.getStoreInfo(rootPath);
+        let [_, storeInfo, setStoreActionStatus] = loop_1.startFromEntry(rootPath);
         stateProvider.setStateKeysList(storeInfo);
         mapStateProvider.setStateKeysList(storeInfo);
         storeBarStatusItem.setStatus(setStoreActionStatus);
