@@ -66,6 +66,7 @@ exports.getInfoFromStore = getInfoFromStore;
  */
 function getStateInfosFromAst(ast, storeContentLines) {
     let stateInfoList = [];
+    traverse_1.default;
     traverse_1.default(ast, {
         VariableDeclarator(path) {
             let isStateLike = looksLike(path, {
@@ -94,6 +95,19 @@ function getStateInfosFromAst(ast, storeContentLines) {
     });
     return stateInfoList;
 }
+function getModuleOrPathMap(node) {
+    let importDeclarationList = node.body.filter(item => item.type === 'ImportDeclaration');
+    let modulelOrPathMap = importDeclarationList.reduce((acc, cur) => {
+        let moduleOrPath = cur.source.value;
+        cur.specifiers
+            .filter(specifier => specifier.type === 'ImportDefaultSpecifier')
+            .forEach(specifier => {
+            acc[specifier.local.name] = moduleOrPath;
+        });
+        return acc;
+    }, {});
+    return modulelOrPathMap;
+}
 /**
  * 获取store入口文件中的相对路径
  *
@@ -102,37 +116,39 @@ function getStateInfosFromAst(ast, storeContentLines) {
  * @returns {string}
  */
 function getStoreEntryRelativePath(ast) {
-    let moduleMap = {};
+    let moduleOrPathMap = {};
     let localVueIdentifier = '';
     let storeRelativeEntry = '';
     traverse_1.default(ast, {
-        ImportDeclaration(path) {
+        Program(path) {
             let node = path.node;
-            let defaultSpecifier = node.specifiers.filter(spec => spec.type === 'ImportDefaultSpecifier')[0];
-            if (!defaultSpecifier)
-                return;
-            let local = defaultSpecifier.local.name;
-            let moduleOrPath = node.source.value;
-            if (moduleOrPath === 'vue')
-                localVueIdentifier = local;
-            moduleMap[local] = {
-                moduleOrPath,
-            };
+            moduleOrPathMap = getModuleOrPathMap(node);
+            Object.keys(moduleOrPathMap).forEach(key => {
+                if (moduleOrPathMap[key] === 'vue') {
+                    localVueIdentifier = key;
+                }
+            });
         },
         NewExpression(path) {
-            let node = path.node;
-            let callee = node.callee;
-            if (callee.type === 'Identifier') {
-                if (callee.name === localVueIdentifier) {
-                    let config = node.arguments[0];
-                    config.properties.forEach((property) => {
-                        let key = property.key;
-                        let value = property.value;
-                        if (key.name === 'store') {
-                            storeRelativeEntry = moduleMap[value.name].moduleOrPath;
-                        }
-                    });
-                }
+            let isVueCallLike = looksLike(path, {
+                node: {
+                    callee: {
+                        type: 'Identifier',
+                        name: localVueIdentifier,
+                    },
+                },
+            });
+            if (isVueCallLike) {
+                debugger;
+                let node = path.node;
+                let config = node.arguments[0];
+                config.properties.forEach((property) => {
+                    let key = property.key;
+                    let value = property.value;
+                    if (key.name === 'store') {
+                        storeRelativeEntry = moduleOrPathMap[value.name];
+                    }
+                });
             }
         },
     });

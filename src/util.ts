@@ -9,6 +9,7 @@ import {
   ObjectProperty,
   VariableDeclarator,
   Property,
+  Program,
 } from '@babel/types';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -84,6 +85,7 @@ export function getInfoFromStore(storeEntryContent: string): ModuleInfo {
  */
 function getStateInfosFromAst(ast, storeContentLines: string[]): StateInfo[] {
   let stateInfoList: StateInfo[] = [];
+  traverse;
   traverse(ast, {
     VariableDeclarator(path) {
       let isStateLike: boolean = looksLike(path, {
@@ -112,7 +114,21 @@ function getStateInfosFromAst(ast, storeContentLines: string[]): StateInfo[] {
   });
   return stateInfoList;
 }
-
+function getModuleOrPathMap(node: Program) {
+  let importDeclarationList: ImportDeclaration[] = node.body.filter(
+    item => item.type === 'ImportDeclaration',
+  ) as ImportDeclaration[];
+  let modulelOrPathMap = importDeclarationList.reduce((acc, cur) => {
+    let moduleOrPath = cur.source.value;
+    cur.specifiers
+      .filter(specifier => specifier.type === 'ImportDefaultSpecifier')
+      .forEach(specifier => {
+        acc[specifier.local.name] = moduleOrPath;
+      });
+    return acc;
+  }, {});
+  return modulelOrPathMap;
+}
 /**
  * 获取store入口文件中的相对路径
  *
@@ -121,39 +137,39 @@ function getStateInfosFromAst(ast, storeContentLines: string[]): StateInfo[] {
  * @returns {string}
  */
 export function getStoreEntryRelativePath(ast): string {
-  let moduleMap = {};
+  let moduleOrPathMap = {};
   let localVueIdentifier: string = '';
   let storeRelativeEntry: string = '';
   traverse(ast, {
-    ImportDeclaration(path) {
-      let node: ImportDeclaration = path.node;
-      let defaultSpecifier:
-        | ImportDefaultSpecifier
-        | undefined = node.specifiers.filter(
-        spec => spec.type === 'ImportDefaultSpecifier',
-      )[0] as ImportDefaultSpecifier;
-      if (!defaultSpecifier) return;
-      let local = defaultSpecifier.local.name;
-      let moduleOrPath = node.source.value;
-      if (moduleOrPath === 'vue') localVueIdentifier = local;
-      moduleMap[local] = {
-        moduleOrPath,
-      };
+    Program(path) {
+      let node: Program = path.node;
+      moduleOrPathMap = getModuleOrPathMap(node);
+      Object.keys(moduleOrPathMap).forEach(key => {
+        if (moduleOrPathMap[key] === 'vue') {
+          localVueIdentifier = key;
+        }
+      });
     },
     NewExpression(path) {
-      let node: NewExpression = path.node;
-      let callee = node.callee;
-      if (callee.type === 'Identifier') {
-        if (callee.name === localVueIdentifier) {
-          let config: ObjectExpression = node.arguments[0] as ObjectExpression;
-          config.properties.forEach((property: ObjectProperty) => {
-            let key: Identifier = property.key;
-            let value: Identifier = property.value as Identifier;
-            if (key.name === 'store') {
-              storeRelativeEntry = moduleMap[value.name].moduleOrPath;
-            }
-          });
-        }
+      let isVueCallLike = looksLike(path, {
+        node: {
+          callee: {
+            type: 'Identifier',
+            name: localVueIdentifier,
+          },
+        },
+      });
+      if (isVueCallLike) {
+        debugger;
+        let node: NewExpression = path.node;
+        let config: ObjectExpression = node.arguments[0] as ObjectExpression;
+        config.properties.forEach((property: ObjectProperty) => {
+          let key: Identifier = property.key;
+          let value: Identifier = property.value as Identifier;
+          if (key.name === 'store') {
+            storeRelativeEntry = moduleOrPathMap[value.name];
+          }
+        });
       }
     },
   });
