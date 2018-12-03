@@ -1,4 +1,7 @@
-const path = require('path');
-const fs = require('fs');
+const parser = require('@babel/parser');
 
-console.log(' state.fuck + this.fuck'.split(' '));
+let file = `
+let a = 3;
+`;
+
+console.log(parser.parse(file));

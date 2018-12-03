@@ -5,19 +5,19 @@ import {
   getStoreEntryRelativePath,
   getAstOfCode,
   getAbsolutePath,
-  getModuleInfoFromABPath,
+  getStoreInfoFromABPath,
 } from './util';
-import { ModuleInfo } from './type';
+import { StoreInfo } from './type';
 
 type setStoreStatus = 1 | -1;
 
-const emptyModule: ModuleInfo = {
+const emptyModule: StoreInfo = {
   state: [],
   abPath: '',
 };
 export function startFromEntry(
   rootPath: string,
-): [string, ModuleInfo, setStoreStatus] {
+): [string, StoreInfo, setStoreStatus] {
   let entry: string = path.resolve(rootPath, 'src/main.js');
   emptyModule.abPath = entry;
   if (!fs.existsSync(entry)) {
@@ -37,9 +37,7 @@ export function startFromEntry(
   );
 
   let storeAbsolutePath = getAbsolutePath(entry, storeRelativePath);
-  let { status, moduleInfo: storeInfo } = getModuleInfoFromABPath(
-    storeAbsolutePath,
-    'module',
-  );
+  let { status, storeInfo } = getStoreInfoFromABPath(storeAbsolutePath);
+  debugger;
   return [storeAbsolutePath, storeInfo, status];
 }

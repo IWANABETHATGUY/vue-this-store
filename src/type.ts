@@ -8,10 +8,18 @@ export interface StateInfo {
 interface FileInfo {
   abPath: string;
 }
-export interface ModuleInfo extends FileInfo {
+export interface StoreInfo extends FileInfo {
   state: StateInfo[];
-  modules?: ModuleInfo;
+  modules?: ModulesInfo;
   [propname: string]: any;
+}
+
+export interface ModulesInfo extends FileInfo {
+  [propname: string]: string | Module;
+}
+
+export interface Module {
+  namespace?: boolean;
 }
 export interface ModuleOrPathMap {
   [propname: string]: string;

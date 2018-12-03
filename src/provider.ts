@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
-import { StateInfo, ModuleInfo } from './type';
+import { StateInfo, StoreInfo } from './type';
 
 // import { stateKeysList } from './extension';
 export class storeStateProvider implements vscode.CompletionItemProvider {
-  private storeInfo: ModuleInfo;
-  constructor(storeInfo: ModuleInfo) {
+  private storeInfo: StoreInfo;
+  constructor(storeInfo: StoreInfo) {
     this.storeInfo = storeInfo;
   }
-  public setStateKeysList(newStoreInfo: ModuleInfo) {
+  public setStateKeysList(newStoreInfo: StoreInfo) {
     this.storeInfo = newStoreInfo;
   }
   public provideCompletionItems(
@@ -39,11 +39,11 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
 }
 
 export class storeMapStateProvider implements vscode.CompletionItemProvider {
-  private storeInfo: ModuleInfo;
-  constructor(storeInfo: ModuleInfo) {
+  private storeInfo: StoreInfo;
+  constructor(storeInfo: StoreInfo) {
     this.storeInfo = storeInfo;
   }
-  public setStateKeysList(newStoreInfo: ModuleInfo) {
+  public setStateKeysList(newStoreInfo: StoreInfo) {
     this.storeInfo = newStoreInfo;
   }
   public provideCompletionItems(

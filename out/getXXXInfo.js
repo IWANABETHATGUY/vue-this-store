@@ -1,24 +1,40 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_1 = require("./util");
+function getModulesInfoFromAbPath(abPath) {
+    let modulesInfo = { abPath };
+    let { status, fileContent } = util_1.getFileContent(abPath);
+    if (status === -1) {
+        return null;
+    }
+    let ast = util_1.getAstOfCode(fileContent);
+    let getStoreInfosFromAst;
+    let program = ast.program;
+    let exportDefault = program.body.filter(node => node.type === 'ExportDefaultDeclaration')[0];
+    if (exportDefault) {
+        let declaration = exportDefault.declaration;
+    }
+}
 exports.default = ({ storeAstMap, moduleOrPathMap, abPath, storeContentLines, }) => ({
-    module(property) {
-        let moduleInfo = { state: [], abPath };
+    modules(property) {
+        let moduleInfo = { abPath };
+        return null;
+        debugger;
+        let key = property.key.name;
+        if (property.shorthand) {
+            if (storeAstMap[key]) {
+            }
+            else if (moduleOrPathMap[key]) {
+                const newModuleABPath = util_1.getAbsolutePath(abPath, moduleOrPathMap[key]);
+                moduleInfo.abPath = newModuleABPath;
+            }
+            // TODO: 需要做state从外部文件中引入的情况判断
+        }
+        else {
+            if (property.value.type === 'ObjectExpression') {
+            }
+        }
         return moduleInfo;
-        //   if (StateProperty.shorthand) {
-        //     if (storeAstMap[StateProperty.key.name]) {
-        //       let Obj: ObjectExpression = storeAstMap[
-        //         StateProperty.key.name
-        //       ] as ObjectExpression;
-        //       moduleInfo.state = getStateInfoList(Obj, storeContentLines);
-        //     }
-        //   } else {
-        //     moduleInfo.state = getStateInfoList(
-        //       StateProperty.value as ObjectExpression,
-        //       storeContentLines,
-        //     );
-        //   }
-        // }
     },
     state(property) {
         if (property.shorthand) {

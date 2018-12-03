@@ -1,7 +1,36 @@
-import { ModuleInfo, StoreAstMap, ModuleOrPathMap, StateInfo } from './type';
-import { BaseNode, ObjectExpression, ObjectProperty } from '@babel/types';
-import { getStateInfoList } from './util';
+import { StoreAstMap, ModuleOrPathMap, StateInfo, ModulesInfo } from './type';
+import {
+  ObjectExpression,
+  ObjectProperty,
+  Program,
+  ExportDefaultDeclaration,
+  Property,
+} from '@babel/types';
+import {
+  getStateInfoList,
+  getAbsolutePath,
+  getStoreInfoFromABPath,
+  getFileContent,
+  getAstOfCode,
+  getStoreInfosFromAst,
+} from './util';
 
+function getModulesInfoFromAbPath(abPath: string): ModulesInfo {
+  let modulesInfo = { abPath };
+  let { status, fileContent } = getFileContent(abPath);
+  if (status === -1) {
+    return null;
+  }
+  let ast = getAstOfCode(fileContent);
+  let getStoreInfosFromAst;
+  let program: Program = ast.program;
+  let exportDefault: ExportDefaultDeclaration = program.body.filter(
+    node => node.type === 'ExportDefaultDeclaration',
+  )[0] as ExportDefaultDeclaration;
+  if (exportDefault) {
+    let declaration: ObjectExpression = exportDefault.declaration as ObjectExpression;
+  }
+}
 interface ModuleInfoConfig {
   storeAstMap: StoreAstMap;
   moduleOrPathMap: ModuleOrPathMap;
@@ -14,23 +43,23 @@ export default ({
   abPath,
   storeContentLines,
 }: ModuleInfoConfig): object => ({
-  module(property: ObjectProperty): ModuleInfo {
-    let moduleInfo: ModuleInfo = { state: [], abPath };
+  modules(property: ObjectProperty): ModulesInfo {
+    let moduleInfo: ModulesInfo = { abPath };
+    return null;
+    debugger;
+    let key = property.key.name;
+    if (property.shorthand) {
+      if (storeAstMap[key]) {
+      } else if (moduleOrPathMap[key]) {
+        const newModuleABPath = getAbsolutePath(abPath, moduleOrPathMap[key]);
+        moduleInfo.abPath = newModuleABPath;
+      }
+      // TODO: 需要做state从外部文件中引入的情况判断
+    } else {
+      if (property.value.type === 'ObjectExpression') {
+      }
+    }
     return moduleInfo;
-    //   if (StateProperty.shorthand) {
-    //     if (storeAstMap[StateProperty.key.name]) {
-    //       let Obj: ObjectExpression = storeAstMap[
-    //         StateProperty.key.name
-    //       ] as ObjectExpression;
-    //       moduleInfo.state = getStateInfoList(Obj, storeContentLines);
-    //     }
-    //   } else {
-    //     moduleInfo.state = getStateInfoList(
-    //       StateProperty.value as ObjectExpression,
-    //       storeContentLines,
-    //     );
-    //   }
-    // }
   },
   state(property: ObjectProperty): StateInfo[] {
     if (property.shorthand) {

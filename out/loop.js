@@ -21,7 +21,8 @@ function startFromEntry(rootPath) {
     let entryFileContentAst = util_1.getAstOfCode(entryFileContent);
     let storeRelativePath = util_1.getStoreEntryRelativePath(entryFileContentAst);
     let storeAbsolutePath = util_1.getAbsolutePath(entry, storeRelativePath);
-    let { status, moduleInfo: storeInfo } = util_1.getModuleInfoFromABPath(storeAbsolutePath, 'module');
+    let { status, storeInfo } = util_1.getStoreInfoFromABPath(storeAbsolutePath);
+    debugger;
     return [storeAbsolutePath, storeInfo, status];
 }
 exports.startFromEntry = startFromEntry;
