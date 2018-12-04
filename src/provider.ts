@@ -25,16 +25,28 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
     if (!reg.test(lastPrefixExpression)) {
       return undefined;
     }
-    return this.storeInfo.state.map(stateInfo => {
-      let stateCompletion = new vscode.CompletionItem(
-        stateInfo.rowKey,
-        vscode.CompletionItemKind.Property,
+    return this.storeInfo.state
+      .map(stateInfo => {
+        let stateCompletion = new vscode.CompletionItem(
+          stateInfo.rowKey,
+          vscode.CompletionItemKind.Property,
+        );
+        stateCompletion.documentation = new vscode.MarkdownString(
+          '```' + stateInfo.defination + '```',
+        );
+        return stateCompletion;
+      })
+      .concat(
+        Object.keys(this.storeInfo.modules ? this.storeInfo.modules : {}).map(
+          module => {
+            let moduleCompletion = new vscode.CompletionItem(
+              module,
+              vscode.CompletionItemKind.Module,
+            );
+            return moduleCompletion;
+          },
+        ),
       );
-      stateCompletion.documentation = new vscode.MarkdownString(
-        '```' + stateInfo.defination + '```',
-      );
-      return stateCompletion;
-    });
   }
 }
 
@@ -73,7 +85,7 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
       return this.storeInfo.state.map(stateInfo => {
         let stateCompletion = new vscode.CompletionItem(
           stateInfo.rowKey,
-          vscode.CompletionItemKind.Property,
+          vscode.CompletionItemKind.Value,
         );
         stateCompletion.documentation = new vscode.MarkdownString(
           '```' + stateInfo.defination + '```',

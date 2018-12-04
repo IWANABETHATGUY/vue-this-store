@@ -19,11 +19,16 @@ class storeStateProvider {
         if (!reg.test(lastPrefixExpression)) {
             return undefined;
         }
-        return this.storeInfo.state.map(stateInfo => {
+        return this.storeInfo.state
+            .map(stateInfo => {
             let stateCompletion = new vscode.CompletionItem(stateInfo.rowKey, vscode.CompletionItemKind.Property);
             stateCompletion.documentation = new vscode.MarkdownString('```' + stateInfo.defination + '```');
             return stateCompletion;
-        });
+        })
+            .concat(Object.keys(this.storeInfo.modules ? this.storeInfo.modules : {}).map(module => {
+            let moduleCompletion = new vscode.CompletionItem(module, vscode.CompletionItemKind.Module);
+            return moduleCompletion;
+        }));
     }
 }
 exports.storeStateProvider = storeStateProvider;
@@ -52,7 +57,7 @@ class storeMapStateProvider {
         if (posIndex >= regRes.index + 10 &&
             posIndex < regRes.index + regRes[0].length - 2) {
             return this.storeInfo.state.map(stateInfo => {
-                let stateCompletion = new vscode.CompletionItem(stateInfo.rowKey, vscode.CompletionItemKind.Property);
+                let stateCompletion = new vscode.CompletionItem(stateInfo.rowKey, vscode.CompletionItemKind.Value);
                 stateCompletion.documentation = new vscode.MarkdownString('```' + stateInfo.defination + '```');
                 return stateCompletion;
             });
