@@ -13,6 +13,8 @@ import {
   getFileContent,
   getAstOfCode,
   getStoreInfosFromAst,
+  getFileDefinationAstMap,
+  getModuleOrPathMap,
 } from './util';
 
 function getModulesInfoFromAbPath(abPath: string): ModulesInfo {
@@ -22,13 +24,24 @@ function getModulesInfoFromAbPath(abPath: string): ModulesInfo {
     return null;
   }
   let ast = getAstOfCode(fileContent);
-  let getStoreInfosFromAst;
+  let moduleDefinationAst = getFileDefinationAstMap(ast);
+  let moduleOrPathMap = getModuleOrPathMap(ast.program);
+  let fileContentLines = fileContent.split('\n');
   let program: Program = ast.program;
   let exportDefault: ExportDefaultDeclaration = program.body.filter(
     node => node.type === 'ExportDefaultDeclaration',
   )[0] as ExportDefaultDeclaration;
   if (exportDefault) {
     let declaration: ObjectExpression = exportDefault.declaration as ObjectExpression;
+    declaration.properties.forEach((property: ObjectProperty) => {
+      if (property.shorthand) {
+        let key = property.key.name;
+        if (moduleDefinationAst[key]) {
+        } else if (1) {
+        }
+      } else if (property.value.type === 'ObjectExpression') {
+      }
+    });
   }
 }
 interface ModuleInfoConfig {
@@ -47,19 +60,19 @@ export default ({
     let moduleInfo: ModulesInfo = { abPath };
     return null;
     debugger;
-    let key = property.key.name;
-    if (property.shorthand) {
-      if (storeAstMap[key]) {
-      } else if (moduleOrPathMap[key]) {
-        const newModuleABPath = getAbsolutePath(abPath, moduleOrPathMap[key]);
-        moduleInfo.abPath = newModuleABPath;
-      }
-      // TODO: 需要做state从外部文件中引入的情况判断
-    } else {
-      if (property.value.type === 'ObjectExpression') {
-      }
-    }
-    return moduleInfo;
+    // let key = property.key.name;
+    // if (property.shorthand) {
+    //   if (storeAstMap[key]) {
+    //   } else if (moduleOrPathMap[key]) {
+    //     const newModuleABPath = getAbsolutePath(abPath, moduleOrPathMap[key]);
+    //     moduleInfo.abPath = newModuleABPath;
+    //   }
+    //   // TODO: 需要做state从外部文件中引入的情况判断
+    // } else {
+    //   if (property.value.type === 'ObjectExpression') {
+    //   }
+    // }
+    // return moduleInfo;
   },
   state(property: ObjectProperty): StateInfo[] {
     if (property.shorthand) {
