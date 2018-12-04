@@ -144,7 +144,7 @@ export function getVuexConfig(storeABPath: string): ParseModuleParam {
  * @param {object} b
  * @returns
  */
-function looksLike(a: object, b: object) {
+export function looksLike(a: object, b: object) {
   return (
     a &&
     b &&

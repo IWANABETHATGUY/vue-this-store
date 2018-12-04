@@ -7,22 +7,14 @@ import {
   ObjectExpression,
   ObjectProperty,
   Program,
-  VariableDeclarator,
-  Property,
-  VariableDeclaration,
   File,
 } from '@babel/types';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import {
-  StateInfo,
-  Status,
-  ModuleOrPathMap,
-  StoreAstMap,
-  StoreInfo,
-} from './type';
-import getXXXInfo from './getXXXInfo';
+import { Status, ModuleOrPathMap } from './type';
+
+import { looksLike } from './traverse/utils';
 
 interface getFileContentResult {
   status: Status;
@@ -64,28 +56,6 @@ export function getFileContent(abPath: string): getFileContentResult {
   return { status: -1, fileContent: '' };
 }
 
-/**
- * 递归获取store中的所有定义
- *
- * @export
- * @param {string} storeContent
- * @returns {string[]}
- */
-export function getStoreInfoFromABPath(
-  abPath: string,
-): { status: Status; storeInfo: StoreInfo } {
-  let storeInfo: StoreInfo = { state: [], abPath: abPath };
-  let { status: getFileStatus, fileContent } = getFileContent(abPath);
-  if (getFileStatus === -1) {
-    // TODO: 这里后续加上出错的原因，可以将错误原因输出到控制台
-    return { status: -1, storeInfo };
-  }
-  let ast: File = getAstOfCode(fileContent);
-  let storeEntryContentLines = fileContent.split('\n');
-  storeInfo = getStoreInfosFromAst(ast, storeEntryContentLines, abPath);
-  return { status: 1, storeInfo };
-}
-
 /*
  *通过ast获取store中的所有statekey
  *
@@ -93,98 +63,7 @@ export function getStoreInfoFromABPath(
  * @param {string[]} storeContent
  * @returns {StateInfo[]}
  */
-export function getStateInfoList(
-  stateObjectAst: ObjectExpression,
-  storeContentLines: string[],
-): StateInfo[] {
-  let stateInfoList: StateInfo[];
-  let init: ObjectExpression = stateObjectAst;
-  let properties: Property[] = init.properties as Property[];
-  stateInfoList = properties.map(property => {
-    let loc = property.loc;
-    let stateInfo: StateInfo = {
-      stateKey: property.key.name,
-      defination: storeContentLines
-        .slice(loc.start.line - 1, loc.end.line)
-        .join('\n'),
-    };
-    return stateInfo;
-  });
-  return stateInfoList;
-}
-export function getFileDefinationAstMap(ast: File): StoreAstMap {
-  let program: Program = ast.program;
-  let storeAstMap: StoreAstMap = {};
-  let variableDeclarationList: VariableDeclaration[] = program.body.filter(
-    item =>
-      item.type === 'VariableDeclaration' && item.declarations.length === 1,
-  ) as VariableDeclaration[];
-  variableDeclarationList.forEach(varDeclation => {
-    let firstDeclarator: VariableDeclarator = varDeclation.declarations[0];
-    if (firstDeclarator.init.type !== 'ObjectExpression') {
-      return;
-    }
-    let id = (firstDeclarator.id as Identifier).name;
-    storeAstMap[id] = firstDeclarator.init;
-  });
-  return storeAstMap;
-}
 
-export function getStoreInfosFromAst(
-  ast: File,
-  storeContentLines: string[],
-  abPath,
-): StoreInfo {
-  let moduleOrPathMap: ModuleOrPathMap = {};
-  let localVuexIndentifier: string = '';
-  let storeAstMap: StoreAstMap = {};
-  let moduleInfo: StoreInfo = { state: [], abPath };
-  traverse(ast, {
-    Program(path) {
-      let node: Program = path.node;
-      moduleOrPathMap = getModuleOrPathMap(node);
-      localVuexIndentifier = getLocalFromModuleOrPathMap(
-        moduleOrPathMap,
-        'vuex',
-      );
-      storeAstMap = getFileDefinationAstMap(ast);
-    },
-    NewExpression(path) {
-      let isVuexCallLike = looksLike(path, {
-        node: {
-          callee: {
-            type: 'MemberExpression',
-            object: {
-              name: localVuexIndentifier,
-            },
-            property: {
-              name: 'Store',
-            },
-          },
-        },
-      });
-      if (isVuexCallLike) {
-        let node: NewExpression = path.node;
-        let configAst = node.arguments[0] as ObjectExpression;
-        let infoFnGenerator = getXXXInfo({
-          storeAstMap,
-          moduleOrPathMap,
-          abPath,
-          storeContentLines,
-        });
-        configAst.properties.forEach((property: ObjectProperty) => {
-          let key = (property.key as Identifier).name;
-          if (['modules', 'state'].indexOf(key) !== -1) {
-            moduleInfo[key] = infoFnGenerator[key](property);
-          }
-        });
-      }
-    },
-  });
-
-  return moduleInfo;
-}
-function getVuexConfig() {}
 function getLocalFromModuleOrPathMap(
   mOrPMap: ModuleOrPathMap,
   moduleOrPath: string,
@@ -260,36 +139,4 @@ export function getStoreEntryRelativePath(ast): string {
     },
   });
   return storeRelativeEntry;
-}
-
-/**
- * 辅助函数用来判断第二个参数传入的对象中的内容是否在a中都一样，如果一样返回true，否则返回false
- *
- * @param {object} a
- * @param {object} b
- * @returns
- */
-function looksLike(a: object, b: object) {
-  return (
-    a &&
-    b &&
-    Object.keys(b).every(bKey => {
-      const bVal = b[bKey];
-      const aVal = a[bKey];
-      if (typeof bVal === 'function') {
-        return bVal(aVal);
-      }
-      return isPrimitive(bVal) ? bVal === aVal : looksLike(aVal, bVal);
-    })
-  );
-}
-
-/**
- * 判断一个对象是否是基本类型
- *
- * @param {any} val
- * @returns
- */
-function isPrimitive(val) {
-  return val == null || /^[sbn]/.test(typeof val);
 }

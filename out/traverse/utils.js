@@ -150,6 +150,7 @@ function looksLike(a, b) {
             return isPrimitive(bVal) ? bVal === aVal : looksLike(aVal, bVal);
         }));
 }
+exports.looksLike = looksLike;
 /**
  * 判断一个对象是否是基本类型
  *

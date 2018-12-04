@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from './traverse/modules';
 
-// import { stateKeysList } from './extension';
 export class storeStateProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {

@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
-// import { stateKeysList } from './extension';
 class storeStateProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
