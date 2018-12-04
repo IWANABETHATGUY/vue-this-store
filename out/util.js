@@ -48,19 +48,19 @@ exports.getFileContent = getFileContent;
  * @param {string} storeContent
  * @returns {string[]}
  */
-function getModuleInfoFromABPath(abPath, type) {
-    let moduleInfo = { state: [], abPath: abPath };
+function getStoreInfoFromABPath(abPath) {
+    let storeInfo = { state: [], abPath: abPath };
     let { status: getFileStatus, fileContent } = getFileContent(abPath);
     if (getFileStatus === -1) {
         // TODO: 这里后续加上出错的原因，可以将错误原因输出到控制台
-        return { status: -1, moduleInfo };
+        return { status: -1, storeInfo };
     }
     let ast = getAstOfCode(fileContent);
     let storeEntryContentLines = fileContent.split('\n');
-    moduleInfo = getStoreInfosFromAst(ast, storeEntryContentLines, abPath);
-    return { status: 1, moduleInfo };
+    storeInfo = getStoreInfosFromAst(ast, storeEntryContentLines, abPath);
+    return { status: 1, storeInfo };
 }
-exports.getModuleInfoFromABPath = getModuleInfoFromABPath;
+exports.getStoreInfoFromABPath = getStoreInfoFromABPath;
 /*
  *通过ast获取store中的所有statekey
  *
@@ -85,6 +85,21 @@ function getStateInfoList(stateObjectAst, storeContentLines) {
     return stateInfoList;
 }
 exports.getStateInfoList = getStateInfoList;
+function getFileDefinationAstMap(ast) {
+    let program = ast.program;
+    let storeAstMap = {};
+    let variableDeclarationList = program.body.filter(item => item.type === 'VariableDeclaration' && item.declarations.length === 1);
+    variableDeclarationList.forEach(varDeclation => {
+        let firstDeclarator = varDeclation.declarations[0];
+        if (firstDeclarator.init.type !== 'ObjectExpression') {
+            return;
+        }
+        let id = firstDeclarator.id.name;
+        storeAstMap[id] = firstDeclarator.init;
+    });
+    return storeAstMap;
+}
+exports.getFileDefinationAstMap = getFileDefinationAstMap;
 function getStoreInfosFromAst(ast, storeContentLines, abPath) {
     let moduleOrPathMap = {};
     let localVuexIndentifier = '';
@@ -95,15 +110,7 @@ function getStoreInfosFromAst(ast, storeContentLines, abPath) {
             let node = path.node;
             moduleOrPathMap = getModuleOrPathMap(node);
             localVuexIndentifier = getLocalFromModuleOrPathMap(moduleOrPathMap, 'vuex');
-            let variableDeclarationList = node.body.filter(item => item.type === 'VariableDeclaration' && item.declarations.length === 1);
-            variableDeclarationList.forEach(varDeclation => {
-                let firstDeclarator = varDeclation.declarations[0];
-                if (firstDeclarator.init.type !== 'ObjectExpression') {
-                    return;
-                }
-                let id = firstDeclarator.id.name;
-                storeAstMap[id] = firstDeclarator.init;
-            });
+            storeAstMap = getFileDefinationAstMap(ast);
         },
         NewExpression(path) {
             let isVuexCallLike = looksLike(path, {
@@ -130,7 +137,7 @@ function getStoreInfosFromAst(ast, storeContentLines, abPath) {
                 });
                 configAst.properties.forEach((property) => {
                     let key = property.key.name;
-                    if (['module', 'state'].indexOf(key) !== -1) {
+                    if (['modules', 'state'].indexOf(key) !== -1) {
                         moduleInfo[key] = infoFnGenerator[key](property);
                     }
                 });
@@ -139,6 +146,7 @@ function getStoreInfosFromAst(ast, storeContentLines, abPath) {
     });
     return moduleInfo;
 }
+exports.getStoreInfosFromAst = getStoreInfosFromAst;
 function getVuexConfig() { }
 function getLocalFromModuleOrPathMap(mOrPMap, moduleOrPath) {
     let localName = '';
@@ -169,6 +177,7 @@ function getModuleOrPathMap(node) {
     }, {});
     return modulelOrPathMap;
 }
+exports.getModuleOrPathMap = getModuleOrPathMap;
 /**
  * 获取store入口文件中的相对路径
  *

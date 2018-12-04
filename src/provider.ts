@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { StateInfo, ModuleInfo } from './type';
+import { ModuleInfo } from './traverse/modules';
 
 // import { stateKeysList } from './extension';
 export class storeStateProvider implements vscode.CompletionItemProvider {
@@ -27,7 +27,7 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
     }
     return this.storeInfo.state.map(stateInfo => {
       let stateCompletion = new vscode.CompletionItem(
-        stateInfo.stateKey,
+        stateInfo.rowKey,
         vscode.CompletionItemKind.Property,
       );
       stateCompletion.documentation = new vscode.MarkdownString(
@@ -72,7 +72,7 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
     ) {
       return this.storeInfo.state.map(stateInfo => {
         let stateCompletion = new vscode.CompletionItem(
-          stateInfo.stateKey,
+          stateInfo.rowKey,
           vscode.CompletionItemKind.Property,
         );
         stateCompletion.documentation = new vscode.MarkdownString(

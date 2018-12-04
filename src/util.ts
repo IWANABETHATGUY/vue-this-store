@@ -10,7 +10,7 @@ import {
   VariableDeclarator,
   Property,
   VariableDeclaration,
-  objectProperty,
+  File,
 } from '@babel/types';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -18,13 +18,12 @@ import * as path from 'path';
 import {
   StateInfo,
   Status,
-  ModuleInfo,
   ModuleOrPathMap,
   StoreAstMap,
+  StoreInfo,
 } from './type';
 import getXXXInfo from './getXXXInfo';
 
-interface VuexConfig {}
 interface getFileContentResult {
   status: Status;
   fileContent: string;
@@ -36,7 +35,7 @@ interface getFileContentResult {
  * @param {string} code
  * @returns
  */
-export function getAstOfCode(code: string) {
+export function getAstOfCode(code: string): File {
   return parse(code, { sourceType: 'module' });
 }
 
@@ -72,20 +71,19 @@ export function getFileContent(abPath: string): getFileContentResult {
  * @param {string} storeContent
  * @returns {string[]}
  */
-export function getModuleInfoFromABPath(
+export function getStoreInfoFromABPath(
   abPath: string,
-  type: 'store' | 'module',
-): { status: Status; moduleInfo: ModuleInfo } {
-  let moduleInfo: ModuleInfo = { state: [], abPath: abPath };
+): { status: Status; storeInfo: StoreInfo } {
+  let storeInfo: StoreInfo = { state: [], abPath: abPath };
   let { status: getFileStatus, fileContent } = getFileContent(abPath);
   if (getFileStatus === -1) {
     // TODO: 这里后续加上出错的原因，可以将错误原因输出到控制台
-    return { status: -1, moduleInfo };
+    return { status: -1, storeInfo };
   }
-  let ast = getAstOfCode(fileContent);
+  let ast: File = getAstOfCode(fileContent);
   let storeEntryContentLines = fileContent.split('\n');
-  moduleInfo = getStoreInfosFromAst(ast, storeEntryContentLines, abPath);
-  return { status: 1, moduleInfo };
+  storeInfo = getStoreInfosFromAst(ast, storeEntryContentLines, abPath);
+  return { status: 1, storeInfo };
 }
 
 /*
@@ -114,16 +112,33 @@ export function getStateInfoList(
   });
   return stateInfoList;
 }
+export function getFileDefinationAstMap(ast: File): StoreAstMap {
+  let program: Program = ast.program;
+  let storeAstMap: StoreAstMap = {};
+  let variableDeclarationList: VariableDeclaration[] = program.body.filter(
+    item =>
+      item.type === 'VariableDeclaration' && item.declarations.length === 1,
+  ) as VariableDeclaration[];
+  variableDeclarationList.forEach(varDeclation => {
+    let firstDeclarator: VariableDeclarator = varDeclation.declarations[0];
+    if (firstDeclarator.init.type !== 'ObjectExpression') {
+      return;
+    }
+    let id = (firstDeclarator.id as Identifier).name;
+    storeAstMap[id] = firstDeclarator.init;
+  });
+  return storeAstMap;
+}
 
-function getStoreInfosFromAst(
-  ast,
+export function getStoreInfosFromAst(
+  ast: File,
   storeContentLines: string[],
   abPath,
-): ModuleInfo {
+): StoreInfo {
   let moduleOrPathMap: ModuleOrPathMap = {};
   let localVuexIndentifier: string = '';
   let storeAstMap: StoreAstMap = {};
-  let moduleInfo: ModuleInfo = { state: [], abPath };
+  let moduleInfo: StoreInfo = { state: [], abPath };
   traverse(ast, {
     Program(path) {
       let node: Program = path.node;
@@ -132,18 +147,7 @@ function getStoreInfosFromAst(
         moduleOrPathMap,
         'vuex',
       );
-      let variableDeclarationList: VariableDeclaration[] = node.body.filter(
-        item =>
-          item.type === 'VariableDeclaration' && item.declarations.length === 1,
-      ) as VariableDeclaration[];
-      variableDeclarationList.forEach(varDeclation => {
-        let firstDeclarator: VariableDeclarator = varDeclation.declarations[0];
-        if (firstDeclarator.init.type !== 'ObjectExpression') {
-          return;
-        }
-        let id = (firstDeclarator.id as Identifier).name;
-        storeAstMap[id] = firstDeclarator.init;
-      });
+      storeAstMap = getFileDefinationAstMap(ast);
     },
     NewExpression(path) {
       let isVuexCallLike = looksLike(path, {
@@ -170,7 +174,7 @@ function getStoreInfosFromAst(
         });
         configAst.properties.forEach((property: ObjectProperty) => {
           let key = (property.key as Identifier).name;
-          if (['module', 'state'].indexOf(key) !== -1) {
+          if (['modules', 'state'].indexOf(key) !== -1) {
             moduleInfo[key] = infoFnGenerator[key](property);
           }
         });
@@ -201,7 +205,7 @@ function getLocalFromModuleOrPathMap(
  * @param {Program} node
  * @returns 返回一个map内容是specifier以及对应的module或者path内容
  */
-function getModuleOrPathMap(node: Program): ModuleOrPathMap {
+export function getModuleOrPathMap(node: Program): ModuleOrPathMap {
   let importDeclarationList: ImportDeclaration[] = node.body.filter(
     item => item.type === 'ImportDeclaration',
   ) as ImportDeclaration[];

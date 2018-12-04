@@ -5,21 +5,18 @@ import {
   getStoreEntryRelativePath,
   getAstOfCode,
   getAbsolutePath,
-  getModuleInfoFromABPath,
 } from './util';
-import { ModuleInfo } from './type';
+import { parseModuleAst, ModuleInfo } from './traverse/modules';
+import { getVuexConfig } from './traverse/utils';
 
 type setStoreStatus = 1 | -1;
-
 const emptyModule: ModuleInfo = {
   state: [],
-  abPath: '',
 };
 export function startFromEntry(
   rootPath: string,
 ): [string, ModuleInfo, setStoreStatus] {
   let entry: string = path.resolve(rootPath, 'src/main.js');
-  emptyModule.abPath = entry;
   if (!fs.existsSync(entry)) {
     console.error("you don't have the entry file");
     return ['', emptyModule, -1];
@@ -37,9 +34,21 @@ export function startFromEntry(
   );
 
   let storeAbsolutePath = getAbsolutePath(entry, storeRelativePath);
-  let { status, moduleInfo: storeInfo } = getModuleInfoFromABPath(
+  let { objAst, m2pmap, defmap, cwf, lineOfFile } = getVuexConfig(
     storeAbsolutePath,
-    'module',
   );
-  return [storeAbsolutePath, storeInfo, status];
+  try {
+    let storeInfo = parseModuleAst({
+      objAst,
+      m2pmap,
+      defmap,
+      cwf,
+      lineOfFile,
+    });
+    return [storeAbsolutePath, storeInfo, 1];
+  } catch (err) {
+    console.log(err);
+    debugger;
+    return [storeAbsolutePath, emptyModule, -1];
+  }
 }
