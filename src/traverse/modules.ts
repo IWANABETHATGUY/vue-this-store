@@ -18,6 +18,7 @@ import { walkFile, parseState } from './state';
 
 export interface ModuleInfo {
   modules?: ModulesInfo;
+  state: any[];
   [prop: string]: {};
 }
 export interface ModulesInfo {
@@ -34,7 +35,7 @@ export function parseModuleAst({
   cwf,
   lineOfFile,
 }: ParseModuleParam) {
-  let infoObj: ModuleInfo = {};
+  let infoObj: ModuleInfo = { state: [] };
   objAst.properties.forEach((property: ObjectProperty) => {
     switch (property.key.name) {
       case 'state':

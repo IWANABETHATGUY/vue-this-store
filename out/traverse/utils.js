@@ -95,7 +95,6 @@ function getFileDefinationAstMap(ast) {
 }
 exports.getFileDefinationAstMap = getFileDefinationAstMap;
 function getVuexConfig(storeABPath) {
-    debugger;
     storeABPath = getAbsolutePath(storeABPath, '');
     let entryFile = getFileContent(storeABPath);
     let entryAst = getAst(entryFile);

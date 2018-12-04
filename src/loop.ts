@@ -10,21 +10,23 @@ import { parseModuleAst, ModuleInfo } from './traverse/modules';
 import { getVuexConfig } from './traverse/utils';
 
 type setStoreStatus = 1 | -1;
-
+const emptyModule: ModuleInfo = {
+  state: [],
+};
 export function startFromEntry(
   rootPath: string,
 ): [string, ModuleInfo, setStoreStatus] {
   let entry: string = path.resolve(rootPath, 'src/main.js');
   if (!fs.existsSync(entry)) {
     console.error("you don't have the entry file");
-    return ['', {}, -1];
+    return ['', emptyModule, -1];
   }
   let {
     fileContent: entryFileContent,
     status: entryFileStatus,
   } = getFileContent(entry);
   if (entryFileContent === '') {
-    return ['', {}, entryFileStatus];
+    return ['', emptyModule, entryFileStatus];
   }
   let entryFileContentAst = getAstOfCode(entryFileContent);
   let storeRelativePath: string = getStoreEntryRelativePath(
@@ -43,11 +45,10 @@ export function startFromEntry(
       cwf,
       lineOfFile,
     });
-    debugger;
     return [storeAbsolutePath, storeInfo, 1];
   } catch (err) {
     console.log(err);
     debugger;
-    return [storeAbsolutePath, {}, -1];
+    return [storeAbsolutePath, emptyModule, -1];
   }
 }

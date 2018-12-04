@@ -32,7 +32,6 @@ exports.default = ({ storeAstMap, moduleOrPathMap, abPath, storeContentLines, })
     modules(property) {
         let moduleInfo = { abPath };
         return null;
-        debugger;
         // let key = property.key.name;
         // if (property.shorthand) {
         //   if (storeAstMap[key]) {

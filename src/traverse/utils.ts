@@ -101,7 +101,6 @@ export function getFileDefinationAstMap(ast: File): StoreAstMap {
 }
 
 export function getVuexConfig(storeABPath: string): ParseModuleParam {
-  debugger;
   storeABPath = getAbsolutePath(storeABPath, '');
   let entryFile = getFileContent(storeABPath);
   let entryAst = getAst(entryFile);

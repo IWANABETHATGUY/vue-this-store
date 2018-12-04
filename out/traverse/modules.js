@@ -4,7 +4,7 @@ const utils_1 = require("./utils");
 const types_1 = require("@babel/types");
 const state_1 = require("./state");
 function parseModuleAst({ objAst, m2pmap, defmap, cwf, lineOfFile, }) {
-    let infoObj = {};
+    let infoObj = { state: [] };
     objAst.properties.forEach((property) => {
         switch (property.key.name) {
             case 'state':

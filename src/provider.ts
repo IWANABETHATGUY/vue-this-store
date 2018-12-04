@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
-import { StateInfo, StoreInfo } from './type';
+import { ModuleInfo } from './traverse/modules';
 
 // import { stateKeysList } from './extension';
 export class storeStateProvider implements vscode.CompletionItemProvider {
-  private storeInfo: StoreInfo;
-  constructor(storeInfo: StoreInfo) {
+  private storeInfo: ModuleInfo;
+  constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;
   }
-  public setStateKeysList(newStoreInfo: StoreInfo) {
+  public setStateKeysList(newStoreInfo: ModuleInfo) {
     this.storeInfo = newStoreInfo;
   }
   public provideCompletionItems(
@@ -27,7 +27,7 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
     }
     return this.storeInfo.state.map(stateInfo => {
       let stateCompletion = new vscode.CompletionItem(
-        stateInfo.stateKey,
+        stateInfo.rowKey,
         vscode.CompletionItemKind.Property,
       );
       stateCompletion.documentation = new vscode.MarkdownString(
@@ -39,11 +39,11 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
 }
 
 export class storeMapStateProvider implements vscode.CompletionItemProvider {
-  private storeInfo: StoreInfo;
-  constructor(storeInfo: StoreInfo) {
+  private storeInfo: ModuleInfo;
+  constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;
   }
-  public setStateKeysList(newStoreInfo: StoreInfo) {
+  public setStateKeysList(newStoreInfo: ModuleInfo) {
     this.storeInfo = newStoreInfo;
   }
   public provideCompletionItems(
@@ -72,7 +72,7 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
     ) {
       return this.storeInfo.state.map(stateInfo => {
         let stateCompletion = new vscode.CompletionItem(
-          stateInfo.stateKey,
+          stateInfo.rowKey,
           vscode.CompletionItemKind.Property,
         );
         stateCompletion.documentation = new vscode.MarkdownString(

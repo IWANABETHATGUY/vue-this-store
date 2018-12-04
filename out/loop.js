@@ -5,15 +5,18 @@ const fs = require("fs");
 const util_1 = require("./util");
 const modules_1 = require("./traverse/modules");
 const utils_1 = require("./traverse/utils");
+const emptyModule = {
+    state: [],
+};
 function startFromEntry(rootPath) {
     let entry = path.resolve(rootPath, 'src/main.js');
     if (!fs.existsSync(entry)) {
         console.error("you don't have the entry file");
-        return ['', {}, -1];
+        return ['', emptyModule, -1];
     }
     let { fileContent: entryFileContent, status: entryFileStatus, } = util_1.getFileContent(entry);
     if (entryFileContent === '') {
-        return ['', {}, entryFileStatus];
+        return ['', emptyModule, entryFileStatus];
     }
     let entryFileContentAst = util_1.getAstOfCode(entryFileContent);
     let storeRelativePath = util_1.getStoreEntryRelativePath(entryFileContentAst);
@@ -27,13 +30,12 @@ function startFromEntry(rootPath) {
             cwf,
             lineOfFile,
         });
-        debugger;
         return [storeAbsolutePath, storeInfo, 1];
     }
     catch (err) {
         console.log(err);
         debugger;
-        return [storeAbsolutePath, {}, -1];
+        return [storeAbsolutePath, emptyModule, -1];
     }
 }
 exports.startFromEntry = startFromEntry;

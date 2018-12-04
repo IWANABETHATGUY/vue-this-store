@@ -59,7 +59,7 @@ export default ({
   modules(property: ObjectProperty): ModulesInfo {
     let moduleInfo: ModulesInfo = { abPath };
     return null;
-    debugger;
+
     // let key = property.key.name;
     // if (property.shorthand) {
     //   if (storeAstMap[key]) {
