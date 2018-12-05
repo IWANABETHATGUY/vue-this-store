@@ -1,21 +1,7 @@
 import * as vscode from 'vscode';
-import { ModuleInfo, ModulesInfo } from './traverse/modules';
+import { ModuleInfo } from '../traverse/modules';
+import { getModuleFromPath } from './util';
 
-function getModuleFromPath(
-  obj: ModuleInfo,
-  path: string[] | undefined,
-): ModuleInfo | undefined {
-  if (path === undefined) {
-    return obj;
-  }
-  try {
-    return path.reduce((acc, cur) => {
-      return acc['modules'][cur];
-    }, obj);
-  } catch (err) {
-    return undefined;
-  }
-}
 export class storeStateProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
@@ -44,7 +30,6 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
     let pathArray: string[] | undefined = path
       ? path.split('.').filter(item => item.length > 0)
       : undefined;
-    // debugger;
     let newModule = getModuleFromPath(this.storeInfo, pathArray);
     if (!newModule) return undefined;
     let state = newModule.state;

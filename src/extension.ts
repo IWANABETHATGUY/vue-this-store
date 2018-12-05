@@ -8,8 +8,12 @@ import * as vscode from 'vscode';
 // import { vueStoreStateProviderFunciton } from './provider';
 import { startFromEntry } from './loop';
 import { generateWatcher } from './watcher';
-import { storeStateProvider, storeMapStateProvider } from './provider';
+import {
+  storeStateProvider,
+  storeMapStateProvider,
+} from './provider/stateProvider';
 import { VueThisStoreStatusBarItem } from './statusBarItem';
+import { storeGettersProvider } from './provider/gettersProvider';
 
 export function activate(context: vscode.ExtensionContext) {
   console.time('generateState');
@@ -29,6 +33,7 @@ export function activate(context: vscode.ExtensionContext) {
   //init provider
   let stateProvider = new storeStateProvider(storeInfo);
   let mapStateProvider = new storeMapStateProvider(storeInfo);
+  let gettersProvider = new storeGettersProvider(storeInfo);
 
   watcher.on('change', () => {
     storeBarStatusItem.setStatus(0);
@@ -38,6 +43,7 @@ export function activate(context: vscode.ExtensionContext) {
     storeBarStatusItem.setStatus(setStoreActionStatus);
   });
   console.timeEnd('generateState');
+
   context.subscriptions.push(
     storeBarStatusItem,
     vscode.languages.registerCompletionItemProvider('vue', stateProvider, '.'),
@@ -46,6 +52,11 @@ export function activate(context: vscode.ExtensionContext) {
       mapStateProvider,
       "'",
       '"',
+    ),
+    vscode.languages.registerCompletionItemProvider(
+      'vue',
+      gettersProvider,
+      '.',
     ),
   );
 }

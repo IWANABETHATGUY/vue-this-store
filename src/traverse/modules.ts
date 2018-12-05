@@ -15,10 +15,12 @@ import {
 } from '@babel/types';
 import { StoreAstMap, ModuleOrPathMap } from '../type';
 import { walkFile, parseState } from './state';
+import { parseGetters } from './getters';
 
 export interface ModuleInfo {
   modules?: ModulesInfo;
-  state: any[];
+  state?: any[];
+  getters?: any[];
   [prop: string]: {};
 }
 export interface ModulesInfo {
@@ -59,7 +61,21 @@ export function parseModuleAst({
         // parseActions(property.value, m2pmap, defmap);
         break;
       case 'getters':
-        // parseGetters(property.value, m2pmap, defmap);
+        if (property.shorthand) {
+          let value: Identifier = property.value as Identifier;
+          if (m2pmap[value.name]) {
+            let { export: importGetters, lineOfFile } = walkFile(
+              cwf,
+              m2pmap[value.name],
+            );
+            infoObj.getters = parseGetters(importGetters, lineOfFile);
+          } else if (defmap[value.name]) {
+            infoObj.getters = parseGetters(defmap[value.name], lineOfFile);
+          }
+        } else {
+          let value: ObjectExpression = property.value as ObjectExpression;
+          infoObj.getters = parseGetters(value, lineOfFile);
+        }
         break;
       case 'mutations':
         // parseMutations(property.value, m2pmap, defmap);

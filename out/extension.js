@@ -7,8 +7,9 @@ const vscode = require("vscode");
 // import { vueStoreStateProviderFunciton } from './provider';
 const loop_1 = require("./loop");
 const watcher_1 = require("./watcher");
-const provider_1 = require("./provider");
+const stateProvider_1 = require("./provider/stateProvider");
 const statusBarItem_1 = require("./statusBarItem");
+const gettersProvider_1 = require("./provider/gettersProvider");
 function activate(context) {
     console.time('generateState');
     let rootPath = vscode.workspace.rootPath;
@@ -22,8 +23,9 @@ function activate(context) {
     storeBarStatusItem.setStatus(setStoreActionStatus);
     let watcher = watcher_1.generateWatcher(storeAbsolutePath);
     //init provider
-    let stateProvider = new provider_1.storeStateProvider(storeInfo);
-    let mapStateProvider = new provider_1.storeMapStateProvider(storeInfo);
+    let stateProvider = new stateProvider_1.storeStateProvider(storeInfo);
+    let mapStateProvider = new stateProvider_1.storeMapStateProvider(storeInfo);
+    let gettersProvider = new gettersProvider_1.storeGettersProvider(storeInfo);
     watcher.on('change', () => {
         storeBarStatusItem.setStatus(0);
         let [_, storeInfo, setStoreActionStatus] = loop_1.startFromEntry(rootPath);
@@ -32,7 +34,7 @@ function activate(context) {
         storeBarStatusItem.setStatus(setStoreActionStatus);
     });
     console.timeEnd('generateState');
-    context.subscriptions.push(storeBarStatusItem, vscode.languages.registerCompletionItemProvider('vue', stateProvider, '.'), vscode.languages.registerCompletionItemProvider('vue', mapStateProvider, "'", '"'));
+    context.subscriptions.push(storeBarStatusItem, vscode.languages.registerCompletionItemProvider('vue', stateProvider, '.'), vscode.languages.registerCompletionItemProvider('vue', mapStateProvider, "'", '"'), vscode.languages.registerCompletionItemProvider('vue', gettersProvider, '.'));
 }
 exports.activate = activate;
 //# sourceMappingURL=extension.js.map

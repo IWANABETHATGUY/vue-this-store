@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("./utils");
 const types_1 = require("@babel/types");
 const state_1 = require("./state");
+const getters_1 = require("./getters");
 function parseModuleAst({ objAst, m2pmap, defmap, cwf, lineOfFile, }) {
     let infoObj = { state: [] };
     objAst.properties.forEach((property) => {
@@ -27,7 +28,20 @@ function parseModuleAst({ objAst, m2pmap, defmap, cwf, lineOfFile, }) {
                 // parseActions(property.value, m2pmap, defmap);
                 break;
             case 'getters':
-                // parseGetters(property.value, m2pmap, defmap);
+                if (property.shorthand) {
+                    let value = property.value;
+                    if (m2pmap[value.name]) {
+                        let { export: importGetters, lineOfFile } = state_1.walkFile(cwf, m2pmap[value.name]);
+                        infoObj.getters = getters_1.parseGetters(importGetters, lineOfFile);
+                    }
+                    else if (defmap[value.name]) {
+                        infoObj.getters = getters_1.parseGetters(defmap[value.name], lineOfFile);
+                    }
+                }
+                else {
+                    let value = property.value;
+                    infoObj.getters = getters_1.parseGetters(value, lineOfFile);
+                }
                 break;
             case 'mutations':
                 // parseMutations(property.value, m2pmap, defmap);
