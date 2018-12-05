@@ -105,8 +105,11 @@ function parseModules({ objAst, m2pmap, defmap, cwf, lineOfFile }, namespace) {
         let needNewSpace = namespaceProperty && namespaceProperty.value.value;
         infoObj[key.name] = {
             namespace: needNewSpace
-                ? namespace.concat([key.name])
-                : namespace.slice(),
+                ? namespace
+                    .split('.')
+                    .concat([key.name])
+                    .join('.')
+                : namespace,
         };
         parseModuleAst({
             objAst: value,

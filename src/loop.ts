@@ -11,7 +11,7 @@ import { getVuexConfig } from './traverse/utils';
 
 type setStoreStatus = 1 | -1;
 const emptyModule: ModuleInfo = {
-  namespace: [],
+  namespace: '',
   state: [],
 };
 export function startFromEntry(
@@ -39,7 +39,7 @@ export function startFromEntry(
     storeAbsolutePath,
   );
   try {
-    let storeInfo: ModuleInfo = { namespace: [''] };
+    let storeInfo: ModuleInfo = { namespace: '' };
     parseModuleAst(
       {
         objAst,

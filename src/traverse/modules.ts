@@ -19,7 +19,7 @@ import { walkFile, parseState } from './state';
 import { parseGetters } from './getters';
 
 export interface ModuleInfo {
-  namespace: string[];
+  namespace: string;
   modules?: ModulesInfo;
   state?: any[];
   getters?: any[];
@@ -144,7 +144,7 @@ export function walkModulesFile(base: string, relative: string = '') {
 
 export function parseModules(
   { objAst, m2pmap, defmap, cwf, lineOfFile }: ParseModuleParam,
-  namespace: string[],
+  namespace: string,
 ) {
   let infoObj: ModulesInfo = {};
   objAst.properties.forEach((property: ObjectProperty) => {
@@ -159,8 +159,11 @@ export function parseModules(
 
     infoObj[key.name] = {
       namespace: needNewSpace
-        ? namespace.concat([key.name])
-        : namespace.slice(),
+        ? namespace
+            .split('.')
+            .concat([key.name])
+            .join('.')
+        : namespace,
     };
     parseModuleAst(
       {

@@ -1,1 +1,6 @@
-console.log(['test', ''].join('.'));
+console.log(
+  ''
+    .split('.')
+    .concat(['account'])
+    .join('.'),
+);
