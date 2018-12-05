@@ -15,14 +15,17 @@ import {
   storeStateProvider,
   storeMapStateProvider,
 } from './provider/stateProvider';
-import { storeGettersProvider } from './provider/gettersProvider';
+import {
+  storeGettersProvider,
+  storeMapGettersProvider,
+} from './provider/gettersProvider';
 
 type setStoreStatus = 1 | -1;
 const emptyModule: ModuleInfo = {
   namespace: '',
   state: [],
 };
-
+// TODO: 考虑同一个computed对象中可能会有多个...mapXXX的情况，不能只是捕获一个。。
 export default class VueThis$Store {
   private _outputChannel = window.createOutputChannel('VueThis$Store');
   private _statusBarItem = new VueThisStoreStatusBarItem();
@@ -34,7 +37,7 @@ export default class VueThis$Store {
   private _stateProvider: storeStateProvider;
   private _mapStateProvider: storeMapStateProvider;
   private _gettersProvider: storeGettersProvider;
-
+  private _mapGettersProvider: storeMapGettersProvider;
   constructor(ctx: ExtensionContext, rootPath: string) {
     this._extensionContext = ctx;
     if (rootPath === undefined) {
@@ -78,7 +81,7 @@ export default class VueThis$Store {
     this._stateProvider = new storeStateProvider(storeInfo);
     this._mapStateProvider = new storeMapStateProvider(storeInfo);
     this._gettersProvider = new storeGettersProvider(storeInfo);
-
+    this._mapGettersProvider = new storeMapGettersProvider(storeInfo);
     this._watcher.on('change', () => {
       this.restart();
     });
@@ -95,6 +98,13 @@ export default class VueThis$Store {
         'vue',
         this._gettersProvider,
         '.',
+      ),
+      languages.registerCompletionItemProvider(
+        'vue',
+        this._mapGettersProvider,
+        "'",
+        '"',
+        '/',
       ),
     );
   }
@@ -159,7 +169,7 @@ export default class VueThis$Store {
         },
         storeInfo,
       );
-      debugger;
+      // debugger;
       return [storeAbsolutePath, storeInfo, 1];
     } catch (err) {
       this._outputChannel.clear();

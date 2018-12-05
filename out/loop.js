@@ -22,6 +22,7 @@ const emptyModule = {
     namespace: '',
     state: [],
 };
+// TODO: 考虑同一个computed对象中可能会有多个...mapXXX的情况，不能只是捕获一个。。
 class VueThis$Store {
     constructor(ctx, rootPath) {
         this._outputChannel = vscode_1.window.createOutputChannel('VueThis$Store');
@@ -58,10 +59,11 @@ class VueThis$Store {
         this._stateProvider = new stateProvider_1.storeStateProvider(storeInfo);
         this._mapStateProvider = new stateProvider_1.storeMapStateProvider(storeInfo);
         this._gettersProvider = new gettersProvider_1.storeGettersProvider(storeInfo);
+        this._mapGettersProvider = new gettersProvider_1.storeMapGettersProvider(storeInfo);
         this._watcher.on('change', () => {
             this.restart();
         });
-        this._extensionContext.subscriptions.push(vscode_1.languages.registerCompletionItemProvider('vue', this._stateProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapStateProvider, "'", '"'), vscode_1.languages.registerCompletionItemProvider('vue', this._gettersProvider, '.'));
+        this._extensionContext.subscriptions.push(vscode_1.languages.registerCompletionItemProvider('vue', this._stateProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapStateProvider, "'", '"'), vscode_1.languages.registerCompletionItemProvider('vue', this._gettersProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapGettersProvider, "'", '"', '/'));
     }
     restart() {
         this._statusBarItem.setStatus(0);
@@ -107,7 +109,7 @@ class VueThis$Store {
                 cwf,
                 lineOfFile,
             }, storeInfo);
-            debugger;
+            // debugger;
             return [storeAbsolutePath, storeInfo, 1];
         }
         catch (err) {

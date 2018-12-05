@@ -55,6 +55,7 @@ class storeMapStateProvider {
         // console.time('mapState');
         let reg = /\bmapState\(([\[\{])[\s\S]*?([\}\]]).*?\)/;
         let regRes = reg.exec(docContent);
+        // debugger;
         if (!regRes) {
             return undefined;
         }
@@ -67,7 +68,7 @@ class storeMapStateProvider {
         if (posIndex >= regRes.index + 10 &&
             posIndex < regRes.index + regRes[0].length - 2) {
             return this.storeInfo.state.map(stateInfo => {
-                let stateCompletion = new vscode.CompletionItem(stateInfo.rowKey, vscode.CompletionItemKind.Value);
+                let stateCompletion = new vscode.CompletionItem(stateInfo.rowKey, vscode.CompletionItemKind.Property);
                 stateCompletion.documentation = new vscode.MarkdownString('```' + stateInfo.defination + '```');
                 return stateCompletion;
             });

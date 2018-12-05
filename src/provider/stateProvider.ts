@@ -75,6 +75,7 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
     // console.time('mapState');
     let reg = /\bmapState\(([\[\{])[\s\S]*?([\}\]]).*?\)/;
     let regRes = reg.exec(docContent);
+    // debugger;
     if (!regRes) {
       return undefined;
     }
@@ -93,7 +94,7 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
       return this.storeInfo.state.map(stateInfo => {
         let stateCompletion = new vscode.CompletionItem(
           stateInfo.rowKey,
-          vscode.CompletionItemKind.Value,
+          vscode.CompletionItemKind.Property,
         );
         stateCompletion.documentation = new vscode.MarkdownString(
           '```' + stateInfo.defination + '```',

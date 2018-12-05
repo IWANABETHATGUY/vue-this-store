@@ -161,6 +161,7 @@ export function parseModules(
       namespace: needNewSpace
         ? namespace
             .split('.')
+            .filter(item => item.length)
             .concat([key.name])
             .join('.')
         : namespace,

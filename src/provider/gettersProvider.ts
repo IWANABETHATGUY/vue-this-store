@@ -2,6 +2,19 @@ import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
 import { getModuleFromPath } from './util';
 
+function getGettersFromNameSpace(obj: ModuleInfo, namespace: string) {
+  let getterInfoList = [];
+  if (obj.namespace.split('.').join('/') === namespace) {
+    getterInfoList.push(...obj.getters);
+  }
+  if (obj.modules) {
+    Object.keys(obj.modules).forEach(key => {
+      let module = obj.modules[key];
+      getterInfoList.push(...getGettersFromNameSpace(module, namespace));
+    });
+  }
+  return getterInfoList;
+}
 export class storeGettersProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
@@ -21,6 +34,7 @@ export class storeGettersProvider implements vscode.CompletionItemProvider {
     let trimLinePrefixExpressions = linePrefix.trim().split(' ');
     let lastPrefixExpression =
       trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
+    // TODO: getters没有对象的说法，只能通过['namespace/namespace/somegetters']的方式访问
     let reg = /(?=return this\.)?(?=\$store\.)?getters\.(.*\.)?/;
     let regRes = reg.exec(lastPrefixExpression);
     if (!regRes) {
@@ -59,7 +73,7 @@ export class storeGettersProvider implements vscode.CompletionItemProvider {
   }
 }
 
-export class storeMapStateProvider implements vscode.CompletionItemProvider {
+export class storeMapGettersProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;
@@ -74,12 +88,17 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
     let docContent = document.getText();
     let posIndex = 0;
     // console.time('mapState');
-    let reg = /\bmapState\(([\[\{])[\s\S]*?([\}\]]).*?\)/;
+    let reg = /\bmapGetters\((\'(.*)\',\s*)?([\[\{])[\s\S]*?([\}\]]).*?\)/;
     let regRes = reg.exec(docContent);
+
     if (!regRes) {
       return undefined;
     }
-
+    let namespace: string = regRes[2];
+    let namespaceGroup = regRes[1];
+    // debugger;
+    if (!namespace) namespace = '';
+    let allGettersInfo = getGettersFromNameSpace(this.storeInfo, namespace);
     docContent.split('\n').some((line, index) => {
       posIndex += line.length + 1;
       return index >= position.line - 1;
@@ -88,18 +107,18 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
     // console.timeEnd('mapState');
 
     if (
-      posIndex >= regRes.index + 10 &&
+      posIndex >= regRes.index + 10 + namespaceGroup.length &&
       posIndex < regRes.index + regRes[0].length - 2
     ) {
-      return this.storeInfo.state.map(stateInfo => {
-        let stateCompletion = new vscode.CompletionItem(
-          stateInfo.rowKey,
-          vscode.CompletionItemKind.Value,
+      return allGettersInfo.map(getterInfo => {
+        let getterCompletion = new vscode.CompletionItem(
+          getterInfo.rowKey,
+          vscode.CompletionItemKind.Property,
         );
-        stateCompletion.documentation = new vscode.MarkdownString(
-          '```' + stateInfo.defination + '```',
+        getterCompletion.documentation = new vscode.MarkdownString(
+          '```' + getterInfo.defination + '```',
         );
-        return stateCompletion;
+        return getterCompletion;
       });
     }
     return undefined;

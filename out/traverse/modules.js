@@ -107,6 +107,7 @@ function parseModules({ objAst, m2pmap, defmap, cwf, lineOfFile }, namespace) {
             namespace: needNewSpace
                 ? namespace
                     .split('.')
+                    .filter(item => item.length)
                     .concat([key.name])
                     .join('.')
                 : namespace,
