@@ -1,6 +1,21 @@
 import * as vscode from 'vscode';
-import { ModuleInfo } from './traverse/modules';
+import { ModuleInfo, ModulesInfo } from './traverse/modules';
 
+function getModuleFromPath(
+  obj: ModuleInfo,
+  path: string[] | undefined,
+): ModuleInfo | undefined {
+  if (path === undefined) {
+    return obj;
+  }
+  try {
+    return path.reduce((acc, cur) => {
+      return acc['modules'][cur];
+    }, obj);
+  } catch (err) {
+    return undefined;
+  }
+}
 export class storeStateProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
@@ -20,32 +35,41 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
     let trimLinePrefixExpressions = linePrefix.trim().split(' ');
     let lastPrefixExpression =
       trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
-    let reg = /(return this.)?($store.)?state/;
-    if (!reg.test(lastPrefixExpression)) {
+    let reg = /(?=return this\.)?(?=\$store\.)?state\.(.*\.)?/;
+    let regRes = reg.exec(lastPrefixExpression);
+    if (!regRes) {
       return undefined;
     }
-    return this.storeInfo.state
-      .map(stateInfo => {
-        let stateCompletion = new vscode.CompletionItem(
-          stateInfo.rowKey,
-          vscode.CompletionItemKind.Property,
+    let path = regRes[1];
+    let pathArray: string[] | undefined = path
+      ? path.split('.').filter(item => item.length > 0)
+      : undefined;
+    // debugger;
+    let newModule = getModuleFromPath(this.storeInfo, pathArray);
+    if (!newModule) return undefined;
+    let state = newModule.state;
+    let modules = newModule.modules;
+    return (state
+      ? state.map(stateInfo => {
+          let stateCompletion = new vscode.CompletionItem(
+            stateInfo.rowKey,
+            vscode.CompletionItemKind.Property,
+          );
+          stateCompletion.documentation = new vscode.MarkdownString(
+            '```' + stateInfo.defination + '```',
+          );
+          return stateCompletion;
+        })
+      : []
+    ).concat(
+      Object.keys(modules ? modules : {}).map(module => {
+        let moduleCompletion = new vscode.CompletionItem(
+          module,
+          vscode.CompletionItemKind.Module,
         );
-        stateCompletion.documentation = new vscode.MarkdownString(
-          '```' + stateInfo.defination + '```',
-        );
-        return stateCompletion;
-      })
-      .concat(
-        Object.keys(this.storeInfo.modules ? this.storeInfo.modules : {}).map(
-          module => {
-            let moduleCompletion = new vscode.CompletionItem(
-              module,
-              vscode.CompletionItemKind.Module,
-            );
-            return moduleCompletion;
-          },
-        ),
-      );
+        return moduleCompletion;
+      }),
+    );
   }
 }
 
