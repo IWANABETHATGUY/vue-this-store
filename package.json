@@ -19,6 +19,14 @@
   "activationEvents": [
     "onLanguage:vue"
   ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "VueThis$Store.specify entrance path",
+        "title": "自定义入口路径specify entrance path"
+      }
+    ]
+  },
   "main": "./out/extension",
   "scripts": {
     "vscode:prepublish": "npm run compile",
