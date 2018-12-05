@@ -12,12 +12,14 @@ import {
   File,
   ExportDefaultDeclaration,
   objectExpression,
+  BooleanLiteral,
 } from '@babel/types';
 import { StoreAstMap, ModuleOrPathMap } from '../type';
 import { walkFile, parseState } from './state';
 import { parseGetters } from './getters';
 
 export interface ModuleInfo {
+  namespace: string[];
   modules?: ModulesInfo;
   state?: any[];
   getters?: any[];
@@ -30,14 +32,10 @@ export interface ParseModuleParam {
   objAst: ObjectExpression;
   [prop: string]: any;
 }
-export function parseModuleAst({
-  objAst,
-  m2pmap,
-  defmap,
-  cwf,
-  lineOfFile,
-}: ParseModuleParam) {
-  let infoObj: ModuleInfo = { state: [] };
+export function parseModuleAst(
+  { objAst, m2pmap, defmap, cwf, lineOfFile }: ParseModuleParam,
+  infoObj: ModuleInfo,
+) {
   objAst.properties.forEach((property: ObjectProperty) => {
     switch (property.key.name) {
       case 'state':
@@ -91,21 +89,27 @@ export function parseModuleAst({
               defmap: defmapp,
               lineOfFile: lineOfFilee,
             } = walkModulesFile(cwf, m2pmap[value.name]);
-            infoObj.modules = parseModules({
-              objAst: objAstt as ObjectExpression,
-              m2pmap: m2pmapp,
-              defmap: defmapp,
-              cwf: cwff,
-              lineOfFile: lineOfFilee,
-            });
+            infoObj.modules = parseModules(
+              {
+                objAst: objAstt as ObjectExpression,
+                m2pmap: m2pmapp,
+                defmap: defmapp,
+                cwf: cwff,
+                lineOfFile: lineOfFilee,
+              },
+              infoObj.namespace,
+            );
           } else if (defmap[value.name]) {
-            infoObj.modules = parseModules({
-              objAst: defmap[value.name],
-              lineOfFile,
-              m2pmap,
-              defmap,
-              cwf,
-            });
+            infoObj.modules = parseModules(
+              {
+                objAst: defmap[value.name],
+                lineOfFile,
+                m2pmap,
+                defmap,
+                cwf,
+              },
+              infoObj.namespace,
+            );
           }
         } else {
           // parseState(value, m2pmap, defmap);
@@ -140,20 +144,34 @@ export function walkModulesFile(base: string, relative: string = '') {
 
 export function parseModules(
   { objAst, m2pmap, defmap, cwf, lineOfFile }: ParseModuleParam,
-  namespace?: string,
+  namespace: string[],
 ) {
-  let infoObj = {};
+  let infoObj: ModulesInfo = {};
   objAst.properties.forEach((property: ObjectProperty) => {
     let key: Identifier = property.key as Identifier;
     // TODO:  这里需要注意， modules仍然可能从外部文件引入
     let value: ObjectExpression = property.value as ObjectExpression;
-    infoObj[key.name] = parseModuleAst({
-      objAst: value,
-      m2pmap,
-      defmap,
-      cwf,
-      lineOfFile,
-    });
+    let namespaceProperty: ObjectProperty = value.properties.filter(
+      (prop: ObjectProperty) => prop.key.name === 'namespace',
+    )[0] as ObjectProperty;
+    let needNewSpace: boolean =
+      namespaceProperty && (namespaceProperty.value as BooleanLiteral).value;
+
+    infoObj[key.name] = {
+      namespace: needNewSpace
+        ? namespace.concat([key.name])
+        : namespace.slice(),
+    };
+    parseModuleAst(
+      {
+        objAst: value,
+        m2pmap,
+        defmap,
+        cwf,
+        lineOfFile,
+      },
+      infoObj[key.name],
+    );
   });
   return infoObj;
 }

@@ -4,8 +4,7 @@ const utils_1 = require("./utils");
 const types_1 = require("@babel/types");
 const state_1 = require("./state");
 const getters_1 = require("./getters");
-function parseModuleAst({ objAst, m2pmap, defmap, cwf, lineOfFile, }) {
-    let infoObj = { state: [] };
+function parseModuleAst({ objAst, m2pmap, defmap, cwf, lineOfFile }, infoObj) {
     objAst.properties.forEach((property) => {
         switch (property.key.name) {
             case 'state':
@@ -57,7 +56,7 @@ function parseModuleAst({ objAst, m2pmap, defmap, cwf, lineOfFile, }) {
                             defmap: defmapp,
                             cwf: cwff,
                             lineOfFile: lineOfFilee,
-                        });
+                        }, infoObj.namespace);
                     }
                     else if (defmap[value.name]) {
                         infoObj.modules = parseModules({
@@ -66,7 +65,7 @@ function parseModuleAst({ objAst, m2pmap, defmap, cwf, lineOfFile, }) {
                             m2pmap,
                             defmap,
                             cwf,
-                        });
+                        }, infoObj.namespace);
                     }
                 }
                 else {
@@ -102,13 +101,20 @@ function parseModules({ objAst, m2pmap, defmap, cwf, lineOfFile }, namespace) {
         let key = property.key;
         // TODO:  这里需要注意， modules仍然可能从外部文件引入
         let value = property.value;
-        infoObj[key.name] = parseModuleAst({
+        let namespaceProperty = value.properties.filter((prop) => prop.key.name === 'namespace')[0];
+        let needNewSpace = namespaceProperty && namespaceProperty.value.value;
+        infoObj[key.name] = {
+            namespace: needNewSpace
+                ? namespace.concat([key.name])
+                : namespace.slice(),
+        };
+        parseModuleAst({
             objAst: value,
             m2pmap,
             defmap,
             cwf,
             lineOfFile,
-        });
+        }, infoObj[key.name]);
     });
     return infoObj;
 }

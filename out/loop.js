@@ -6,6 +6,7 @@ const util_1 = require("./util");
 const modules_1 = require("./traverse/modules");
 const utils_1 = require("./traverse/utils");
 const emptyModule = {
+    namespace: [],
     state: [],
 };
 function startFromEntry(rootPath) {
@@ -23,13 +24,15 @@ function startFromEntry(rootPath) {
     let storeAbsolutePath = util_1.getAbsolutePath(entry, storeRelativePath);
     let { objAst, m2pmap, defmap, cwf, lineOfFile } = utils_1.getVuexConfig(storeAbsolutePath);
     try {
-        let storeInfo = modules_1.parseModuleAst({
+        let storeInfo = { namespace: [''] };
+        modules_1.parseModuleAst({
             objAst,
             m2pmap,
             defmap,
             cwf,
             lineOfFile,
-        });
+        }, storeInfo);
+        debugger;
         return [storeAbsolutePath, storeInfo, 1];
     }
     catch (err) {
