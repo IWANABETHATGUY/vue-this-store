@@ -152,7 +152,7 @@ export function parseModules(
     // TODO:  这里需要注意， modules仍然可能从外部文件引入
     let value: ObjectExpression = property.value as ObjectExpression;
     let namespaceProperty: ObjectProperty = value.properties.filter(
-      (prop: ObjectProperty) => prop.key.name === 'namespace',
+      (prop: ObjectProperty) => prop.key.name === 'namespaced',
     )[0] as ObjectProperty;
     let needNewSpace: boolean =
       namespaceProperty && (namespaceProperty.value as BooleanLiteral).value;

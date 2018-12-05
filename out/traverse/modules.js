@@ -101,7 +101,7 @@ function parseModules({ objAst, m2pmap, defmap, cwf, lineOfFile }, namespace) {
         let key = property.key;
         // TODO:  这里需要注意， modules仍然可能从外部文件引入
         let value = property.value;
-        let namespaceProperty = value.properties.filter((prop) => prop.key.name === 'namespace')[0];
+        let namespaceProperty = value.properties.filter((prop) => prop.key.name === 'namespaced')[0];
         let needNewSpace = namespaceProperty && namespaceProperty.value.value;
         infoObj[key.name] = {
             namespace: needNewSpace

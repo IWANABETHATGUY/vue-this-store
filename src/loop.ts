@@ -105,6 +105,9 @@ export default class VueThis$Store {
     this._stateProvider.setStateKeysList(storeInfo);
     this._mapStateProvider.setStateKeysList(storeInfo);
     this._gettersProvider.setGettersKeyList(storeInfo);
+    if (setStoreActionStatus === -1) {
+      this._outputChannel.clear();
+    }
     this._statusBarItem.setStatus(setStoreActionStatus);
   }
   public setEntrancePath(entrancePath: string) {
@@ -112,12 +115,18 @@ export default class VueThis$Store {
   }
 
   private startFromEntry(): [string, ModuleInfo, setStoreStatus] {
+    // TODO: 这里可能会修改别人传入的新entrance:
     if (!fs.existsSync(this._entrancePath)) {
-      this._outputChannel.clear();
-      this._outputChannel.appendLine(
-        'please specify your project entrance path',
-      );
-      return ['', emptyModule, -1];
+      if (!fs.existsSync(this._rootPath + '/src/index.js')) {
+        this._outputChannel.clear();
+        this._outputChannel.appendLine(
+          'please specify your project entrance path',
+        );
+        this._outputChannel.show();
+        return ['', emptyModule, -1];
+      } else {
+        this._entrancePath = this._rootPath + '/src/index.js';
+      }
     }
     let {
       fileContent: entryFileContent,
@@ -150,7 +159,7 @@ export default class VueThis$Store {
         },
         storeInfo,
       );
-      // debugger;
+      debugger;
       return [storeAbsolutePath, storeInfo, 1];
     } catch (err) {
       this._outputChannel.clear();
