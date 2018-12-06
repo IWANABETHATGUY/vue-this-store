@@ -109,7 +109,6 @@ class VueThis$Store {
                 cwf,
                 lineOfFile,
             }, storeInfo);
-            // debugger;
             return [storeAbsolutePath, storeInfo, 1];
         }
         catch (err) {

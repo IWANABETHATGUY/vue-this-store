@@ -169,7 +169,6 @@ export default class VueThis$Store {
         },
         storeInfo,
       );
-      // debugger;
       return [storeAbsolutePath, storeInfo, 1];
     } catch (err) {
       this._outputChannel.clear();

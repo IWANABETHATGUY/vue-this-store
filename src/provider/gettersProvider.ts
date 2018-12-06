@@ -11,19 +11,39 @@ import {
 } from '@babel/types';
 
 function getGettersFromNameSpace(obj: ModuleInfo, namespace: string) {
+  // debugger;
   let getterInfoList = [];
-  if (obj.namespace.split('.').join('/') === namespace) {
+  if (obj.namespace === namespace && obj.getters) {
     getterInfoList.push(...obj.getters);
   }
   if (obj.modules) {
     Object.keys(obj.modules).forEach(key => {
-      let module = obj.modules[key];
-      getterInfoList.push(...getGettersFromNameSpace(module, namespace));
+      let curModule = obj.modules[key];
+      getterInfoList.push(...getGettersFromNameSpace(curModule, namespace));
     });
   }
   return getterInfoList;
 }
-
+function getNextNamespace(obj: ModuleInfo, namespace: string) {
+  let nextNamespaceList = [];
+  let curObjNamespace = obj.namespace;
+  let curObjNamespaceList = obj.namespace.split('.');
+  if (
+    curObjNamespace &&
+    curObjNamespace.startsWith(namespace) &&
+    curObjNamespaceList.length ===
+      namespace.split('.').filter(item => item.length).length + 1
+  ) {
+    nextNamespaceList.push(curObjNamespaceList[curObjNamespaceList.length - 1]);
+  }
+  if (obj.modules) {
+    let modules = obj.modules;
+    Object.keys(modules).forEach(key => {
+      nextNamespaceList.push(...getNextNamespace(modules[key], namespace));
+    });
+  }
+  return nextNamespaceList;
+}
 function getCursorInfo(mapGetterAst: File, relativePos: number) {
   let program = mapGetterAst.program;
   let exp: ExpressionStatement = program.body[0] as ExpressionStatement;
@@ -96,8 +116,7 @@ export class storeGettersProvider implements vscode.CompletionItemProvider {
     if (!newModule) return undefined;
     let getters = newModule.getters;
 
-    let modules = newModule.modules;
-    return (getters
+    return getters
       ? getters.map(getterInfo => {
           let stateCompletion = new vscode.CompletionItem(
             getterInfo.rowKey,
@@ -108,16 +127,17 @@ export class storeGettersProvider implements vscode.CompletionItemProvider {
           );
           return stateCompletion;
         })
-      : []
-    ).concat(
-      Object.keys(modules ? modules : {}).map(module => {
-        let moduleCompletion = new vscode.CompletionItem(
-          module,
-          vscode.CompletionItemKind.Module,
-        );
-        return moduleCompletion;
-      }),
-    );
+      : [];
+
+    // concat(
+    //   Object.keys(modules ? modules : {}).map(module => {
+    //     let moduleCompletion = new vscode.CompletionItem(
+    //       module,
+    //       vscode.CompletionItemKind.Module,
+    //     );
+    //     return moduleCompletion;
+    //   }),
+    // );
   }
 }
 
@@ -153,37 +173,32 @@ export class storeMapGettersProvider implements vscode.CompletionItemProvider {
 
     if (cursorInfo) {
       // debugger;
-      return getGettersFromNameSpace(
-        this.storeInfo,
-        [cursorInfo.namespace, cursorInfo.secondNameSpace]
-          .filter(item => item.length)
-          .join('.'),
-      ).map(getterInfo => {
-        let getterCompletion = new vscode.CompletionItem(
-          getterInfo.rowKey,
-          vscode.CompletionItemKind.Property,
+      let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
+        .map(item => item.split('/').join('.'))
+        .filter(item => item.length)
+        .join('.');
+
+      return getGettersFromNameSpace(this.storeInfo, fullNamespace)
+        .map(getterInfo => {
+          let getterCompletion = new vscode.CompletionItem(
+            getterInfo.rowKey,
+            vscode.CompletionItemKind.Property,
+          );
+          getterCompletion.documentation = new vscode.MarkdownString(
+            '```' + getterInfo.defination + '```',
+          );
+          return getterCompletion;
+        })
+        .concat(
+          getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
+            let NSCompletion = new vscode.CompletionItem(
+              nextNS,
+              vscode.CompletionItemKind.Module,
+            );
+            return NSCompletion;
+          }),
         );
-        getterCompletion.documentation = new vscode.MarkdownString(
-          '```' + getterInfo.defination + '```',
-        );
-        return getterCompletion;
-      });
     }
-    // if (
-    //   posIndex >= regRes.index + 10 + namespaceGroup.length &&
-    //   posIndex < regRes.index + regRes[0].length - 2
-    // ) {
-    // return allGettersInfo.map(getterInfo => {
-    //   let getterCompletion = new vscode.CompletionItem(
-    //     getterInfo.rowKey,
-    //     vscode.CompletionItemKind.Property,
-    //   );
-    //   getterCompletion.documentation = new vscode.MarkdownString(
-    //     '```' + getterInfo.defination + '```',
-    //   );
-    //   return getterCompletion;
-    // });
-    // }
     return undefined;
   }
 }
