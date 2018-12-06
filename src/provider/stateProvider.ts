@@ -43,6 +43,7 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
           stateCompletion.documentation = new vscode.MarkdownString(
             '```' + stateInfo.defination + '```',
           );
+          stateCompletion.detail = 'state';
           return stateCompletion;
         })
       : []

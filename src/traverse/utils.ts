@@ -2,6 +2,7 @@ import { parse } from '@babel/parser';
 import traverse from '@babel/traverse';
 import * as fs from 'fs';
 import * as path from 'path';
+
 import {
   File,
   Program,
@@ -66,11 +67,9 @@ export function getModuleOrPathMap(ast: File) {
   ) as ImportDeclaration[];
   let modulelOrPathMap = importDeclarationList.reduce((acc, cur) => {
     let moduleOrPath = cur.source.value;
-    cur.specifiers
-      .filter(specifier => specifier.type === 'ImportDefaultSpecifier')
-      .forEach(specifier => {
-        acc[specifier.local.name] = moduleOrPath;
-      });
+    cur.specifiers.forEach(specifier => {
+      acc[specifier.local.name] = moduleOrPath;
+    });
     return acc;
   }, {});
   return modulelOrPathMap;

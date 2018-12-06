@@ -4,6 +4,8 @@ const utils_1 = require("./utils");
 const types_1 = require("@babel/types");
 const state_1 = require("./state");
 const getters_1 = require("./getters");
+const mutations_1 = require("./mutations");
+// TODO: 这了需要重构
 function parseModuleAst({ objAst, m2pmap, defmap, cwf, lineOfFile }, infoObj) {
     objAst.properties.forEach((property) => {
         switch (property.key.name) {
@@ -43,7 +45,20 @@ function parseModuleAst({ objAst, m2pmap, defmap, cwf, lineOfFile }, infoObj) {
                 }
                 break;
             case 'mutations':
-                // parseMutations(property.value, m2pmap, defmap);
+                if (property.shorthand) {
+                    let value = property.value;
+                    if (m2pmap[value.name]) {
+                        let { export: importGetters, lineOfFile } = mutations_1.walkMutationsFile(cwf, m2pmap[value.name]);
+                        infoObj.mutations = mutations_1.parseMutations(importGetters, lineOfFile);
+                    }
+                    else if (defmap[value.name]) {
+                        infoObj.mutations = mutations_1.parseMutations(defmap[value.name], lineOfFile);
+                    }
+                }
+                else {
+                    let value = property.value;
+                    infoObj.mutations = getters_1.parseGetters(value, lineOfFile);
+                }
                 break;
             case 'modules':
                 if (property.shorthand) {

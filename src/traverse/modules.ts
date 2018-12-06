@@ -17,6 +17,7 @@ import {
 import { StoreAstMap, ModuleOrPathMap } from '../type';
 import { walkFile, parseState } from './state';
 import { parseGetters } from './getters';
+import { parseMutations, walkMutationsFile } from './mutations';
 
 export interface ModuleInfo {
   namespace: string;
@@ -32,6 +33,7 @@ export interface ParseModuleParam {
   objAst: ObjectExpression;
   [prop: string]: any;
 }
+// TODO: 这了需要重构
 export function parseModuleAst(
   { objAst, m2pmap, defmap, cwf, lineOfFile }: ParseModuleParam,
   infoObj: ModuleInfo,
@@ -76,7 +78,21 @@ export function parseModuleAst(
         }
         break;
       case 'mutations':
-        // parseMutations(property.value, m2pmap, defmap);
+        if (property.shorthand) {
+          let value: Identifier = property.value as Identifier;
+          if (m2pmap[value.name]) {
+            let { export: importGetters, lineOfFile } = walkMutationsFile(
+              cwf,
+              m2pmap[value.name],
+            );
+            infoObj.mutations = parseMutations(importGetters, lineOfFile);
+          } else if (defmap[value.name]) {
+            infoObj.mutations = parseMutations(defmap[value.name], lineOfFile);
+          }
+        } else {
+          let value: ObjectExpression = property.value as ObjectExpression;
+          infoObj.mutations = parseGetters(value, lineOfFile);
+        }
         break;
       case 'modules':
         if (property.shorthand) {

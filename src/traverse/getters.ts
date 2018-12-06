@@ -12,7 +12,7 @@ import {
   ObjectProperty,
 } from '@babel/types';
 
-export function walkFile(base: string, relative: string = '') {
+function walkFile(base: string, relative: string = '') {
   let filename = getAbsolutePath(base, relative);
   let fileContent = getFileContent(filename);
   let ast = getAst(fileContent);

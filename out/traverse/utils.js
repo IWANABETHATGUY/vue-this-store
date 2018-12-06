@@ -63,9 +63,7 @@ function getModuleOrPathMap(ast) {
     let importDeclarationList = node.body.filter(item => item.type === 'ImportDeclaration');
     let modulelOrPathMap = importDeclarationList.reduce((acc, cur) => {
         let moduleOrPath = cur.source.value;
-        cur.specifiers
-            .filter(specifier => specifier.type === 'ImportDefaultSpecifier')
-            .forEach(specifier => {
+        cur.specifiers.forEach(specifier => {
             acc[specifier.local.name] = moduleOrPath;
         });
         return acc;

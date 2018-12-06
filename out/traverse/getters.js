@@ -16,7 +16,6 @@ function walkFile(base, relative = '') {
         lineOfFile: fileContent.split('\n'),
     };
 }
-exports.walkFile = walkFile;
 function parseGetters(objAst, lileOfFile) {
     let getterInfoList = [];
     objAst.properties.forEach((property) => {
