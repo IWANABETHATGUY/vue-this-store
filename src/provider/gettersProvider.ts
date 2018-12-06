@@ -53,15 +53,32 @@ function getCursorInfo(mapGetterAst: File, relativePos: number) {
     let firstArg = args[0];
     if (firstArg.type === 'ArrayExpression') {
       let cursorAtExp = (firstArg as ArrayExpression).elements.filter(item => {
-        relativePos >= item.start && relativePos < item.end;
-      });
+        return relativePos >= item.start && relativePos < item.end;
+      })[0];
       // debugger;
+      if (cursorAtExp) {
+        return {
+          isNamespace: false,
+          namespace: '',
+          secondNameSpace: (cursorAtExp as StringLiteral).value
+            .split('/')
+            .filter(ns => ns.length)
+            .join('.'),
+        };
+      }
     }
   } else if (args.length === 2) {
     let firstArg = args[0];
     let secondArg = args[1];
     if (firstArg.type === 'StringLiteral') {
       if (secondArg.type === 'ArrayExpression') {
+        if (relativePos >= firstArg.start && relativePos < firstArg.end) {
+          return {
+            isNamespace: true,
+            namespace: firstArg.value,
+            secondNameSpace: '',
+          };
+        }
         let cursorAtExp = (secondArg as ArrayExpression).elements.filter(
           item => {
             return relativePos >= item.start && relativePos < item.end;
@@ -70,7 +87,7 @@ function getCursorInfo(mapGetterAst: File, relativePos: number) {
         // debugger;
         if (cursorAtExp) {
           return {
-            namespaced: true,
+            isNamespace: false,
             namespace: firstArg.value,
             secondNameSpace: (cursorAtExp as StringLiteral).value
               .split('/')
@@ -170,16 +187,28 @@ export class storeMapGettersProvider implements vscode.CompletionItemProvider {
     // console.timeEnd('mapState');
     let mapGetterAst = parse(regRes[0]);
     let cursorInfo = getCursorInfo(mapGetterAst, posIndex - regRes.index);
-
     if (cursorInfo) {
       // debugger;
       let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
         .map(item => item.split('/').join('.'))
         .filter(item => item.length)
         .join('.');
-
-      return getGettersFromNameSpace(this.storeInfo, fullNamespace)
-        .map(getterInfo => {
+      let getterCompletionList = [];
+      let namespaceCompletionList = getNextNamespace(
+        this.storeInfo,
+        fullNamespace,
+      ).map(nextNS => {
+        let NSCompletion = new vscode.CompletionItem(
+          nextNS,
+          vscode.CompletionItemKind.Module,
+        );
+        return NSCompletion;
+      });
+      if (!cursorInfo.isNamespace) {
+        getterCompletionList = getGettersFromNameSpace(
+          this.storeInfo,
+          fullNamespace,
+        ).map(getterInfo => {
           let getterCompletion = new vscode.CompletionItem(
             getterInfo.rowKey,
             vscode.CompletionItemKind.Property,
@@ -188,16 +217,9 @@ export class storeMapGettersProvider implements vscode.CompletionItemProvider {
             '```' + getterInfo.defination + '```',
           );
           return getterCompletion;
-        })
-        .concat(
-          getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
-            let NSCompletion = new vscode.CompletionItem(
-              nextNS,
-              vscode.CompletionItemKind.Module,
-            );
-            return NSCompletion;
-          }),
-        );
+        });
+      }
+      return getterCompletionList.concat(namespaceCompletionList);
     }
     return undefined;
   }

@@ -44,9 +44,19 @@ function getCursorInfo(mapGetterAst, relativePos) {
         let firstArg = args[0];
         if (firstArg.type === 'ArrayExpression') {
             let cursorAtExp = firstArg.elements.filter(item => {
-                relativePos >= item.start && relativePos < item.end;
-            });
+                return relativePos >= item.start && relativePos < item.end;
+            })[0];
             // debugger;
+            if (cursorAtExp) {
+                return {
+                    isNamespace: false,
+                    namespace: '',
+                    secondNameSpace: cursorAtExp.value
+                        .split('/')
+                        .filter(ns => ns.length)
+                        .join('.'),
+                };
+            }
         }
     }
     else if (args.length === 2) {
@@ -54,13 +64,20 @@ function getCursorInfo(mapGetterAst, relativePos) {
         let secondArg = args[1];
         if (firstArg.type === 'StringLiteral') {
             if (secondArg.type === 'ArrayExpression') {
+                if (relativePos >= firstArg.start && relativePos < firstArg.end) {
+                    return {
+                        isNamespace: true,
+                        namespace: firstArg.value,
+                        secondNameSpace: '',
+                    };
+                }
                 let cursorAtExp = secondArg.elements.filter(item => {
                     return relativePos >= item.start && relativePos < item.end;
                 })[0];
                 // debugger;
                 if (cursorAtExp) {
                     return {
-                        namespaced: true,
+                        isNamespace: false,
                         namespace: firstArg.value,
                         secondNameSpace: cursorAtExp.value
                             .split('/')
@@ -149,16 +166,19 @@ class storeMapGettersProvider {
                 .map(item => item.split('/').join('.'))
                 .filter(item => item.length)
                 .join('.');
-            return getGettersFromNameSpace(this.storeInfo, fullNamespace)
-                .map(getterInfo => {
-                let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Property);
-                getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
-                return getterCompletion;
-            })
-                .concat(getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
+            let getterCompletionList = [];
+            let namespaceCompletionList = getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
                 let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
                 return NSCompletion;
-            }));
+            });
+            if (!cursorInfo.isNamespace) {
+                getterCompletionList = getGettersFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
+                    let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Property);
+                    getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
+                    return getterCompletion;
+                });
+            }
+            return getterCompletionList.concat(namespaceCompletionList);
         }
         return undefined;
     }
