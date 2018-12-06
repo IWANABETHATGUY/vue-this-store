@@ -52,6 +52,7 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
           module,
           vscode.CompletionItemKind.Module,
         );
+        moduleCompletion.detail = 'module';
         return moduleCompletion;
       }),
     );
@@ -99,6 +100,8 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
         stateCompletion.documentation = new vscode.MarkdownString(
           '```' + stateInfo.defination + '```',
         );
+        stateCompletion.detail = 'state';
+
         return stateCompletion;
       });
     }

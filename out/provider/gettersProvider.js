@@ -74,7 +74,6 @@ function getCursorInfo(mapGetterAst, relativePos) {
                 let cursorAtExp = secondArg.elements.filter(item => {
                     return relativePos >= item.start && relativePos < item.end;
                 })[0];
-                // debugger;
                 if (cursorAtExp) {
                     return {
                         isNamespace: false,
@@ -124,15 +123,6 @@ class storeGettersProvider {
                 return stateCompletion;
             })
             : [];
-        // concat(
-        //   Object.keys(modules ? modules : {}).map(module => {
-        //     let moduleCompletion = new vscode.CompletionItem(
-        //       module,
-        //       vscode.CompletionItemKind.Module,
-        //     );
-        //     return moduleCompletion;
-        //   }),
-        // );
     }
 }
 exports.storeGettersProvider = storeGettersProvider;
@@ -169,12 +159,14 @@ class storeMapGettersProvider {
             let getterCompletionList = [];
             let namespaceCompletionList = getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
                 let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
+                NSCompletion.detail = 'module';
                 return NSCompletion;
             });
             if (!cursorInfo.isNamespace) {
                 getterCompletionList = getGettersFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
                     let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Property);
                     getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
+                    getterCompletion.detail = 'getter';
                     return getterCompletion;
                 });
             }

@@ -84,7 +84,6 @@ function getCursorInfo(mapGetterAst: File, relativePos: number) {
             return relativePos >= item.start && relativePos < item.end;
           },
         )[0];
-        // debugger;
         if (cursorAtExp) {
           return {
             isNamespace: false,
@@ -145,16 +144,6 @@ export class storeGettersProvider implements vscode.CompletionItemProvider {
           return stateCompletion;
         })
       : [];
-
-    // concat(
-    //   Object.keys(modules ? modules : {}).map(module => {
-    //     let moduleCompletion = new vscode.CompletionItem(
-    //       module,
-    //       vscode.CompletionItemKind.Module,
-    //     );
-    //     return moduleCompletion;
-    //   }),
-    // );
   }
 }
 
@@ -202,6 +191,7 @@ export class storeMapGettersProvider implements vscode.CompletionItemProvider {
           nextNS,
           vscode.CompletionItemKind.Module,
         );
+        NSCompletion.detail = 'module';
         return NSCompletion;
       });
       if (!cursorInfo.isNamespace) {
@@ -216,6 +206,7 @@ export class storeMapGettersProvider implements vscode.CompletionItemProvider {
           getterCompletion.documentation = new vscode.MarkdownString(
             '```' + getterInfo.defination + '```',
           );
+          getterCompletion.detail = 'getter';
           return getterCompletion;
         });
       }

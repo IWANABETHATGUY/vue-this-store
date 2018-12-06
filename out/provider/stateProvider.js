@@ -37,6 +37,7 @@ class storeStateProvider {
             })
             : []).concat(Object.keys(modules ? modules : {}).map(module => {
             let moduleCompletion = new vscode.CompletionItem(module, vscode.CompletionItemKind.Module);
+            moduleCompletion.detail = 'module';
             return moduleCompletion;
         }));
     }
@@ -70,6 +71,7 @@ class storeMapStateProvider {
             return this.storeInfo.state.map(stateInfo => {
                 let stateCompletion = new vscode.CompletionItem(stateInfo.rowKey, vscode.CompletionItemKind.Property);
                 stateCompletion.documentation = new vscode.MarkdownString('```' + stateInfo.defination + '```');
+                stateCompletion.detail = 'state';
                 return stateCompletion;
             });
         }
