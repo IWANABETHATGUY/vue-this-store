@@ -55,18 +55,18 @@ class VueThis$Store {
     start() {
         this._extensionContext.subscriptions.push(this._statusBarItem);
         let [storeAbsolutePath, storeInfo, setStoreActionStatus,] = this.startFromEntry();
-        debugger;
         this._statusBarItem.setStatus(setStoreActionStatus);
         this._watcher = watcher_1.generateWatcher(storeAbsolutePath);
         this._stateProvider = new stateProvider_1.storeStateProvider(storeInfo);
         this._mapStateProvider = new stateProvider_1.storeMapStateProvider(storeInfo);
         this._gettersProvider = new gettersProvider_1.storeGettersProvider(storeInfo);
         this._mapGettersProvider = new gettersProvider_1.storeMapGettersProvider(storeInfo);
+        this._mutationsProvider = new mutationsProvider_1.storeMutationsProvider(storeInfo);
         this._mapMutationsProvider = new mutationsProvider_1.storeMapMutationsProvider(storeInfo);
         this._watcher.on('change', () => {
             this.restart();
         });
-        this._extensionContext.subscriptions.push(vscode_1.languages.registerCompletionItemProvider('vue', this._stateProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapStateProvider, "'", '"'), vscode_1.languages.registerCompletionItemProvider('vue', this._gettersProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapGettersProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapMutationsProvider, "'", '"', '/'));
+        this._extensionContext.subscriptions.push(vscode_1.languages.registerCompletionItemProvider('vue', this._stateProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapStateProvider, "'", '"'), vscode_1.languages.registerCompletionItemProvider('vue', this._gettersProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapGettersProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mutationsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapMutationsProvider, "'", '"', '/'));
     }
     restart() {
         this._statusBarItem.setStatus(0);
@@ -76,6 +76,7 @@ class VueThis$Store {
         this._gettersProvider.setStoreInfo(storeInfo);
         this._mapGettersProvider.setStoreInfo(storeInfo);
         this._mapMutationsProvider.setStoreInfo(storeInfo);
+        this._mutationsProvider.setStoreInfo(storeInfo);
         if (setStoreActionStatus === -1) {
             this._outputChannel.clear();
         }

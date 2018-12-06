@@ -3,6 +3,36 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
 const util_1 = require("./util");
 const parser_1 = require("@babel/parser");
+function getPositionIndex(doc, position) {
+    let docContent = doc.getText();
+    let posIndex = 0;
+    docContent.split('\n').some((line, index) => {
+        posIndex += line.length + 1;
+        return index >= position.line - 1;
+    });
+    posIndex += position.character;
+    return posIndex;
+}
+function getCommitCursorInfo(commitAst, relativePos) {
+    let program = commitAst.program;
+    let exp = program.body[0];
+    let callExp = exp.expression;
+    let args = callExp.arguments;
+    if (args.length === 1) {
+        let firstArg = args[0];
+        if (firstArg.type === 'StringLiteral') {
+            if (relativePos >= firstArg.start && relativePos < firstArg.end) {
+                return {
+                    isNamespace: false,
+                    namespace: firstArg.value
+                        .split('/')
+                        .filter(ns => ns.length)
+                        .join('.'),
+                };
+            }
+        }
+    }
+}
 function getMutationsFromNameSpace(obj, namespace) {
     // debugger;
     let mutationInfoList = [];
@@ -71,7 +101,7 @@ function getCursorInfo(mapGetterAst, relativePos) {
     }
     return null;
 }
-class storeGettersProvider {
+class storeMutationsProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
     }
@@ -79,35 +109,41 @@ class storeGettersProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position, token) {
-        let linePrefix = document
-            .lineAt(position)
-            .text.substr(0, position.character);
-        let trimLinePrefixExpressions = linePrefix.trim().split(' ');
-        let lastPrefixExpression = trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
+        let lineContent = document.lineAt(position);
+        let trimLineExpressions = lineContent.text;
         // TODO: getters没有对象的说法，只能通过['namespace/namespace/somegetters']的方式访问
-        let reg = /(?=return this\.)?(?=\$store\.)?getters\.(.*\.)?/;
-        let regRes = reg.exec(lastPrefixExpression);
+        let reg = /((?:this\.)?(?:\$store\.)commit\(.*\))/;
+        let regRes = reg.exec(trimLineExpressions);
+        // debugger;
         if (!regRes) {
             return undefined;
         }
-        let path = regRes[1];
-        let pathArray = path
-            ? path.split('.').filter(item => item.length > 0)
-            : undefined;
-        let newModule = util_1.getModuleFromPath(this.storeInfo, pathArray);
-        if (!newModule)
-            return undefined;
-        let getters = newModule.getters;
-        return getters
-            ? getters.map(getterInfo => {
-                let stateCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Field);
-                stateCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
-                return stateCompletion;
-            })
-            : [];
+        let commitExpression = regRes[1];
+        let commitAst = parser_1.parse(commitExpression);
+        let posIndex = position.character;
+        let cursorInfo = getCommitCursorInfo(commitAst, posIndex - regRes.index);
+        if (cursorInfo) {
+            // debugger;
+            let fullNamespace = cursorInfo.namespace;
+            let getterCompletionList = [];
+            let namespaceCompletionList = util_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
+                let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
+                NSCompletion.detail = 'module';
+                return NSCompletion;
+            });
+            if (!cursorInfo.isNamespace) {
+                getterCompletionList = getMutationsFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
+                    let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Property);
+                    getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
+                    getterCompletion.detail = 'mutation';
+                    return getterCompletion;
+                });
+            }
+            return getterCompletionList.concat(namespaceCompletionList);
+        }
     }
 }
-exports.storeGettersProvider = storeGettersProvider;
+exports.storeMutationsProvider = storeMutationsProvider;
 class storeMapMutationsProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
@@ -117,20 +153,15 @@ class storeMapMutationsProvider {
     }
     provideCompletionItems(document, position) {
         let docContent = document.getText();
-        let posIndex = 0;
         // console.time('mapState');
         let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?([\[\{])[\s\S]*?([\}\]]).*?\)/;
         let regRes = reg.exec(docContent);
         if (!regRes) {
             return undefined;
         }
-        docContent.split('\n').some((line, index) => {
-            posIndex += line.length + 1;
-            return index >= position.line - 1;
-        });
-        posIndex += position.character;
         // console.timeEnd('mapState');
         let mapGetterAst = parser_1.parse(regRes[0]);
+        let posIndex = getPositionIndex(document, position);
         let cursorInfo = getCursorInfo(mapGetterAst, posIndex - regRes.index);
         if (cursorInfo) {
             // debugger;
@@ -148,7 +179,7 @@ class storeMapMutationsProvider {
                 getterCompletionList = getMutationsFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
                     let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Property);
                     getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
-                    getterCompletion.detail = 'getter';
+                    getterCompletion.detail = 'mutation';
                     return getterCompletion;
                 });
             }

@@ -19,7 +19,10 @@ import {
   storeGettersProvider,
   storeMapGettersProvider,
 } from './provider/gettersProvider';
-import { storeMapMutationsProvider } from './provider/mutationsProvider';
+import {
+  storeMapMutationsProvider,
+  storeMutationsProvider,
+} from './provider/mutationsProvider';
 
 type setStoreStatus = 1 | -1;
 const emptyModule: ModuleInfo = {
@@ -40,6 +43,7 @@ export default class VueThis$Store {
   private _gettersProvider: storeGettersProvider;
   private _mapGettersProvider: storeMapGettersProvider;
   private _mapMutationsProvider: storeMapMutationsProvider;
+  private _mutationsProvider: storeMutationsProvider;
   constructor(ctx: ExtensionContext, rootPath: string) {
     this._extensionContext = ctx;
     if (rootPath === undefined) {
@@ -77,7 +81,6 @@ export default class VueThis$Store {
       storeInfo,
       setStoreActionStatus,
     ] = this.startFromEntry();
-    debugger;
     this._statusBarItem.setStatus(setStoreActionStatus);
     this._watcher = generateWatcher(storeAbsolutePath);
 
@@ -85,6 +88,7 @@ export default class VueThis$Store {
     this._mapStateProvider = new storeMapStateProvider(storeInfo);
     this._gettersProvider = new storeGettersProvider(storeInfo);
     this._mapGettersProvider = new storeMapGettersProvider(storeInfo);
+    this._mutationsProvider = new storeMutationsProvider(storeInfo);
     this._mapMutationsProvider = new storeMapMutationsProvider(storeInfo);
 
     this._watcher.on('change', () => {
@@ -113,6 +117,13 @@ export default class VueThis$Store {
       ),
       languages.registerCompletionItemProvider(
         'vue',
+        this._mutationsProvider,
+        '"',
+        "'",
+        '/',
+      ),
+      languages.registerCompletionItemProvider(
+        'vue',
         this._mapMutationsProvider,
         "'",
         '"',
@@ -129,6 +140,7 @@ export default class VueThis$Store {
     this._gettersProvider.setStoreInfo(storeInfo);
     this._mapGettersProvider.setStoreInfo(storeInfo);
     this._mapMutationsProvider.setStoreInfo(storeInfo);
+    this._mutationsProvider.setStoreInfo(storeInfo);
     if (setStoreActionStatus === -1) {
       this._outputChannel.clear();
     }
