@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
 import { getModuleFromPath } from './util';
-
+import { parse } from '@babel/parser';
 export class storeStateProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
@@ -38,7 +38,7 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
       ? state.map(stateInfo => {
           let stateCompletion = new vscode.CompletionItem(
             stateInfo.rowKey,
-            vscode.CompletionItemKind.Property,
+            vscode.CompletionItemKind.Field,
           );
           stateCompletion.documentation = new vscode.MarkdownString(
             '```' + stateInfo.defination + '```',

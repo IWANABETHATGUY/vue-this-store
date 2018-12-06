@@ -31,7 +31,7 @@ class storeStateProvider {
         let modules = newModule.modules;
         return (state
             ? state.map(stateInfo => {
-                let stateCompletion = new vscode.CompletionItem(stateInfo.rowKey, vscode.CompletionItemKind.Property);
+                let stateCompletion = new vscode.CompletionItem(stateInfo.rowKey, vscode.CompletionItemKind.Field);
                 stateCompletion.documentation = new vscode.MarkdownString('```' + stateInfo.defination + '```');
                 return stateCompletion;
             })
