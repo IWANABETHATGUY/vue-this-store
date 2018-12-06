@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
-import { getModuleFromPath } from './util';
+import { getModuleFromPath, getNextNamespace } from './util';
 import { parse } from '@babel/parser';
 import {
   File,
@@ -24,26 +24,7 @@ function getGettersFromNameSpace(obj: ModuleInfo, namespace: string) {
   }
   return getterInfoList;
 }
-function getNextNamespace(obj: ModuleInfo, namespace: string) {
-  let nextNamespaceList = [];
-  let curObjNamespace = obj.namespace;
-  let curObjNamespaceList = obj.namespace.split('.');
-  if (
-    curObjNamespace &&
-    curObjNamespace.startsWith(namespace) &&
-    curObjNamespaceList.length ===
-      namespace.split('.').filter(item => item.length).length + 1
-  ) {
-    nextNamespaceList.push(curObjNamespaceList[curObjNamespaceList.length - 1]);
-  }
-  if (obj.modules) {
-    let modules = obj.modules;
-    Object.keys(modules).forEach(key => {
-      nextNamespaceList.push(...getNextNamespace(modules[key], namespace));
-    });
-  }
-  return nextNamespaceList;
-}
+
 function getCursorInfo(mapGetterAst: File, relativePos: number) {
   let program = mapGetterAst.program;
   let exp: ExpressionStatement = program.body[0] as ExpressionStatement;

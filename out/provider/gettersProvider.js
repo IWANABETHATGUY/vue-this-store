@@ -17,24 +17,6 @@ function getGettersFromNameSpace(obj, namespace) {
     }
     return getterInfoList;
 }
-function getNextNamespace(obj, namespace) {
-    let nextNamespaceList = [];
-    let curObjNamespace = obj.namespace;
-    let curObjNamespaceList = obj.namespace.split('.');
-    if (curObjNamespace &&
-        curObjNamespace.startsWith(namespace) &&
-        curObjNamespaceList.length ===
-            namespace.split('.').filter(item => item.length).length + 1) {
-        nextNamespaceList.push(curObjNamespaceList[curObjNamespaceList.length - 1]);
-    }
-    if (obj.modules) {
-        let modules = obj.modules;
-        Object.keys(modules).forEach(key => {
-            nextNamespaceList.push(...getNextNamespace(modules[key], namespace));
-        });
-    }
-    return nextNamespaceList;
-}
 function getCursorInfo(mapGetterAst, relativePos) {
     let program = mapGetterAst.program;
     let exp = program.body[0];
@@ -157,7 +139,7 @@ class storeMapGettersProvider {
                 .filter(item => item.length)
                 .join('.');
             let getterCompletionList = [];
-            let namespaceCompletionList = getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
+            let namespaceCompletionList = util_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
                 let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
                 NSCompletion.detail = 'module';
                 return NSCompletion;

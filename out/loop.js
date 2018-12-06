@@ -18,6 +18,7 @@ const statusBarItem_1 = require("./statusBarItem");
 const watcher_1 = require("./watcher");
 const stateProvider_1 = require("./provider/stateProvider");
 const gettersProvider_1 = require("./provider/gettersProvider");
+const mutationsProvider_1 = require("./provider/mutationsProvider");
 const emptyModule = {
     namespace: '',
     state: [],
@@ -61,10 +62,11 @@ class VueThis$Store {
         this._mapStateProvider = new stateProvider_1.storeMapStateProvider(storeInfo);
         this._gettersProvider = new gettersProvider_1.storeGettersProvider(storeInfo);
         this._mapGettersProvider = new gettersProvider_1.storeMapGettersProvider(storeInfo);
+        this._mapMutationsProvider = new mutationsProvider_1.storeMapMutationsProvider(storeInfo);
         this._watcher.on('change', () => {
             this.restart();
         });
-        this._extensionContext.subscriptions.push(vscode_1.languages.registerCompletionItemProvider('vue', this._stateProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapStateProvider, "'", '"'), vscode_1.languages.registerCompletionItemProvider('vue', this._gettersProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapGettersProvider, "'", '"', '/'));
+        this._extensionContext.subscriptions.push(vscode_1.languages.registerCompletionItemProvider('vue', this._stateProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapStateProvider, "'", '"'), vscode_1.languages.registerCompletionItemProvider('vue', this._gettersProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapGettersProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapMutationsProvider, "'", '"', '/'));
     }
     restart() {
         this._statusBarItem.setStatus(0);
@@ -73,6 +75,7 @@ class VueThis$Store {
         this._mapStateProvider.setStoreInfo(storeInfo);
         this._gettersProvider.setStoreInfo(storeInfo);
         this._mapGettersProvider.setStoreInfo(storeInfo);
+        this._mapMutationsProvider.setStoreInfo(storeInfo);
         if (setStoreActionStatus === -1) {
             this._outputChannel.clear();
         }

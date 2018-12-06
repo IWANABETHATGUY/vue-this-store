@@ -3,37 +3,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
 const util_1 = require("./util");
 const parser_1 = require("@babel/parser");
-function getGettersFromNameSpace(obj, namespace) {
+function getMutationsFromNameSpace(obj, namespace) {
     // debugger;
-    let getterInfoList = [];
-    if (obj.namespace === namespace && obj.getters) {
-        getterInfoList.push(...obj.getters);
+    let mutationInfoList = [];
+    if (obj.namespace === namespace && obj.mutations) {
+        mutationInfoList.push(...obj.mutations);
     }
     if (obj.modules) {
         Object.keys(obj.modules).forEach(key => {
             let curModule = obj.modules[key];
-            getterInfoList.push(...getGettersFromNameSpace(curModule, namespace));
+            mutationInfoList.push(...getMutationsFromNameSpace(curModule, namespace));
         });
     }
-    return getterInfoList;
-}
-function getNextNamespace(obj, namespace) {
-    let nextNamespaceList = [];
-    let curObjNamespace = obj.namespace;
-    let curObjNamespaceList = obj.namespace.split('.');
-    if (curObjNamespace &&
-        curObjNamespace.startsWith(namespace) &&
-        curObjNamespaceList.length ===
-            namespace.split('.').filter(item => item.length).length + 1) {
-        nextNamespaceList.push(curObjNamespaceList[curObjNamespaceList.length - 1]);
-    }
-    if (obj.modules) {
-        let modules = obj.modules;
-        Object.keys(modules).forEach(key => {
-            nextNamespaceList.push(...getNextNamespace(modules[key], namespace));
-        });
-    }
-    return nextNamespaceList;
+    return mutationInfoList;
 }
 function getCursorInfo(mapGetterAst, relativePos) {
     let program = mapGetterAst.program;
@@ -126,7 +108,7 @@ class storeGettersProvider {
     }
 }
 exports.storeGettersProvider = storeGettersProvider;
-class storeMapGettersProvider {
+class storeMapMutationsProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
     }
@@ -137,7 +119,7 @@ class storeMapGettersProvider {
         let docContent = document.getText();
         let posIndex = 0;
         // console.time('mapState');
-        let reg = /\bmapGetters\(([\'\"](.*)[\'\"],\s*)?([\[\{])[\s\S]*?([\}\]]).*?\)/;
+        let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?([\[\{])[\s\S]*?([\}\]]).*?\)/;
         let regRes = reg.exec(docContent);
         if (!regRes) {
             return undefined;
@@ -157,13 +139,13 @@ class storeMapGettersProvider {
                 .filter(item => item.length)
                 .join('.');
             let getterCompletionList = [];
-            let namespaceCompletionList = getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
+            let namespaceCompletionList = util_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
                 let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
                 NSCompletion.detail = 'module';
                 return NSCompletion;
             });
             if (!cursorInfo.isNamespace) {
-                getterCompletionList = getGettersFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
+                getterCompletionList = getMutationsFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
                     let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Property);
                     getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
                     getterCompletion.detail = 'getter';
@@ -175,5 +157,5 @@ class storeMapGettersProvider {
         return undefined;
     }
 }
-exports.storeMapGettersProvider = storeMapGettersProvider;
+exports.storeMapMutationsProvider = storeMapMutationsProvider;
 //# sourceMappingURL=mutationsProvider.js.map

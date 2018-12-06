@@ -24,6 +24,7 @@ export interface ModuleInfo {
   modules?: ModulesInfo;
   state?: any[];
   getters?: any[];
+  mutations?: any[];
   [prop: string]: {};
 }
 export interface ModulesInfo {

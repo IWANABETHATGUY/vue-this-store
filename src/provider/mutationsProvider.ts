@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
-import { getModuleFromPath } from './util';
+import { getModuleFromPath, getNextNamespace } from './util';
 import { parse } from '@babel/parser';
 import {
   File,
@@ -10,40 +10,21 @@ import {
   StringLiteral,
 } from '@babel/types';
 
-function getGettersFromNameSpace(obj: ModuleInfo, namespace: string) {
+function getMutationsFromNameSpace(obj: ModuleInfo, namespace: string) {
   // debugger;
-  let getterInfoList = [];
-  if (obj.namespace === namespace && obj.getters) {
-    getterInfoList.push(...obj.getters);
+  let mutationInfoList = [];
+  if (obj.namespace === namespace && obj.mutations) {
+    mutationInfoList.push(...obj.mutations);
   }
   if (obj.modules) {
     Object.keys(obj.modules).forEach(key => {
       let curModule = obj.modules[key];
-      getterInfoList.push(...getGettersFromNameSpace(curModule, namespace));
+      mutationInfoList.push(...getMutationsFromNameSpace(curModule, namespace));
     });
   }
-  return getterInfoList;
+  return mutationInfoList;
 }
-function getNextNamespace(obj: ModuleInfo, namespace: string) {
-  let nextNamespaceList = [];
-  let curObjNamespace = obj.namespace;
-  let curObjNamespaceList = obj.namespace.split('.');
-  if (
-    curObjNamespace &&
-    curObjNamespace.startsWith(namespace) &&
-    curObjNamespaceList.length ===
-      namespace.split('.').filter(item => item.length).length + 1
-  ) {
-    nextNamespaceList.push(curObjNamespaceList[curObjNamespaceList.length - 1]);
-  }
-  if (obj.modules) {
-    let modules = obj.modules;
-    Object.keys(modules).forEach(key => {
-      nextNamespaceList.push(...getNextNamespace(modules[key], namespace));
-    });
-  }
-  return nextNamespaceList;
-}
+
 function getCursorInfo(mapGetterAst: File, relativePos: number) {
   let program = mapGetterAst.program;
   let exp: ExpressionStatement = program.body[0] as ExpressionStatement;
@@ -147,7 +128,8 @@ export class storeGettersProvider implements vscode.CompletionItemProvider {
   }
 }
 
-export class storeMapGettersProvider implements vscode.CompletionItemProvider {
+export class storeMapMutationsProvider
+  implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;
@@ -162,7 +144,7 @@ export class storeMapGettersProvider implements vscode.CompletionItemProvider {
     let docContent = document.getText();
     let posIndex = 0;
     // console.time('mapState');
-    let reg = /\bmapGetters\(([\'\"](.*)[\'\"],\s*)?([\[\{])[\s\S]*?([\}\]]).*?\)/;
+    let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?([\[\{])[\s\S]*?([\}\]]).*?\)/;
     let regRes = reg.exec(docContent);
 
     if (!regRes) {
@@ -195,7 +177,7 @@ export class storeMapGettersProvider implements vscode.CompletionItemProvider {
         return NSCompletion;
       });
       if (!cursorInfo.isNamespace) {
-        getterCompletionList = getGettersFromNameSpace(
+        getterCompletionList = getMutationsFromNameSpace(
           this.storeInfo,
           fullNamespace,
         ).map(getterInfo => {
