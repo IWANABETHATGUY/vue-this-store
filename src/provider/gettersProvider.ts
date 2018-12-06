@@ -105,7 +105,7 @@ export class storeGettersProvider implements vscode.CompletionItemProvider {
   constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;
   }
-  public setGettersKeyList(newStoreInfo: ModuleInfo) {
+  public setStoreInfo(newStoreInfo: ModuleInfo) {
     this.storeInfo = newStoreInfo;
   }
   public provideCompletionItems(
@@ -163,7 +163,7 @@ export class storeMapGettersProvider implements vscode.CompletionItemProvider {
   constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;
   }
-  public setStateKeysList(newStoreInfo: ModuleInfo) {
+  public setStoreInfo(newStoreInfo: ModuleInfo) {
     this.storeInfo = newStoreInfo;
   }
   public provideCompletionItems(

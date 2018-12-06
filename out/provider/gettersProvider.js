@@ -94,7 +94,7 @@ class storeGettersProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
     }
-    setGettersKeyList(newStoreInfo) {
+    setStoreInfo(newStoreInfo) {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position, token) {
@@ -140,7 +140,7 @@ class storeMapGettersProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
     }
-    setStateKeysList(newStoreInfo) {
+    setStoreInfo(newStoreInfo) {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position) {

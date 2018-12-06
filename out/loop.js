@@ -68,9 +68,10 @@ class VueThis$Store {
     restart() {
         this._statusBarItem.setStatus(0);
         let [_, storeInfo, setStoreActionStatus] = this.startFromEntry();
-        this._stateProvider.setStateKeysList(storeInfo);
-        this._mapStateProvider.setStateKeysList(storeInfo);
-        this._gettersProvider.setGettersKeyList(storeInfo);
+        this._stateProvider.setStoreInfo(storeInfo);
+        this._mapStateProvider.setStoreInfo(storeInfo);
+        this._gettersProvider.setStoreInfo(storeInfo);
+        this._mapGettersProvider.setStoreInfo(storeInfo);
         if (setStoreActionStatus === -1) {
             this._outputChannel.clear();
         }

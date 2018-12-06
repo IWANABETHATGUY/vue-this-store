@@ -6,7 +6,7 @@ class storeStateProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
     }
-    setStateKeysList(newStoreInfo) {
+    setStoreInfo(newStoreInfo) {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position, token) {
@@ -46,7 +46,7 @@ class storeMapStateProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
     }
-    setStateKeysList(newStoreInfo) {
+    setStoreInfo(newStoreInfo) {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position) {
