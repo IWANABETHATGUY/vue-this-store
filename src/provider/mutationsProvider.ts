@@ -8,6 +8,8 @@ import {
   CallExpression,
   ArrayExpression,
   StringLiteral,
+  ObjectProperty,
+  Identifier,
 } from '@babel/types';
 function getPositionIndex(doc: vscode.TextDocument, position: vscode.Position) {
   let docContent = doc.getText();
@@ -24,13 +26,31 @@ function getCommitCursorInfo(commitAst: File, relativePos: number) {
   let exp: ExpressionStatement = program.body[0] as ExpressionStatement;
   let callExp: CallExpression = exp.expression as CallExpression;
   let args = callExp.arguments;
-  if (args.length === 1) {
-    let firstArg = args[0];
-    if (firstArg.type === 'StringLiteral') {
-      if (relativePos >= firstArg.start && relativePos < firstArg.end) {
+  let firstArg = args[0];
+  if (firstArg.type === 'StringLiteral') {
+    if (relativePos >= firstArg.start && relativePos < firstArg.end) {
+      return {
+        isNamespace: false,
+        namespace: firstArg.value
+          .split('/')
+          .filter(ns => ns.length)
+          .join('.'),
+      };
+    }
+  } else if (firstArg.type === 'ObjectExpression') {
+    let typeProperty = firstArg.properties.filter(
+      (property: ObjectProperty) => {
+        let key: Identifier = property.key as Identifier;
+        return key.name === 'type';
+      },
+    )[0];
+    if (typeProperty) {
+      let value: StringLiteral = (typeProperty as ObjectProperty)
+        .value as StringLiteral;
+      if (relativePos >= value.start && relativePos < value.end) {
         return {
           isNamespace: false,
-          namespace: firstArg.value
+          namespace: value.value
             .split('/')
             .filter(ns => ns.length)
             .join('.'),
@@ -38,6 +58,7 @@ function getCommitCursorInfo(commitAst: File, relativePos: number) {
       }
     }
   }
+  return null;
 }
 function getMutationsFromNameSpace(obj: ModuleInfo, namespace: string) {
   // debugger;

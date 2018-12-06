@@ -18,13 +18,30 @@ function getCommitCursorInfo(commitAst, relativePos) {
     let exp = program.body[0];
     let callExp = exp.expression;
     let args = callExp.arguments;
-    if (args.length === 1) {
-        let firstArg = args[0];
-        if (firstArg.type === 'StringLiteral') {
-            if (relativePos >= firstArg.start && relativePos < firstArg.end) {
+    let firstArg = args[0];
+    if (firstArg.type === 'StringLiteral') {
+        if (relativePos >= firstArg.start && relativePos < firstArg.end) {
+            return {
+                isNamespace: false,
+                namespace: firstArg.value
+                    .split('/')
+                    .filter(ns => ns.length)
+                    .join('.'),
+            };
+        }
+    }
+    else if (firstArg.type === 'ObjectExpression') {
+        let typeProperty = firstArg.properties.filter((property) => {
+            let key = property.key;
+            return key.name === 'type';
+        })[0];
+        if (typeProperty) {
+            let value = typeProperty
+                .value;
+            if (relativePos >= value.start && relativePos < value.end) {
                 return {
                     isNamespace: false,
-                    namespace: firstArg.value
+                    namespace: value.value
                         .split('/')
                         .filter(ns => ns.length)
                         .join('.'),
@@ -32,6 +49,7 @@ function getCommitCursorInfo(commitAst, relativePos) {
             }
         }
     }
+    return null;
 }
 function getMutationsFromNameSpace(obj, namespace) {
     // debugger;
