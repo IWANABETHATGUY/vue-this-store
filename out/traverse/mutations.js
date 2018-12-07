@@ -29,6 +29,7 @@ function walkMutationsFile(base, relative = '') {
     let exportDefault = ast.program.body.filter(item => item.type === 'ExportDefaultDeclaration')[0];
     if (exportDefault) {
         let EvalMap = {};
+        let pathSet = new Set();
         exportDefault.declaration.properties.forEach((property) => {
             let key = property.key;
             if (property.computed) {
@@ -36,12 +37,12 @@ function walkMutationsFile(base, relative = '') {
                     property.key.name = defineAstMap[key.name]
                         .init.value;
                 }
-                else {
+                else if (moduleOrPathMap[key.name]) {
                     EvalMap[key.name] = '';
+                    pathSet.add(moduleOrPathMap[key.name]);
                 }
             }
         });
-        let pathSet = new Set(Object.keys(moduleOrPathMap).map(key => moduleOrPathMap[key]));
         pathSet.forEach(path => {
             evalFromPath(base, path, EvalMap);
         });

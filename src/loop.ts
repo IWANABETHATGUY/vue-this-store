@@ -45,6 +45,7 @@ export default class VueThis$Store {
   private _mapMutationsProvider: storeMapMutationsProvider;
   private _mutationsProvider: storeMutationsProvider;
   constructor(ctx: ExtensionContext, rootPath: string) {
+    console.time('performance');
     this._extensionContext = ctx;
     if (rootPath === undefined) {
       return;
@@ -54,6 +55,7 @@ export default class VueThis$Store {
     this._entrancePath = path.resolve(this._rootPath, 'src/main.js');
     this.initCommands();
     this.start();
+    console.timeEnd('performance');
   }
 
   private initCommands() {
@@ -81,6 +83,7 @@ export default class VueThis$Store {
       storeInfo,
       setStoreActionStatus,
     ] = this.startFromEntry();
+    // debugger;
     this._statusBarItem.setStatus(setStoreActionStatus);
     this._watcher = generateWatcher(storeAbsolutePath);
 

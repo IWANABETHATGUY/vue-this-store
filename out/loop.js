@@ -29,6 +29,7 @@ class VueThis$Store {
         this._outputChannel = vscode_1.window.createOutputChannel('VueThis$Store');
         this._statusBarItem = new statusBarItem_1.VueThisStoreStatusBarItem();
         this._watcher = null;
+        console.time('performance');
         this._extensionContext = ctx;
         if (rootPath === undefined) {
             return;
@@ -39,6 +40,7 @@ class VueThis$Store {
         this._entrancePath = path.resolve(this._rootPath, 'src/main.js');
         this.initCommands();
         this.start();
+        console.timeEnd('performance');
     }
     initCommands() {
         let root = this._rootPath;
@@ -55,6 +57,7 @@ class VueThis$Store {
     start() {
         this._extensionContext.subscriptions.push(this._statusBarItem);
         let [storeAbsolutePath, storeInfo, setStoreActionStatus,] = this.startFromEntry();
+        // debugger;
         this._statusBarItem.setStatus(setStoreActionStatus);
         this._watcher = watcher_1.generateWatcher(storeAbsolutePath);
         this._stateProvider = new stateProvider_1.storeStateProvider(storeInfo);

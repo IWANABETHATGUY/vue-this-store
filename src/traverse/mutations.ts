@@ -44,6 +44,7 @@ export function walkMutationsFile(base: string, relative: string = '') {
   )[0] as ExportDefaultDeclaration;
   if (exportDefault) {
     let EvalMap = {};
+    let pathSet = new Set();
     (exportDefault.declaration as ObjectExpression).properties.forEach(
       (property: ObjectMethod) => {
         let key: Identifier = property.key;
@@ -51,15 +52,14 @@ export function walkMutationsFile(base: string, relative: string = '') {
           if (defineAstMap[key.name]) {
             property.key.name = ((defineAstMap[key.name] as VariableDeclarator)
               .init as StringLiteral).value;
-          } else {
+          } else if (moduleOrPathMap[key.name]) {
             EvalMap[key.name] = '';
+            pathSet.add(moduleOrPathMap[key.name]);
           }
         }
       },
     );
-    let pathSet = new Set(
-      Object.keys(moduleOrPathMap).map(key => moduleOrPathMap[key]),
-    );
+
     pathSet.forEach(path => {
       evalFromPath(base, path, EvalMap);
     });

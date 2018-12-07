@@ -13,6 +13,9 @@ function getPositionIndex(doc, position) {
     posIndex += position.character;
     return posIndex;
 }
+function whichCommit(resMatch, posIndex) {
+    return resMatch.filter(match => posIndex >= match.index && posIndex < match.index + match[0].length)[0];
+}
 function getCommitCursorInfo(commitAst, relativePos) {
     let program = commitAst.program;
     let exp = program.body[0];
@@ -127,19 +130,27 @@ class storeMutationsProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position, token) {
-        let lineContent = document.lineAt(position);
-        let trimLineExpressions = lineContent.text;
+        let docContent = document.getText();
         // TODO: getters没有对象的说法，只能通过['namespace/namespace/somegetters']的方式访问
-        let reg = /((?:this\.)?(?:\$store\.)commit\(.*\))/;
-        let regRes = reg.exec(trimLineExpressions);
+        let reg = /((?:this\.)?(?:\$store\.)\n?commit\([\s\S]*?\))/g;
+        let match = null;
+        let matchList = [];
         // debugger;
-        if (!regRes) {
+        console.time('commitMatch');
+        while ((match = reg.exec(docContent))) {
+            matchList.push(match);
+        }
+        // debugger;
+        if (!matchList.length) {
             return undefined;
         }
-        let commitExpression = regRes[1];
-        let commitAst = parser_1.parse(commitExpression);
-        let posIndex = position.character;
-        let cursorInfo = getCommitCursorInfo(commitAst, posIndex - regRes.index);
+        let posIndex = getPositionIndex(document, position);
+        let commitExpression = whichCommit(matchList, posIndex);
+        if (!commitExpression)
+            return undefined;
+        let commitAst = parser_1.parse(commitExpression[0]);
+        let cursorInfo = getCommitCursorInfo(commitAst, posIndex - commitExpression.index);
+        console.timeEnd('commitMatch');
         if (cursorInfo) {
             // debugger;
             let fullNamespace = cursorInfo.namespace;
