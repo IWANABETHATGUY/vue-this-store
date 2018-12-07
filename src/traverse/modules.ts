@@ -166,7 +166,6 @@ export function parseModules(
   let infoObj: ModulesInfo = {};
   objAst.properties.forEach((property: ObjectProperty) => {
     let key: Identifier = property.key as Identifier;
-    // TODO:  这里需要注意， modules仍然可能从外部文件引入
     let namespaceProperty: ObjectProperty;
     let value;
     if (property.value.type === 'ObjectExpression') {

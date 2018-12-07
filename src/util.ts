@@ -76,7 +76,6 @@ function getLocalFromModuleOrPathMap(
   });
   return localName;
 }
-// TODO:  这里是将store|moduel中的
 
 /**
  * 通过ast获取所有的import内容
