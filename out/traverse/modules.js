@@ -111,12 +111,29 @@ function walkModulesFile(base, relative = '') {
 }
 exports.walkModulesFile = walkModulesFile;
 function parseModules({ objAst, m2pmap, defmap, cwf, lineOfFile }, namespace) {
+    // debugger;
     let infoObj = {};
     objAst.properties.forEach((property) => {
         let key = property.key;
         // TODO:  这里需要注意， modules仍然可能从外部文件引入
-        let value = property.value;
-        let namespaceProperty = value.properties.filter((prop) => prop.key.name === 'namespaced')[0];
+        let namespaceProperty;
+        let value;
+        if (property.value.type === 'ObjectExpression') {
+            value = property.value;
+        }
+        else if (property.shorthand) {
+            if (m2pmap[key.name]) {
+                let { objAst: objAstt, m2pmap: m2pmapp, defmap: defmapp, cwf: cwff, lineOfFile: lineOfFilee, } = walkModulesFile(cwf, m2pmap[key.name]);
+                m2pmap = m2pmapp;
+                defmap = defmapp;
+                cwf = cwff;
+                lineOfFile = lineOfFilee;
+                value = objAstt;
+            }
+        }
+        if (value) {
+            namespaceProperty = value.properties.filter((prop) => prop.key.name === 'namespaced')[0];
+        }
         let needNewSpace = namespaceProperty && namespaceProperty.value.value;
         infoObj[key.name] = {
             namespace: needNewSpace

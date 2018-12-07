@@ -145,7 +145,6 @@ export function walkModulesFile(base: string, relative: string = '') {
   let ast: File = getAst(fileContent);
   let defineAstMap: StoreAstMap = getFileDefinationAstMap(ast);
   let moduleOrPathMap: ModuleOrPathMap = getModuleOrPathMap(ast);
-
   let exportDefault: ExportDefaultDeclaration = ast.program.body.filter(
     item => item.type === 'ExportDefaultDeclaration',
   )[0] as ExportDefaultDeclaration;
@@ -163,14 +162,36 @@ export function parseModules(
   { objAst, m2pmap, defmap, cwf, lineOfFile }: ParseModuleParam,
   namespace: string,
 ) {
+  // debugger;
   let infoObj: ModulesInfo = {};
   objAst.properties.forEach((property: ObjectProperty) => {
     let key: Identifier = property.key as Identifier;
     // TODO:  这里需要注意， modules仍然可能从外部文件引入
-    let value: ObjectExpression = property.value as ObjectExpression;
-    let namespaceProperty: ObjectProperty = value.properties.filter(
-      (prop: ObjectProperty) => prop.key.name === 'namespaced',
-    )[0] as ObjectProperty;
+    let namespaceProperty: ObjectProperty;
+    let value;
+    if (property.value.type === 'ObjectExpression') {
+      value = property.value as ObjectExpression;
+    } else if (property.shorthand) {
+      if (m2pmap[key.name]) {
+        let {
+          objAst: objAstt,
+          m2pmap: m2pmapp,
+          defmap: defmapp,
+          cwf: cwff,
+          lineOfFile: lineOfFilee,
+        } = walkModulesFile(cwf, m2pmap[key.name]);
+        m2pmap = m2pmapp;
+        defmap = defmapp;
+        cwf = cwff;
+        lineOfFile = lineOfFilee;
+        value = objAstt;
+      }
+    }
+    if (value) {
+      namespaceProperty = value.properties.filter(
+        (prop: ObjectProperty) => prop.key.name === 'namespaced',
+      )[0] as ObjectProperty;
+    }
     let needNewSpace: boolean =
       namespaceProperty && (namespaceProperty.value as BooleanLiteral).value;
 
@@ -183,6 +204,7 @@ export function parseModules(
             .join('.')
         : namespace,
     };
+
     parseModuleAst(
       {
         objAst: value,
