@@ -116,6 +116,7 @@ export default class VueThis$Store {
         this._mapStateProvider,
         "'",
         '"',
+        '/',
       ),
       languages.registerCompletionItemProvider(
         'vue',
