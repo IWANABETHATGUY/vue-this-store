@@ -19,6 +19,7 @@ const watcher_1 = require("./watcher");
 const stateProvider_1 = require("./provider/stateProvider");
 const gettersProvider_1 = require("./provider/gettersProvider");
 const mutationsProvider_1 = require("./provider/mutationsProvider");
+const actionsProvider_1 = require("./provider/actionsProvider");
 const emptyModule = {
     namespace: '',
     state: [],
@@ -66,10 +67,12 @@ class VueThis$Store {
         this._mapGettersProvider = new gettersProvider_1.storeMapGettersProvider(storeInfo);
         this._mutationsProvider = new mutationsProvider_1.storeMutationsProvider(storeInfo);
         this._mapMutationsProvider = new mutationsProvider_1.storeMapMutationsProvider(storeInfo);
+        this._actionsProvider = new actionsProvider_1.storeActionsProvider(storeInfo);
+        this._mapActionsProvider = new actionsProvider_1.storeMapActionsProvider(storeInfo);
         this._watcher.on('change', () => {
             this.restart();
         });
-        this._extensionContext.subscriptions.push(vscode_1.languages.registerCompletionItemProvider('vue', this._stateProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapStateProvider, "'", '"'), vscode_1.languages.registerCompletionItemProvider('vue', this._gettersProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapGettersProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mutationsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapMutationsProvider, "'", '"', '/'));
+        this._extensionContext.subscriptions.push(vscode_1.languages.registerCompletionItemProvider('vue', this._stateProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapStateProvider, "'", '"'), vscode_1.languages.registerCompletionItemProvider('vue', this._gettersProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapGettersProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mutationsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapMutationsProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._actionsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapActionsProvider, "'", '"', '/'));
     }
     restart() {
         this._statusBarItem.setStatus(0);
@@ -81,7 +84,6 @@ class VueThis$Store {
         this._mapMutationsProvider.setStoreInfo(storeInfo);
         this._mutationsProvider.setStoreInfo(storeInfo);
         if (setStoreActionStatus === -1) {
-            this._outputChannel.clear();
         }
         this._statusBarItem.setStatus(setStoreActionStatus);
     }

@@ -41,19 +41,19 @@ function getCommitCursorInfo(commitAst, relativePos) {
     }
     return null;
 }
-function getMutationsFromNameSpace(obj, namespace) {
+function getActionsFromNameSpace(obj, namespace) {
     // debugger;
-    let mutationInfoList = [];
-    if (obj.namespace === namespace && obj.mutations) {
-        mutationInfoList.push(...obj.mutations);
+    let actionInfoList = [];
+    if (obj.namespace === namespace && obj.actions) {
+        actionInfoList.push(...obj.actions);
     }
     if (obj.modules) {
         Object.keys(obj.modules).forEach(key => {
             let curModule = obj.modules[key];
-            mutationInfoList.push(...getMutationsFromNameSpace(curModule, namespace));
+            actionInfoList.push(...getActionsFromNameSpace(curModule, namespace));
         });
     }
-    return mutationInfoList;
+    return actionInfoList;
 }
 function getCursorInfo(mapGetterAst, relativePos) {
     let program = mapGetterAst.program;
@@ -109,7 +109,7 @@ function getCursorInfo(mapGetterAst, relativePos) {
     }
     return null;
 }
-class storeMutationsProvider {
+class storeActionsProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
     }
@@ -118,7 +118,9 @@ class storeMutationsProvider {
     }
     provideCompletionItems(document, position, token) {
         let docContent = document.getText();
-        let reg = /((?:this\.)?(?:\$store\.)\n?commit\([\s\S]*?\))/g;
+        //TODO: export default 也需要判断是否export default的是一个已经顶一个过的变量，而不是一个obj字面量
+        // TODO: getters没有对象的说法，只能通过['namespace/namespace/somegetters']的方式访问
+        let reg = /((?:this\.)?(?:\$store\.)\n?dispatch\([\s\S]*?\))/g;
         let match = null;
         let matchList = [];
         // debugger;
@@ -147,10 +149,10 @@ class storeMutationsProvider {
                 return NSCompletion;
             });
             if (!cursorInfo.isNamespace) {
-                getterCompletionList = getMutationsFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
+                getterCompletionList = getActionsFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
                     let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Property);
                     getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
-                    getterCompletion.detail = 'mutation';
+                    getterCompletion.detail = 'action';
                     return getterCompletion;
                 });
             }
@@ -158,8 +160,8 @@ class storeMutationsProvider {
         }
     }
 }
-exports.storeMutationsProvider = storeMutationsProvider;
-class storeMapMutationsProvider {
+exports.storeActionsProvider = storeActionsProvider;
+class storeMapActionsProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
     }
@@ -169,7 +171,7 @@ class storeMapMutationsProvider {
     provideCompletionItems(document, position) {
         let docContent = document.getText();
         // console.time('mapState');
-        let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?([\[\{])[\s\S]*?([\}\]]).*?\)/;
+        let reg = /\bmapActions\(([\'\"](.*)[\'\"],\s*)?([\[\{])[\s\S]*?([\}\]]).*?\)/;
         let regRes = reg.exec(docContent);
         if (!regRes) {
             return undefined;
@@ -191,10 +193,10 @@ class storeMapMutationsProvider {
                 return NSCompletion;
             });
             if (!cursorInfo.isNamespace) {
-                getterCompletionList = getMutationsFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
+                getterCompletionList = getActionsFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
                     let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Property);
                     getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
-                    getterCompletion.detail = 'mutation';
+                    getterCompletion.detail = 'action';
                     return getterCompletion;
                 });
             }
@@ -203,5 +205,5 @@ class storeMapMutationsProvider {
         return undefined;
     }
 }
-exports.storeMapMutationsProvider = storeMapMutationsProvider;
-//# sourceMappingURL=mutationsProvider.js.map
+exports.storeMapActionsProvider = storeMapActionsProvider;
+//# sourceMappingURL=actionsProvider.js.map

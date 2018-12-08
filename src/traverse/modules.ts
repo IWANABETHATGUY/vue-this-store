@@ -18,6 +18,7 @@ import { StoreAstMap, ModuleOrPathMap } from '../type';
 import { walkFile, parseState } from './state';
 import { parseGetters } from './getters';
 import { parseMutations, walkMutationsFile } from './mutations';
+import { walkActionsFile, parseActions } from './actions';
 
 export interface ModuleInfo {
   namespace: string;
@@ -25,6 +26,7 @@ export interface ModuleInfo {
   state?: any[];
   getters?: any[];
   mutations?: any[];
+  actions?: any[];
   [prop: string]: {};
 }
 export interface ModulesInfo {
@@ -119,7 +121,11 @@ export function parseModuleAst(
         );
         break;
       case 'actions':
-        // parseActions(property.value, m2pmap, defmap);
+        infoObj.actions = getXXXInfo(
+          { property, m2pmap, defmap, cwf, lineOfFile },
+          walkActionsFile,
+          parseActions,
+        );
         break;
       case 'getters':
         infoObj.getters = getXXXInfo(

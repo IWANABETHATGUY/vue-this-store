@@ -1,5 +1,5 @@
 import { ModuleInfo } from '../traverse/modules';
-
+import * as vscode from 'vscode';
 export function getModuleFromPath(
   obj: ModuleInfo,
   path: string[] | undefined,
@@ -35,4 +35,24 @@ export function getNextNamespace(obj: ModuleInfo, namespace: string) {
     });
   }
   return nextNamespaceList;
+}
+export function getPositionIndex(
+  doc: vscode.TextDocument,
+  position: vscode.Position,
+) {
+  let docContent = doc.getText();
+  let posIndex = 0;
+  docContent.split('\n').some((line, index) => {
+    posIndex += line.length + 1;
+    return index >= position.line - 1;
+  });
+  posIndex += position.character;
+  return posIndex;
+}
+
+export function whichCommit(resMatch: RegExpExecArray[], posIndex: number) {
+  return resMatch.filter(
+    match =>
+      posIndex >= match.index && posIndex < match.index + match[0].length,
+  )[0];
 }

@@ -23,6 +23,10 @@ import {
   storeMapMutationsProvider,
   storeMutationsProvider,
 } from './provider/mutationsProvider';
+import {
+  storeActionsProvider,
+  storeMapActionsProvider,
+} from './provider/actionsProvider';
 
 type setStoreStatus = 1 | -1;
 const emptyModule: ModuleInfo = {
@@ -44,6 +48,9 @@ export default class VueThis$Store {
   private _mapGettersProvider: storeMapGettersProvider;
   private _mapMutationsProvider: storeMapMutationsProvider;
   private _mutationsProvider: storeMutationsProvider;
+  private _actionsProvider: storeActionsProvider;
+  private _mapActionsProvider: storeMapActionsProvider;
+
   constructor(ctx: ExtensionContext, rootPath: string) {
     console.time('performance');
     this._extensionContext = ctx;
@@ -93,6 +100,8 @@ export default class VueThis$Store {
     this._mapGettersProvider = new storeMapGettersProvider(storeInfo);
     this._mutationsProvider = new storeMutationsProvider(storeInfo);
     this._mapMutationsProvider = new storeMapMutationsProvider(storeInfo);
+    this._actionsProvider = new storeActionsProvider(storeInfo);
+    this._mapActionsProvider = new storeMapActionsProvider(storeInfo);
 
     this._watcher.on('change', () => {
       this.restart();
@@ -132,6 +141,20 @@ export default class VueThis$Store {
         '"',
         '/',
       ),
+      languages.registerCompletionItemProvider(
+        'vue',
+        this._actionsProvider,
+        '"',
+        "'",
+        '/',
+      ),
+      languages.registerCompletionItemProvider(
+        'vue',
+        this._mapActionsProvider,
+        "'",
+        '"',
+        '/',
+      ),
     );
   }
 
@@ -145,7 +168,6 @@ export default class VueThis$Store {
     this._mapMutationsProvider.setStoreInfo(storeInfo);
     this._mutationsProvider.setStoreInfo(storeInfo);
     if (setStoreActionStatus === -1) {
-      this._outputChannel.clear();
     }
     this._statusBarItem.setStatus(setStoreActionStatus);
   }

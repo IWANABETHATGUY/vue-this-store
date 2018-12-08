@@ -33,4 +33,19 @@ function getNextNamespace(obj, namespace) {
     return nextNamespaceList;
 }
 exports.getNextNamespace = getNextNamespace;
+function getPositionIndex(doc, position) {
+    let docContent = doc.getText();
+    let posIndex = 0;
+    docContent.split('\n').some((line, index) => {
+        posIndex += line.length + 1;
+        return index >= position.line - 1;
+    });
+    posIndex += position.character;
+    return posIndex;
+}
+exports.getPositionIndex = getPositionIndex;
+function whichCommit(resMatch, posIndex) {
+    return resMatch.filter(match => posIndex >= match.index && posIndex < match.index + match[0].length)[0];
+}
+exports.whichCommit = whichCommit;
 //# sourceMappingURL=util.js.map

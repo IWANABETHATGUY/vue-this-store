@@ -56,19 +56,19 @@ function getCommitCursorInfo(commitAst: File, relativePos: number) {
   }
   return null;
 }
-function getMutationsFromNameSpace(obj: ModuleInfo, namespace: string) {
+function getActionsFromNameSpace(obj: ModuleInfo, namespace: string) {
   // debugger;
-  let mutationInfoList = [];
-  if (obj.namespace === namespace && obj.mutations) {
-    mutationInfoList.push(...obj.mutations);
+  let actionInfoList = [];
+  if (obj.namespace === namespace && obj.actions) {
+    actionInfoList.push(...obj.actions);
   }
   if (obj.modules) {
     Object.keys(obj.modules).forEach(key => {
       let curModule = obj.modules[key];
-      mutationInfoList.push(...getMutationsFromNameSpace(curModule, namespace));
+      actionInfoList.push(...getActionsFromNameSpace(curModule, namespace));
     });
   }
-  return mutationInfoList;
+  return actionInfoList;
 }
 
 function getCursorInfo(mapGetterAst: File, relativePos: number) {
@@ -126,7 +126,7 @@ function getCursorInfo(mapGetterAst: File, relativePos: number) {
   }
   return null;
 }
-export class storeMutationsProvider implements vscode.CompletionItemProvider {
+export class storeActionsProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;
@@ -140,7 +140,9 @@ export class storeMutationsProvider implements vscode.CompletionItemProvider {
     token: vscode.CancellationToken,
   ): vscode.CompletionItem[] {
     let docContent = document.getText();
-    let reg = /((?:this\.)?(?:\$store\.)\n?commit\([\s\S]*?\))/g;
+    //TODO: export default 也需要判断是否export default的是一个已经顶一个过的变量，而不是一个obj字面量
+    // TODO: getters没有对象的说法，只能通过['namespace/namespace/somegetters']的方式访问
+    let reg = /((?:this\.)?(?:\$store\.)\n?dispatch\([\s\S]*?\))/g;
     let match = null;
     let matchList = [];
     // debugger;
@@ -177,7 +179,7 @@ export class storeMutationsProvider implements vscode.CompletionItemProvider {
         return NSCompletion;
       });
       if (!cursorInfo.isNamespace) {
-        getterCompletionList = getMutationsFromNameSpace(
+        getterCompletionList = getActionsFromNameSpace(
           this.storeInfo,
           fullNamespace,
         ).map(getterInfo => {
@@ -188,7 +190,7 @@ export class storeMutationsProvider implements vscode.CompletionItemProvider {
           getterCompletion.documentation = new vscode.MarkdownString(
             '```' + getterInfo.defination + '```',
           );
-          getterCompletion.detail = 'mutation';
+          getterCompletion.detail = 'action';
           return getterCompletion;
         });
       }
@@ -197,8 +199,7 @@ export class storeMutationsProvider implements vscode.CompletionItemProvider {
   }
 }
 
-export class storeMapMutationsProvider
-  implements vscode.CompletionItemProvider {
+export class storeMapActionsProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;
@@ -212,7 +213,7 @@ export class storeMapMutationsProvider
   ): vscode.CompletionItem[] {
     let docContent = document.getText();
     // console.time('mapState');
-    let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?([\[\{])[\s\S]*?([\}\]]).*?\)/;
+    let reg = /\bmapActions\(([\'\"](.*)[\'\"],\s*)?([\[\{])[\s\S]*?([\}\]]).*?\)/;
     let regRes = reg.exec(docContent);
 
     if (!regRes) {
@@ -242,7 +243,7 @@ export class storeMapMutationsProvider
         return NSCompletion;
       });
       if (!cursorInfo.isNamespace) {
-        getterCompletionList = getMutationsFromNameSpace(
+        getterCompletionList = getActionsFromNameSpace(
           this.storeInfo,
           fullNamespace,
         ).map(getterInfo => {
@@ -253,7 +254,7 @@ export class storeMapMutationsProvider
           getterCompletion.documentation = new vscode.MarkdownString(
             '```' + getterInfo.defination + '```',
           );
-          getterCompletion.detail = 'mutation';
+          getterCompletion.detail = 'action';
           return getterCompletion;
         });
       }

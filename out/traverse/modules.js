@@ -5,6 +5,7 @@ const types_1 = require("@babel/types");
 const state_1 = require("./state");
 const getters_1 = require("./getters");
 const mutations_1 = require("./mutations");
+const actions_1 = require("./actions");
 function getXXXInfo({ property, m2pmap, defmap, cwf, lineOfFile }, walkFileFn, parseFn) {
     let infoList = [];
     if (property.shorthand) {
@@ -62,7 +63,7 @@ function parseModuleAst({ objAst, m2pmap, defmap, cwf, lineOfFile }, infoObj) {
                 infoObj.state = getXXXInfo({ property, m2pmap, defmap, cwf, lineOfFile }, state_1.walkFile, state_1.parseState);
                 break;
             case 'actions':
-                // parseActions(property.value, m2pmap, defmap);
+                infoObj.actions = getXXXInfo({ property, m2pmap, defmap, cwf, lineOfFile }, actions_1.walkActionsFile, actions_1.parseActions);
                 break;
             case 'getters':
                 infoObj.getters = getXXXInfo({ property, m2pmap, defmap, cwf, lineOfFile }, state_1.walkFile, getters_1.parseGetters);
