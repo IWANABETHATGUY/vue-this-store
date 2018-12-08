@@ -1,11 +1,6 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
-import {
-  getModuleFromPath,
-  getNextNamespace,
-  getPositionIndex,
-  whichCommit,
-} from './util';
+import { getNextNamespace, getPositionIndex, whichCommit } from './util';
 import { parse } from '@babel/parser';
 import {
   File,

@@ -26,13 +26,19 @@ function getXXXInfo({ property, m2pmap, defmap, cwf, lineOfFile }, walkFileFn, p
     }
     return infoList;
 }
-function setModulesInfo({ property, m2pmap, defmap, cwf, lineOfFile, namespace }, walkFileFn, parseFn) {
+function getModulesInfo({ property, m2pmap, defmap, cwf, lineOfFile, namespace, }, walkFileFn, parseFn) {
     let modules = {};
+    let config = {
+        lineOfFile,
+        m2pmap,
+        defmap,
+        cwf,
+    };
     if (property.shorthand) {
         let value = property.value;
         if (m2pmap[value.name]) {
-            let { cwf: cwff, m2pmap: m2pmapp, objAst: objAstt, defmap: defmapp, lineOfFile: lineOfFilee, } = walkModulesFile(cwf, m2pmap[value.name]);
-            modules = parseModules({
+            let { cwf: cwff, m2pmap: m2pmapp, objAst: objAstt, defmap: defmapp, lineOfFile: lineOfFilee, } = walkFileFn(cwf, m2pmap[value.name]);
+            modules = parseFn({
                 objAst: objAstt,
                 m2pmap: m2pmapp,
                 defmap: defmapp,
@@ -41,46 +47,34 @@ function setModulesInfo({ property, m2pmap, defmap, cwf, lineOfFile, namespace }
             }, namespace);
         }
         else if (defmap[value.name]) {
-            modules = parseModules({
-                objAst: defmap[value.name],
-                lineOfFile,
-                m2pmap,
-                defmap,
-                cwf,
-            }, namespace);
+            modules = parseFn(Object.assign({ objAst: defmap[value.name] }, config), namespace);
         }
     }
     else {
-        // parseState(value, m2pmap, defmap);
+        if (property.value.type === 'ObjectExpression') {
+            modules = parseFn(Object.assign({ objAst: property.value }, config), namespace);
+        }
     }
     return modules;
 }
-// TODO: 这了需要重构
 function parseModuleAst({ objAst, m2pmap, defmap, cwf, lineOfFile }, infoObj) {
     objAst.properties.forEach((property) => {
+        let config = { property, m2pmap, defmap, cwf, lineOfFile };
         switch (property.key.name) {
             case 'state':
-                infoObj.state = getXXXInfo({ property, m2pmap, defmap, cwf, lineOfFile }, state_1.walkFile, state_1.parseState);
+                infoObj.state = getXXXInfo(config, state_1.walkFile, state_1.parseState);
                 break;
             case 'actions':
-                infoObj.actions = getXXXInfo({ property, m2pmap, defmap, cwf, lineOfFile }, actions_1.walkActionsFile, actions_1.parseActions);
+                infoObj.actions = getXXXInfo(config, actions_1.walkActionsFile, actions_1.parseActions);
                 break;
             case 'getters':
-                infoObj.getters = getXXXInfo({ property, m2pmap, defmap, cwf, lineOfFile }, state_1.walkFile, getters_1.parseGetters);
+                infoObj.getters = getXXXInfo(config, state_1.walkFile, getters_1.parseGetters);
                 break;
             case 'mutations':
-                infoObj.mutations = getXXXInfo({ property, m2pmap, defmap, cwf, lineOfFile }, mutations_1.walkMutationsFile, state_1.parseState);
+                infoObj.mutations = getXXXInfo(config, mutations_1.walkMutationsFile, state_1.parseState);
                 break;
             case 'modules':
-                infoObj.modules = setModulesInfo({
-                    property,
-                    m2pmap,
-                    defmap,
-                    cwf,
-                    lineOfFile,
-                    namespace: infoObj.namespace,
-                }, walkModulesFile, parseModules);
-                // parseModules(property.value, m2pmap, defmap);
+                infoObj.modules = getModulesInfo(Object.assign({}, config, { namespace: infoObj.namespace }), walkModulesFile, parseModules);
                 break;
             default:
         }
