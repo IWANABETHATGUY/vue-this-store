@@ -75,69 +75,6 @@ function getMutationsFromNameSpace(obj, namespace) {
     }
     return mutationInfoList;
 }
-function getmapMutationsCursorInfo(mapGetterAst, relativePos) {
-    let program = mapGetterAst.program;
-    let exp = program.body[0];
-    let callExp = exp.expression;
-    let args = callExp.arguments;
-    if (args.length === 1) {
-        let firstArg = args[0];
-        if (firstArg.type === 'ArrayExpression') {
-            let cursorAtExp = firstArg.elements.filter(item => {
-                return relativePos >= item.start && relativePos < item.end;
-            })[0];
-            if (cursorAtExp) {
-                return {
-                    isNamespace: false,
-                    namespace: '',
-                    secondNameSpace: cursorAtExp.value
-                        .split('/')
-                        .filter(ns => ns.length)
-                        .join('.'),
-                };
-            }
-        }
-        else if (firstArg.type === 'StringLiteral') {
-            let cursorAtExp = relativePos >= firstArg.start && relativePos < firstArg.end;
-            if (cursorAtExp) {
-                return {
-                    isNamespace: true,
-                    namespace: firstArg.value,
-                    secondNameSpace: '',
-                };
-            }
-        }
-    }
-    else if (args.length === 2) {
-        let firstArg = args[0];
-        let secondArg = args[1];
-        if (firstArg.type === 'StringLiteral') {
-            if (secondArg.type === 'ArrayExpression') {
-                if (relativePos >= firstArg.start && relativePos < firstArg.end) {
-                    return {
-                        isNamespace: true,
-                        namespace: firstArg.value,
-                        secondNameSpace: '',
-                    };
-                }
-                let cursorAtExp = secondArg.elements.filter(item => {
-                    return relativePos >= item.start && relativePos < item.end;
-                })[0];
-                if (cursorAtExp) {
-                    return {
-                        isNamespace: false,
-                        namespace: firstArg.value,
-                        secondNameSpace: cursorAtExp.value
-                            .split('/')
-                            .filter(ns => ns.length)
-                            .join('.'),
-                    };
-                }
-            }
-        }
-    }
-    return null;
-}
 class storeMutationsProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
@@ -179,7 +116,7 @@ class storeMapMutationsProvider {
     }
     provideCompletionItems(document, position) {
         let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
-        let cursorInfo = getCursorInfoFromRegExp(reg, document, position, getmapMutationsCursorInfo);
+        let cursorInfo = getCursorInfoFromRegExp(reg, document, position, util_1.getMapGMACursorInfo);
         if (cursorInfo) {
             let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
                 .map(item => item.split('/').join('.'))

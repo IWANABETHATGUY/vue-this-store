@@ -1,6 +1,11 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
-import { getNextNamespace, getPositionIndex, whichCommit } from './util';
+import {
+  getNextNamespace,
+  getPositionIndex,
+  whichCommit,
+  getMapGMACursorInfo,
+} from './util';
 import { parse } from '@babel/parser';
 import {
   File,
@@ -90,70 +95,6 @@ function getMutationsFromNameSpace(obj: ModuleInfo, namespace: string) {
   return mutationInfoList;
 }
 
-function getmapMutationsCursorInfo(mapGetterAst: File, relativePos: number) {
-  let program = mapGetterAst.program;
-  let exp: ExpressionStatement = program.body[0] as ExpressionStatement;
-  let callExp: CallExpression = exp.expression as CallExpression;
-  let args = callExp.arguments;
-  if (args.length === 1) {
-    let firstArg = args[0];
-    if (firstArg.type === 'ArrayExpression') {
-      let cursorAtExp = (firstArg as ArrayExpression).elements.filter(item => {
-        return relativePos >= item.start && relativePos < item.end;
-      })[0];
-      if (cursorAtExp) {
-        return {
-          isNamespace: false,
-          namespace: '',
-          secondNameSpace: (cursorAtExp as StringLiteral).value
-            .split('/')
-            .filter(ns => ns.length)
-            .join('.'),
-        };
-      }
-    } else if (firstArg.type === 'StringLiteral') {
-      let cursorAtExp =
-        relativePos >= firstArg.start && relativePos < firstArg.end;
-      if (cursorAtExp) {
-        return {
-          isNamespace: true,
-          namespace: firstArg.value,
-          secondNameSpace: '',
-        };
-      }
-    }
-  } else if (args.length === 2) {
-    let firstArg = args[0];
-    let secondArg = args[1];
-    if (firstArg.type === 'StringLiteral') {
-      if (secondArg.type === 'ArrayExpression') {
-        if (relativePos >= firstArg.start && relativePos < firstArg.end) {
-          return {
-            isNamespace: true,
-            namespace: firstArg.value,
-            secondNameSpace: '',
-          };
-        }
-        let cursorAtExp = (secondArg as ArrayExpression).elements.filter(
-          item => {
-            return relativePos >= item.start && relativePos < item.end;
-          },
-        )[0];
-        if (cursorAtExp) {
-          return {
-            isNamespace: false,
-            namespace: firstArg.value,
-            secondNameSpace: (cursorAtExp as StringLiteral).value
-              .split('/')
-              .filter(ns => ns.length)
-              .join('.'),
-          };
-        }
-      }
-    }
-  }
-  return null;
-}
 export class storeMutationsProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
@@ -228,7 +169,7 @@ export class storeMapMutationsProvider
       reg,
       document,
       position,
-      getmapMutationsCursorInfo,
+      getMapGMACursorInfo,
     );
 
     if (cursorInfo) {

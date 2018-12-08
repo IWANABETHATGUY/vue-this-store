@@ -56,70 +56,6 @@ function getActionsFromNameSpace(obj, namespace) {
     }
     return actionInfoList;
 }
-function getmapActionsCursorInfo(mapGetterAst, relativePos) {
-    let program = mapGetterAst.program;
-    let exp = program.body[0];
-    let callExp = exp.expression;
-    let args = callExp.arguments;
-    if (args.length === 1) {
-        let firstArg = args[0];
-        if (firstArg.type === 'ArrayExpression') {
-            let cursorAtExp = firstArg.elements.filter(item => {
-                return relativePos >= item.start && relativePos < item.end;
-            })[0];
-            if (cursorAtExp) {
-                return {
-                    isNamespace: false,
-                    namespace: '',
-                    secondNameSpace: cursorAtExp.value
-                        .split('/')
-                        .filter(ns => ns.length)
-                        .join('.'),
-                };
-            }
-        }
-        else if (firstArg.type === 'StringLiteral') {
-            let cursorAtExp = relativePos >= firstArg.start && relativePos < firstArg.end;
-            // debugger;
-            if (cursorAtExp) {
-                return {
-                    isNamespace: true,
-                    namespace: firstArg.value,
-                    secondNameSpace: '',
-                };
-            }
-        }
-    }
-    else if (args.length === 2) {
-        let firstArg = args[0];
-        let secondArg = args[1];
-        if (firstArg.type === 'StringLiteral') {
-            if (secondArg.type === 'ArrayExpression') {
-                if (relativePos >= firstArg.start && relativePos < firstArg.end) {
-                    return {
-                        isNamespace: true,
-                        namespace: firstArg.value,
-                        secondNameSpace: '',
-                    };
-                }
-                let cursorAtExp = secondArg.elements.filter(item => {
-                    return relativePos >= item.start && relativePos < item.end;
-                })[0];
-                if (cursorAtExp) {
-                    return {
-                        isNamespace: false,
-                        namespace: firstArg.value,
-                        secondNameSpace: cursorAtExp.value
-                            .split('/')
-                            .filter(ns => ns.length)
-                            .join('.'),
-                    };
-                }
-            }
-        }
-    }
-    return null;
-}
 class storeActionsProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
@@ -177,12 +113,9 @@ class storeMapActionsProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position) {
-        let docContent = document.getText();
-        // console.time('mapState');
         let reg = /\bmapActions\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
-        let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, getmapActionsCursorInfo);
+        let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, util_1.getMapGMACursorInfo);
         if (cursorInfo) {
-            // debugger;
             let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
                 .map(item => item.split('/').join('.'))
                 .filter(item => item.length)
