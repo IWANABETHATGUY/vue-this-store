@@ -17,6 +17,29 @@ import {
   Identifier,
 } from '@babel/types';
 
+export function getCursorInfoFromRegExp(
+  reg: RegExp,
+  document: vscode.TextDocument,
+  position: vscode.Position,
+  parseMatchFn: Function,
+) {
+  let docContent = document.getText();
+
+  let match = null;
+  let matchList = [];
+  while ((match = reg.exec(docContent))) {
+    matchList.push(match);
+  }
+  if (!matchList.length) {
+    return undefined;
+  }
+  let posIndex = getPositionIndex(document, position);
+  let commitExpression = whichCommit(matchList, posIndex);
+  if (!commitExpression) return undefined;
+  let commitAst = parse(commitExpression[0]);
+  let cursorInfo = parseMatchFn(commitAst, posIndex - commitExpression.index);
+  return cursorInfo;
+}
 function getCommitCursorInfo(commitAst: File, relativePos: number) {
   let program = commitAst.program;
   let exp: ExpressionStatement = program.body[0] as ExpressionStatement;
@@ -31,6 +54,7 @@ function getCommitCursorInfo(commitAst: File, relativePos: number) {
           .split('/')
           .filter(ns => ns.length)
           .join('.'),
+        secondNameSpace: '',
       };
     }
   } else if (firstArg.type === 'ObjectExpression') {
@@ -50,6 +74,7 @@ function getCommitCursorInfo(commitAst: File, relativePos: number) {
             .split('/')
             .filter(ns => ns.length)
             .join('.'),
+          secondNameSpace: '',
         };
       }
     }
@@ -57,7 +82,6 @@ function getCommitCursorInfo(commitAst: File, relativePos: number) {
   return null;
 }
 function getMutationsFromNameSpace(obj: ModuleInfo, namespace: string) {
-  // debugger;
   let mutationInfoList = [];
   if (obj.namespace === namespace && obj.mutations) {
     mutationInfoList.push(...obj.mutations);
@@ -71,7 +95,7 @@ function getMutationsFromNameSpace(obj: ModuleInfo, namespace: string) {
   return mutationInfoList;
 }
 
-function getCursorInfo(mapGetterAst: File, relativePos: number) {
+function getmapMutationsCursorInfo(mapGetterAst: File, relativePos: number) {
   let program = mapGetterAst.program;
   let exp: ExpressionStatement = program.body[0] as ExpressionStatement;
   let callExp: CallExpression = exp.expression as CallExpression;
@@ -82,7 +106,6 @@ function getCursorInfo(mapGetterAst: File, relativePos: number) {
       let cursorAtExp = (firstArg as ArrayExpression).elements.filter(item => {
         return relativePos >= item.start && relativePos < item.end;
       })[0];
-      // debugger;
       if (cursorAtExp) {
         return {
           isNamespace: false,
@@ -96,10 +119,9 @@ function getCursorInfo(mapGetterAst: File, relativePos: number) {
     } else if (firstArg.type === 'StringLiteral') {
       let cursorAtExp =
         relativePos >= firstArg.start && relativePos < firstArg.end;
-      // debugger;
       if (cursorAtExp) {
         return {
-          isNamespace: false,
+          isNamespace: true,
           namespace: firstArg.value,
           secondNameSpace: '',
         };
@@ -150,31 +172,15 @@ export class storeMutationsProvider implements vscode.CompletionItemProvider {
     position: vscode.Position,
     token: vscode.CancellationToken,
   ): vscode.CompletionItem[] {
-    let docContent = document.getText();
     // TODO: getters没有对象的说法，只能通过['namespace/namespace/somegetters']的方式访问
     let reg = /((?:this\.)?(?:\$store\.)\n?commit\([\s\S]*?\))/g;
-    let match = null;
-    let matchList = [];
-    // debugger;
-    console.time('commitMatch');
-    while ((match = reg.exec(docContent))) {
-      matchList.push(match);
-    }
-    // debugger;
-    if (!matchList.length) {
-      return undefined;
-    }
-    let posIndex = getPositionIndex(document, position);
-    let commitExpression = whichCommit(matchList, posIndex);
-    if (!commitExpression) return undefined;
-    let commitAst = parse(commitExpression[0]);
-    let cursorInfo = getCommitCursorInfo(
-      commitAst,
-      posIndex - commitExpression.index,
+    let cursorInfo = getCursorInfoFromRegExp(
+      reg,
+      document,
+      position,
+      getCommitCursorInfo,
     );
-    console.timeEnd('commitMatch');
     if (cursorInfo) {
-      // debugger;
       let fullNamespace = cursorInfo.namespace;
       let getterCompletionList = [];
       let namespaceCompletionList = getNextNamespace(
@@ -222,21 +228,15 @@ export class storeMapMutationsProvider
     document: vscode.TextDocument,
     position: vscode.Position,
   ): vscode.CompletionItem[] {
-    let docContent = document.getText();
-    // console.time('mapState');
-    let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/;
-    let regRes = reg.exec(docContent);
+    let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
+    let cursorInfo = getCursorInfoFromRegExp(
+      reg,
+      document,
+      position,
+      getmapMutationsCursorInfo,
+    );
 
-    if (!regRes) {
-      return undefined;
-    }
-
-    // console.timeEnd('mapState');
-    let mapGetterAst = parse(regRes[0]);
-    let posIndex = getPositionIndex(document, position);
-    let cursorInfo = getCursorInfo(mapGetterAst, posIndex - regRes.index);
     if (cursorInfo) {
-      // debugger;
       let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
         .map(item => item.split('/').join('.'))
         .filter(item => item.length)

@@ -3,6 +3,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
 const util_1 = require("./util");
 const parser_1 = require("@babel/parser");
+function getCursorInfoFromRegExp(reg, document, position, parseMatchFn) {
+    let docContent = document.getText();
+    let match = null;
+    let matchList = [];
+    while ((match = reg.exec(docContent))) {
+        matchList.push(match);
+    }
+    if (!matchList.length) {
+        return undefined;
+    }
+    let posIndex = util_1.getPositionIndex(document, position);
+    let commitExpression = util_1.whichCommit(matchList, posIndex);
+    if (!commitExpression)
+        return undefined;
+    let commitAst = parser_1.parse(commitExpression[0]);
+    let cursorInfo = parseMatchFn(commitAst, posIndex - commitExpression.index);
+    return cursorInfo;
+}
+exports.getCursorInfoFromRegExp = getCursorInfoFromRegExp;
 function getCommitCursorInfo(commitAst, relativePos) {
     let program = commitAst.program;
     let exp = program.body[0];
@@ -17,6 +36,7 @@ function getCommitCursorInfo(commitAst, relativePos) {
                     .split('/')
                     .filter(ns => ns.length)
                     .join('.'),
+                secondNameSpace: '',
             };
         }
     }
@@ -35,6 +55,7 @@ function getCommitCursorInfo(commitAst, relativePos) {
                         .split('/')
                         .filter(ns => ns.length)
                         .join('.'),
+                    secondNameSpace: '',
                 };
             }
         }
@@ -42,7 +63,6 @@ function getCommitCursorInfo(commitAst, relativePos) {
     return null;
 }
 function getMutationsFromNameSpace(obj, namespace) {
-    // debugger;
     let mutationInfoList = [];
     if (obj.namespace === namespace && obj.mutations) {
         mutationInfoList.push(...obj.mutations);
@@ -55,7 +75,7 @@ function getMutationsFromNameSpace(obj, namespace) {
     }
     return mutationInfoList;
 }
-function getCursorInfo(mapGetterAst, relativePos) {
+function getmapMutationsCursorInfo(mapGetterAst, relativePos) {
     let program = mapGetterAst.program;
     let exp = program.body[0];
     let callExp = exp.expression;
@@ -66,7 +86,6 @@ function getCursorInfo(mapGetterAst, relativePos) {
             let cursorAtExp = firstArg.elements.filter(item => {
                 return relativePos >= item.start && relativePos < item.end;
             })[0];
-            // debugger;
             if (cursorAtExp) {
                 return {
                     isNamespace: false,
@@ -80,10 +99,9 @@ function getCursorInfo(mapGetterAst, relativePos) {
         }
         else if (firstArg.type === 'StringLiteral') {
             let cursorAtExp = relativePos >= firstArg.start && relativePos < firstArg.end;
-            // debugger;
             if (cursorAtExp) {
                 return {
-                    isNamespace: false,
+                    isNamespace: true,
                     namespace: firstArg.value,
                     secondNameSpace: '',
                 };
@@ -128,29 +146,10 @@ class storeMutationsProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position, token) {
-        let docContent = document.getText();
         // TODO: getters没有对象的说法，只能通过['namespace/namespace/somegetters']的方式访问
         let reg = /((?:this\.)?(?:\$store\.)\n?commit\([\s\S]*?\))/g;
-        let match = null;
-        let matchList = [];
-        // debugger;
-        console.time('commitMatch');
-        while ((match = reg.exec(docContent))) {
-            matchList.push(match);
-        }
-        // debugger;
-        if (!matchList.length) {
-            return undefined;
-        }
-        let posIndex = util_1.getPositionIndex(document, position);
-        let commitExpression = util_1.whichCommit(matchList, posIndex);
-        if (!commitExpression)
-            return undefined;
-        let commitAst = parser_1.parse(commitExpression[0]);
-        let cursorInfo = getCommitCursorInfo(commitAst, posIndex - commitExpression.index);
-        console.timeEnd('commitMatch');
+        let cursorInfo = getCursorInfoFromRegExp(reg, document, position, getCommitCursorInfo);
         if (cursorInfo) {
-            // debugger;
             let fullNamespace = cursorInfo.namespace;
             let getterCompletionList = [];
             let namespaceCompletionList = util_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
@@ -179,19 +178,9 @@ class storeMapMutationsProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position) {
-        let docContent = document.getText();
-        // console.time('mapState');
-        let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/;
-        let regRes = reg.exec(docContent);
-        if (!regRes) {
-            return undefined;
-        }
-        // console.timeEnd('mapState');
-        let mapGetterAst = parser_1.parse(regRes[0]);
-        let posIndex = util_1.getPositionIndex(document, position);
-        let cursorInfo = getCursorInfo(mapGetterAst, posIndex - regRes.index);
+        let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
+        let cursorInfo = getCursorInfoFromRegExp(reg, document, position, getmapMutationsCursorInfo);
         if (cursorInfo) {
-            // debugger;
             let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
                 .map(item => item.split('/').join('.'))
                 .filter(item => item.length)

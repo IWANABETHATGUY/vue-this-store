@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
 const util_1 = require("./util");
-const parser_1 = require("@babel/parser");
+const mutationsProvider_1 = require("./mutationsProvider");
 function getGettersFromNameSpace(obj, namespace) {
     // debugger;
     let getterInfoList = [];
@@ -17,7 +17,7 @@ function getGettersFromNameSpace(obj, namespace) {
     }
     return getterInfoList;
 }
-function getCursorInfo(mapGetterAst, relativePos) {
+function getmapGettersCursorInfo(mapGetterAst, relativePos) {
     let program = mapGetterAst.program;
     let exp = program.body[0];
     let callExp = exp.expression;
@@ -127,22 +127,9 @@ class storeMapGettersProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position) {
-        let docContent = document.getText();
-        let posIndex = 0;
         // console.time('mapState');
-        let reg = /\bmapGetters\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/;
-        let regRes = reg.exec(docContent);
-        if (!regRes) {
-            return undefined;
-        }
-        docContent.split('\n').some((line, index) => {
-            posIndex += line.length + 1;
-            return index >= position.line - 1;
-        });
-        posIndex += position.character;
-        // console.timeEnd('mapState');
-        let mapGetterAst = parser_1.parse(regRes[0]);
-        let cursorInfo = getCursorInfo(mapGetterAst, posIndex - regRes.index);
+        let reg = /\bmapGetters\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
+        let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, getmapGettersCursorInfo);
         if (cursorInfo) {
             // debugger;
             let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]

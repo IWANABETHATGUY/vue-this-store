@@ -1,11 +1,6 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
-import {
-  getModuleFromPath,
-  getNextNamespace,
-  getPositionIndex,
-  whichCommit,
-} from './util';
+import { getNextNamespace, getPositionIndex, whichCommit } from './util';
 import { parse } from '@babel/parser';
 import {
   File,
@@ -16,8 +11,9 @@ import {
   ObjectProperty,
   Identifier,
 } from '@babel/types';
+import { getCursorInfoFromRegExp } from './mutationsProvider';
 
-function getCommitCursorInfo(commitAst: File, relativePos: number) {
+function getDispatchCursorInfo(commitAst: File, relativePos: number) {
   let program = commitAst.program;
   let exp: ExpressionStatement = program.body[0] as ExpressionStatement;
   let callExp: CallExpression = exp.expression as CallExpression;
@@ -71,7 +67,7 @@ function getActionsFromNameSpace(obj: ModuleInfo, namespace: string) {
   return actionInfoList;
 }
 
-function getCursorInfo(mapGetterAst: File, relativePos: number) {
+function getmapActionsCursorInfo(mapGetterAst: File, relativePos: number) {
   let program = mapGetterAst.program;
   let exp: ExpressionStatement = program.body[0] as ExpressionStatement;
   let callExp: CallExpression = exp.expression as CallExpression;
@@ -98,7 +94,7 @@ function getCursorInfo(mapGetterAst: File, relativePos: number) {
       // debugger;
       if (cursorAtExp) {
         return {
-          isNamespace: false,
+          isNamespace: true,
           namespace: firstArg.value,
           secondNameSpace: '',
         };
@@ -151,12 +147,10 @@ export class storeActionsProvider implements vscode.CompletionItemProvider {
   ): vscode.CompletionItem[] {
     let docContent = document.getText();
     //TODO: export default 也需要判断是否export default的是一个已经顶一个过的变量，而不是一个obj字面量
-    // TODO: getters没有对象的说法，只能通过['namespace/namespace/somegetters']的方式访问
     let reg = /((?:this\.)?(?:\$store\.)\n?dispatch\([\s\S]*?\))/g;
     let match = null;
     let matchList = [];
     // debugger;
-    console.time('commitMatch');
     while ((match = reg.exec(docContent))) {
       matchList.push(match);
     }
@@ -168,11 +162,10 @@ export class storeActionsProvider implements vscode.CompletionItemProvider {
     let commitExpression = whichCommit(matchList, posIndex);
     if (!commitExpression) return undefined;
     let commitAst = parse(commitExpression[0]);
-    let cursorInfo = getCommitCursorInfo(
+    let cursorInfo = getDispatchCursorInfo(
       commitAst,
       posIndex - commitExpression.index,
     );
-    console.timeEnd('commitMatch');
     if (cursorInfo) {
       // debugger;
       let fullNamespace = cursorInfo.namespace;
@@ -223,17 +216,13 @@ export class storeMapActionsProvider implements vscode.CompletionItemProvider {
   ): vscode.CompletionItem[] {
     let docContent = document.getText();
     // console.time('mapState');
-    let reg = /\bmapActions\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/;
-    let regRes = reg.exec(docContent);
-
-    if (!regRes) {
-      return undefined;
-    }
-
-    // console.timeEnd('mapState');
-    let mapGetterAst = parse(regRes[0]);
-    let posIndex = getPositionIndex(document, position);
-    let cursorInfo = getCursorInfo(mapGetterAst, posIndex - regRes.index);
+    let reg = /\bmapActions\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
+    let cursorInfo = getCursorInfoFromRegExp(
+      reg,
+      document,
+      position,
+      getmapActionsCursorInfo,
+    );
     if (cursorInfo) {
       // debugger;
       let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]

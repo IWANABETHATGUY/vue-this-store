@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
-import { getModuleFromPath, getNextNamespace } from './util';
+import { getModuleFromPath, getNextNamespace, getPositionIndex } from './util';
 import { parse } from '@babel/parser';
 import {
   File,
@@ -9,6 +9,7 @@ import {
   ArrayExpression,
   StringLiteral,
 } from '@babel/types';
+import { getCursorInfoFromRegExp } from './mutationsProvider';
 
 function getGettersFromNameSpace(obj: ModuleInfo, namespace: string) {
   // debugger;
@@ -25,7 +26,7 @@ function getGettersFromNameSpace(obj: ModuleInfo, namespace: string) {
   return getterInfoList;
 }
 
-function getCursorInfo(mapGetterAst: File, relativePos: number) {
+function getmapGettersCursorInfo(mapGetterAst: File, relativePos: number) {
   let program = mapGetterAst.program;
   let exp: ExpressionStatement = program.body[0] as ExpressionStatement;
   let callExp: CallExpression = exp.expression as CallExpression;
@@ -152,23 +153,14 @@ export class storeMapGettersProvider implements vscode.CompletionItemProvider {
     document: vscode.TextDocument,
     position: vscode.Position,
   ): vscode.CompletionItem[] {
-    let docContent = document.getText();
-    let posIndex = 0;
     // console.time('mapState');
-    let reg = /\bmapGetters\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/;
-    let regRes = reg.exec(docContent);
-
-    if (!regRes) {
-      return undefined;
-    }
-    docContent.split('\n').some((line, index) => {
-      posIndex += line.length + 1;
-      return index >= position.line - 1;
-    });
-    posIndex += position.character;
-    // console.timeEnd('mapState');
-    let mapGetterAst = parse(regRes[0]);
-    let cursorInfo = getCursorInfo(mapGetterAst, posIndex - regRes.index);
+    let reg = /\bmapGetters\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
+    let cursorInfo = getCursorInfoFromRegExp(
+      reg,
+      document,
+      position,
+      getmapGettersCursorInfo,
+    );
     if (cursorInfo) {
       // debugger;
       let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
