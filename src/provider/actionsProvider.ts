@@ -82,7 +82,6 @@ function getCursorInfo(mapGetterAst: File, relativePos: number) {
       let cursorAtExp = (firstArg as ArrayExpression).elements.filter(item => {
         return relativePos >= item.start && relativePos < item.end;
       })[0];
-      // debugger;
       if (cursorAtExp) {
         return {
           isNamespace: false,
@@ -91,6 +90,17 @@ function getCursorInfo(mapGetterAst: File, relativePos: number) {
             .split('/')
             .filter(ns => ns.length)
             .join('.'),
+        };
+      }
+    } else if (firstArg.type === 'StringLiteral') {
+      let cursorAtExp =
+        relativePos >= firstArg.start && relativePos < firstArg.end;
+      // debugger;
+      if (cursorAtExp) {
+        return {
+          isNamespace: false,
+          namespace: firstArg.value,
+          secondNameSpace: '',
         };
       }
     }
@@ -213,7 +223,7 @@ export class storeMapActionsProvider implements vscode.CompletionItemProvider {
   ): vscode.CompletionItem[] {
     let docContent = document.getText();
     // console.time('mapState');
-    let reg = /\bmapActions\(([\'\"](.*)[\'\"],\s*)?([\[\{])[\s\S]*?([\}\]]).*?\)/;
+    let reg = /\bmapActions\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/;
     let regRes = reg.exec(docContent);
 
     if (!regRes) {

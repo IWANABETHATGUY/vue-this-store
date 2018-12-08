@@ -66,7 +66,6 @@ function getCursorInfo(mapGetterAst, relativePos) {
             let cursorAtExp = firstArg.elements.filter(item => {
                 return relativePos >= item.start && relativePos < item.end;
             })[0];
-            // debugger;
             if (cursorAtExp) {
                 return {
                     isNamespace: false,
@@ -75,6 +74,17 @@ function getCursorInfo(mapGetterAst, relativePos) {
                         .split('/')
                         .filter(ns => ns.length)
                         .join('.'),
+                };
+            }
+        }
+        else if (firstArg.type === 'StringLiteral') {
+            let cursorAtExp = relativePos >= firstArg.start && relativePos < firstArg.end;
+            // debugger;
+            if (cursorAtExp) {
+                return {
+                    isNamespace: false,
+                    namespace: firstArg.value,
+                    secondNameSpace: '',
                 };
             }
         }
@@ -171,7 +181,7 @@ class storeMapActionsProvider {
     provideCompletionItems(document, position) {
         let docContent = document.getText();
         // console.time('mapState');
-        let reg = /\bmapActions\(([\'\"](.*)[\'\"],\s*)?([\[\{])[\s\S]*?([\}\]]).*?\)/;
+        let reg = /\bmapActions\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/;
         let regRes = reg.exec(docContent);
         if (!regRes) {
             return undefined;

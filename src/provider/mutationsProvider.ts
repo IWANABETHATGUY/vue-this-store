@@ -93,6 +93,17 @@ function getCursorInfo(mapGetterAst: File, relativePos: number) {
             .join('.'),
         };
       }
+    } else if (firstArg.type === 'StringLiteral') {
+      let cursorAtExp =
+        relativePos >= firstArg.start && relativePos < firstArg.end;
+      // debugger;
+      if (cursorAtExp) {
+        return {
+          isNamespace: false,
+          namespace: firstArg.value,
+          secondNameSpace: '',
+        };
+      }
     }
   } else if (args.length === 2) {
     let firstArg = args[0];
@@ -140,6 +151,7 @@ export class storeMutationsProvider implements vscode.CompletionItemProvider {
     token: vscode.CancellationToken,
   ): vscode.CompletionItem[] {
     let docContent = document.getText();
+    // TODO: getters没有对象的说法，只能通过['namespace/namespace/somegetters']的方式访问
     let reg = /((?:this\.)?(?:\$store\.)\n?commit\([\s\S]*?\))/g;
     let match = null;
     let matchList = [];
@@ -212,7 +224,7 @@ export class storeMapMutationsProvider
   ): vscode.CompletionItem[] {
     let docContent = document.getText();
     // console.time('mapState');
-    let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?([\[\{])[\s\S]*?([\}\]]).*?\)/;
+    let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/;
     let regRes = reg.exec(docContent);
 
     if (!regRes) {

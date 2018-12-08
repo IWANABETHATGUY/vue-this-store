@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
 import { getModuleFromPath } from './util';
-import { parse } from '@babel/parser';
 export class storeStateProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {

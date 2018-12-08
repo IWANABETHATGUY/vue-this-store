@@ -58,7 +58,6 @@ class VueThis$Store {
     start() {
         this._extensionContext.subscriptions.push(this._statusBarItem);
         let [storeAbsolutePath, storeInfo, setStoreActionStatus,] = this.startFromEntry();
-        debugger;
         this._statusBarItem.setStatus(setStoreActionStatus);
         this._watcher = watcher_1.generateWatcher(storeAbsolutePath);
         this._stateProvider = new stateProvider_1.storeStateProvider(storeInfo);
@@ -72,6 +71,9 @@ class VueThis$Store {
         this._watcher.on('change', () => {
             this.restart();
         });
+        this.registerCompletionProvider();
+    }
+    registerCompletionProvider() {
         this._extensionContext.subscriptions.push(vscode_1.languages.registerCompletionItemProvider('vue', this._stateProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapStateProvider, "'", '"'), vscode_1.languages.registerCompletionItemProvider('vue', this._gettersProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapGettersProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mutationsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapMutationsProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._actionsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapActionsProvider, "'", '"', '/'));
     }
     restart() {

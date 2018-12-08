@@ -32,6 +32,7 @@ function getCursorInfo(mapGetterAst: File, relativePos: number) {
   let args = callExp.arguments;
   if (args.length === 1) {
     let firstArg = args[0];
+
     if (firstArg.type === 'ArrayExpression') {
       let cursorAtExp = (firstArg as ArrayExpression).elements.filter(item => {
         return relativePos >= item.start && relativePos < item.end;
@@ -45,6 +46,17 @@ function getCursorInfo(mapGetterAst: File, relativePos: number) {
             .split('/')
             .filter(ns => ns.length)
             .join('.'),
+        };
+      }
+    } else if (firstArg.type === 'StringLiteral') {
+      let cursorAtExp =
+        relativePos >= firstArg.start && relativePos < firstArg.end;
+      // debugger;
+      if (cursorAtExp) {
+        return {
+          isNamespace: true,
+          namespace: firstArg.value,
+          secondNameSpace: '',
         };
       }
     }
@@ -143,7 +155,7 @@ export class storeMapGettersProvider implements vscode.CompletionItemProvider {
     let docContent = document.getText();
     let posIndex = 0;
     // console.time('mapState');
-    let reg = /\bmapGetters\(([\'\"](.*)[\'\"],\s*)?([\[\{])[\s\S]*?([\}\]]).*?\)/;
+    let reg = /\bmapGetters\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/;
     let regRes = reg.exec(docContent);
 
     if (!regRes) {

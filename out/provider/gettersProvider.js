@@ -40,6 +40,17 @@ function getCursorInfo(mapGetterAst, relativePos) {
                 };
             }
         }
+        else if (firstArg.type === 'StringLiteral') {
+            let cursorAtExp = relativePos >= firstArg.start && relativePos < firstArg.end;
+            // debugger;
+            if (cursorAtExp) {
+                return {
+                    isNamespace: true,
+                    namespace: firstArg.value,
+                    secondNameSpace: '',
+                };
+            }
+        }
     }
     else if (args.length === 2) {
         let firstArg = args[0];
@@ -119,7 +130,7 @@ class storeMapGettersProvider {
         let docContent = document.getText();
         let posIndex = 0;
         // console.time('mapState');
-        let reg = /\bmapGetters\(([\'\"](.*)[\'\"],\s*)?([\[\{])[\s\S]*?([\}\]]).*?\)/;
+        let reg = /\bmapGetters\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/;
         let regRes = reg.exec(docContent);
         if (!regRes) {
             return undefined;

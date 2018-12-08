@@ -90,7 +90,6 @@ export default class VueThis$Store {
       storeInfo,
       setStoreActionStatus,
     ] = this.startFromEntry();
-    debugger;
     this._statusBarItem.setStatus(setStoreActionStatus);
     this._watcher = generateWatcher(storeAbsolutePath);
 
@@ -107,6 +106,9 @@ export default class VueThis$Store {
       this.restart();
     });
 
+    this.registerCompletionProvider();
+  }
+  private registerCompletionProvider() {
     this._extensionContext.subscriptions.push(
       languages.registerCompletionItemProvider('vue', this._stateProvider, '.'),
       languages.registerCompletionItemProvider(
@@ -157,7 +159,6 @@ export default class VueThis$Store {
       ),
     );
   }
-
   private restart() {
     this._statusBarItem.setStatus(0);
     let [_, storeInfo, setStoreActionStatus] = this.startFromEntry();
