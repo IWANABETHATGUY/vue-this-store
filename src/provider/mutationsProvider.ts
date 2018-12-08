@@ -107,7 +107,6 @@ export class storeMutationsProvider implements vscode.CompletionItemProvider {
     position: vscode.Position,
     token: vscode.CancellationToken,
   ): vscode.CompletionItem[] {
-    // TODO: getters没有对象的说法，只能通过['namespace/namespace/somegetters']的方式访问
     let reg = /((?:this\.)?(?:\$store\.)\n?commit\([\s\S]*?\))/g;
     let cursorInfo = getCursorInfoFromRegExp(
       reg,

@@ -83,7 +83,6 @@ class storeMutationsProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position, token) {
-        // TODO: getters没有对象的说法，只能通过['namespace/namespace/somegetters']的方式访问
         let reg = /((?:this\.)?(?:\$store\.)\n?commit\([\s\S]*?\))/g;
         let cursorInfo = getCursorInfoFromRegExp(reg, document, position, getCommitCursorInfo);
         if (cursorInfo) {

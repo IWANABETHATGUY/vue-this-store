@@ -30,7 +30,6 @@ class storeGettersProvider {
             .text.substr(0, position.character);
         let trimLinePrefixExpressions = linePrefix.trim().split(' ');
         let lastPrefixExpression = trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
-        // TODO: getters没有对象的说法，只能通过['namespace/namespace/somegetters']的方式访问
         let reg = /(?=return this\.)?(?=\$store\.)?getters\.(.*\.)?/;
         let regRes = reg.exec(lastPrefixExpression);
         if (!regRes) {

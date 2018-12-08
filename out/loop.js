@@ -24,7 +24,6 @@ const emptyModule = {
     namespace: '',
     state: [],
 };
-// TODO: 考虑同一个computed对象中可能会有多个...mapXXX的情况，不能只是捕获一个。。
 class VueThis$Store {
     constructor(ctx, rootPath) {
         this._outputChannel = vscode_1.window.createOutputChannel('VueThis$Store');

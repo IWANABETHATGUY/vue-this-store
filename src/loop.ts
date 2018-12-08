@@ -33,7 +33,7 @@ const emptyModule: ModuleInfo = {
   namespace: '',
   state: [],
 };
-// TODO: 考虑同一个computed对象中可能会有多个...mapXXX的情况，不能只是捕获一个。。
+
 export default class VueThis$Store {
   private _outputChannel = window.createOutputChannel('VueThis$Store');
   private _statusBarItem = new VueThisStoreStatusBarItem();
