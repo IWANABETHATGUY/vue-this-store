@@ -30,7 +30,7 @@ class VueThis$Store {
         this._outputChannel = vscode_1.window.createOutputChannel('VueThis$Store');
         this._statusBarItem = new statusBarItem_1.VueThisStoreStatusBarItem();
         this._watcher = null;
-        console.time('performance');
+        let timeStart = Number(new Date());
         this._extensionContext = ctx;
         if (rootPath === undefined) {
             return;
@@ -41,7 +41,8 @@ class VueThis$Store {
         this._entrancePath = path.resolve(this._rootPath, 'src/main.js');
         this.initCommands();
         this.start();
-        console.timeEnd('performance');
+        let timeEnd = Number(new Date());
+        this._outputChannel.appendLine(`Init information cost ${timeEnd - timeStart} ms`);
     }
     initCommands() {
         let root = this._rootPath;

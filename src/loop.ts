@@ -52,7 +52,7 @@ export default class VueThis$Store {
   private _mapActionsProvider: storeMapActionsProvider;
 
   constructor(ctx: ExtensionContext, rootPath: string) {
-    console.time('performance');
+    let timeStart = Number(new Date());
     this._extensionContext = ctx;
     if (rootPath === undefined) {
       return;
@@ -62,7 +62,10 @@ export default class VueThis$Store {
     this._entrancePath = path.resolve(this._rootPath, 'src/main.js');
     this.initCommands();
     this.start();
-    console.timeEnd('performance');
+    let timeEnd = Number(new Date());
+    this._outputChannel.appendLine(
+      `Init information cost ${timeEnd - timeStart} ms`,
+    );
   }
 
   private initCommands() {

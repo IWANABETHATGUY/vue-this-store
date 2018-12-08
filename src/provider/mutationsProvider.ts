@@ -11,7 +11,6 @@ import {
   File,
   ExpressionStatement,
   CallExpression,
-  ArrayExpression,
   StringLiteral,
   ObjectProperty,
   Identifier,

@@ -53,6 +53,12 @@ function getMapGMACursorInfo(mapGetterAst, relativePos) {
     let exp = program.body[0];
     let callExp = exp.expression;
     let args = callExp.arguments;
+    let retCursorInfo = {
+        isNamespace: false,
+        namespace: '',
+        secondNameSpace: '',
+        match: false,
+    };
     if (args.length === 1) {
         let firstArg = args[0];
         if (firstArg.type === 'ArrayExpression') {
@@ -61,75 +67,82 @@ function getMapGMACursorInfo(mapGetterAst, relativePos) {
             })[0];
             // debugger;
             if (cursorAtExp && cursorAtExp.type === 'StringLiteral') {
-                return {
-                    isNamespace: false,
-                    namespace: '',
-                    secondNameSpace: cursorAtExp.value
-                        .split('/')
-                        .filter(ns => ns.length)
-                        .join('.'),
-                };
+                retCursorInfo.match = true;
+                retCursorInfo.secondNameSpace = cursorAtExp.value
+                    .split('/')
+                    .filter(ns => ns.length)
+                    .join('.');
             }
         }
-        else if (firstArg.type === 'StringLiteral') {
+        else if (firstArg.type === 'StringLiteral' && !retCursorInfo.match) {
             let cursorAtExp = relativePos >= firstArg.start && relativePos < firstArg.end;
             // debugger;
             if (cursorAtExp) {
-                return {
-                    isNamespace: true,
-                    namespace: firstArg.value,
-                    secondNameSpace: '',
-                };
+                retCursorInfo.match = true;
+                retCursorInfo.isNamespace = true;
+                retCursorInfo.namespace = firstArg.value;
             }
         }
-        else if (firstArg.type === 'ObjectExpression') {
+        else if (firstArg.type === 'ObjectExpression' && !retCursorInfo.match) {
             let cursorAtExp = firstArg.properties.filter((property) => {
                 return relativePos >= property.start && relativePos < property.end;
             })[0];
-            // debugger;
             if (cursorAtExp &&
                 cursorAtExp.type === 'ObjectProperty' &&
                 cursorAtExp.value.type === 'StringLiteral') {
-                return {
-                    isNamespace: false,
-                    namespace: '',
-                    secondNameSpace: cursorAtExp.value.value
-                        .split('/')
-                        .filter(ns => ns.length)
-                        .join('.'),
-                };
+                retCursorInfo.match = true;
+                retCursorInfo.secondNameSpace = cursorAtExp.value.value
+                    .split('/')
+                    .filter(ns => ns.length)
+                    .join('.');
             }
         }
     }
     else if (args.length === 2) {
         let firstArg = args[0];
         let secondArg = args[1];
-        if (firstArg.type === 'StringLiteral') {
-            if (secondArg.type === 'ArrayExpression') {
-                if (relativePos >= firstArg.start && relativePos < firstArg.end) {
-                    return {
-                        isNamespace: true,
-                        namespace: firstArg.value,
-                        secondNameSpace: '',
-                    };
-                }
+        if (firstArg.type === 'StringLiteral' && !retCursorInfo.match) {
+            if (relativePos >= firstArg.start && relativePos < firstArg.end) {
+                retCursorInfo.match = true;
+                retCursorInfo.isNamespace = true;
+                retCursorInfo.namespace = firstArg.value;
+            }
+            if (secondArg.type === 'ArrayExpression' && !retCursorInfo.match) {
                 let cursorAtExp = secondArg.elements.filter(item => {
                     return relativePos >= item.start && relativePos < item.end;
                 })[0];
                 if (cursorAtExp && cursorAtExp.type === 'StringLiteral') {
-                    return {
-                        isNamespace: false,
-                        namespace: firstArg.value,
-                        secondNameSpace: cursorAtExp.value
-                            .split('/')
-                            .filter(ns => ns.length)
-                            .join('.'),
-                    };
+                    retCursorInfo.match = true;
+                    retCursorInfo.namespace = firstArg.value;
+                    retCursorInfo.secondNameSpace = cursorAtExp.value
+                        .split('/')
+                        .filter(ns => ns.length)
+                        .join('.');
+                }
+            }
+            else if (secondArg.type === 'ObjectExpression' &&
+                !retCursorInfo.match) {
+                let cursorAtProperty = secondArg.properties.filter((property) => {
+                    return relativePos >= property.start && relativePos < property.end;
+                })[0];
+                // debugger;
+                if (cursorAtProperty &&
+                    cursorAtProperty.type === 'ObjectProperty' &&
+                    cursorAtProperty.value.type === 'StringLiteral') {
+                    retCursorInfo.match = true;
+                    retCursorInfo.namespace = firstArg.value;
+                    retCursorInfo.secondNameSpace = cursorAtProperty.value.value
+                        .split('/')
+                        .filter(ns => ns.length)
+                        .join('.');
                 }
             }
         }
     }
-    return null;
+    if (!retCursorInfo.match) {
+        return null;
+    }
+    return retCursorInfo;
 }
 exports.getMapGMACursorInfo = getMapGMACursorInfo;
 //# sourceMappingURL=util.js.map

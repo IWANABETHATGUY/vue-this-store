@@ -3,17 +3,8 @@ import { ModuleInfo } from '../traverse/modules';
 import {
   getModuleFromPath,
   getNextNamespace,
-  getPositionIndex,
   getMapGMACursorInfo,
 } from './util';
-import {
-  File,
-  ExpressionStatement,
-  CallExpression,
-  ArrayExpression,
-  StringLiteral,
-  ObjectProperty,
-} from '@babel/types';
 import { getCursorInfoFromRegExp } from './mutationsProvider';
 
 function getGettersFromNameSpace(obj: ModuleInfo, namespace: string) {
