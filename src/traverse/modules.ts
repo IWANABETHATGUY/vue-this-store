@@ -34,6 +34,76 @@ export interface ParseModuleParam {
   objAst: ObjectExpression;
   [prop: string]: any;
 }
+
+function getXXXInfo(
+  { property, m2pmap, defmap, cwf, lineOfFile },
+  walkFileFn: Function,
+  parseFn: Function,
+) {
+  let infoList = [];
+  if (property.shorthand) {
+    let value: Identifier = property.value as Identifier;
+    if (m2pmap[value.name]) {
+      let { export: importState, lineOfFile } = walkFileFn(
+        cwf,
+        m2pmap[value.name],
+      );
+      infoList = parseFn(importState, lineOfFile);
+    } else if (defmap[value.name]) {
+      infoList = parseFn(defmap[value.name], lineOfFile);
+    }
+  } else {
+    if (property.value.type === 'ObjectExpression') {
+      let value: ObjectExpression = property.value;
+      infoList = parseFn(value, lineOfFile);
+    }
+  }
+  return infoList;
+}
+
+function setModulesInfo(
+  { property, m2pmap, defmap, cwf, lineOfFile, namespace },
+  walkFileFn: Function,
+  parseFn: Function,
+) {
+  let modules = {};
+  if (property.shorthand) {
+    let value: Identifier = property.value as Identifier;
+    if (m2pmap[value.name]) {
+      let {
+        cwf: cwff,
+        m2pmap: m2pmapp,
+        objAst: objAstt,
+        defmap: defmapp,
+        lineOfFile: lineOfFilee,
+      } = walkModulesFile(cwf, m2pmap[value.name]);
+      modules = parseModules(
+        {
+          objAst: objAstt as ObjectExpression,
+          m2pmap: m2pmapp,
+          defmap: defmapp,
+          cwf: cwff,
+          lineOfFile: lineOfFilee,
+        },
+        namespace,
+      );
+    } else if (defmap[value.name]) {
+      modules = parseModules(
+        {
+          objAst: defmap[value.name],
+          lineOfFile,
+          m2pmap,
+          defmap,
+          cwf,
+        },
+        namespace,
+      );
+    }
+  } else {
+    // parseState(value, m2pmap, defmap);
+  }
+  return modules;
+}
 // TODO: 这了需要重构
 export function parseModuleAst(
   { objAst, m2pmap, defmap, cwf, lineOfFile }: ParseModuleParam,
@@ -42,95 +112,42 @@ export function parseModuleAst(
   objAst.properties.forEach((property: ObjectProperty) => {
     switch (property.key.name) {
       case 'state':
-        if (property.shorthand) {
-          let value: Identifier = property.value as Identifier;
-          if (m2pmap[value.name]) {
-            let { export: importState, lineOfFile } = walkFile(
-              cwf,
-              m2pmap[value.name],
-            );
-            infoObj.state = parseState(importState, lineOfFile);
-          } else if (defmap[value.name]) {
-            infoObj.state = parseState(defmap[value.name], lineOfFile);
-          }
-        } else {
-          let value: ObjectExpression = property.value as ObjectExpression;
-          infoObj.state = parseState(value, lineOfFile);
-        }
+        infoObj.state = getXXXInfo(
+          { property, m2pmap, defmap, cwf, lineOfFile },
+          walkFile,
+          parseState,
+        );
         break;
       case 'actions':
         // parseActions(property.value, m2pmap, defmap);
         break;
       case 'getters':
-        if (property.shorthand) {
-          let value: Identifier = property.value as Identifier;
-          if (m2pmap[value.name]) {
-            let { export: importGetters, lineOfFile } = walkFile(
-              cwf,
-              m2pmap[value.name],
-            );
-            infoObj.getters = parseGetters(importGetters, lineOfFile);
-          } else if (defmap[value.name]) {
-            infoObj.getters = parseGetters(defmap[value.name], lineOfFile);
-          }
-        } else {
-          let value: ObjectExpression = property.value as ObjectExpression;
-          infoObj.getters = parseGetters(value, lineOfFile);
-        }
+        infoObj.getters = getXXXInfo(
+          { property, m2pmap, defmap, cwf, lineOfFile },
+          walkFile,
+          parseGetters,
+        );
         break;
       case 'mutations':
-        if (property.shorthand) {
-          let value: Identifier = property.value as Identifier;
-          if (m2pmap[value.name]) {
-            let { export: importGetters, lineOfFile } = walkMutationsFile(
-              cwf,
-              m2pmap[value.name],
-            );
-            infoObj.mutations = parseMutations(importGetters, lineOfFile);
-          } else if (defmap[value.name]) {
-            infoObj.mutations = parseMutations(defmap[value.name], lineOfFile);
-          }
-        } else {
-          let value: ObjectExpression = property.value as ObjectExpression;
-          infoObj.mutations = parseGetters(value, lineOfFile);
-        }
+        infoObj.mutations = getXXXInfo(
+          { property, m2pmap, defmap, cwf, lineOfFile },
+          walkMutationsFile,
+          parseState,
+        );
         break;
       case 'modules':
-        if (property.shorthand) {
-          let value: Identifier = property.value as Identifier;
-          if (m2pmap[value.name]) {
-            let {
-              cwf: cwff,
-              m2pmap: m2pmapp,
-              objAst: objAstt,
-              defmap: defmapp,
-              lineOfFile: lineOfFilee,
-            } = walkModulesFile(cwf, m2pmap[value.name]);
-            infoObj.modules = parseModules(
-              {
-                objAst: objAstt as ObjectExpression,
-                m2pmap: m2pmapp,
-                defmap: defmapp,
-                cwf: cwff,
-                lineOfFile: lineOfFilee,
-              },
-              infoObj.namespace,
-            );
-          } else if (defmap[value.name]) {
-            infoObj.modules = parseModules(
-              {
-                objAst: defmap[value.name],
-                lineOfFile,
-                m2pmap,
-                defmap,
-                cwf,
-              },
-              infoObj.namespace,
-            );
-          }
-        } else {
-          // parseState(value, m2pmap, defmap);
-        }
+        infoObj.modules = setModulesInfo(
+          {
+            property,
+            m2pmap,
+            defmap,
+            cwf,
+            lineOfFile,
+            namespace: infoObj.namespace,
+          },
+          walkModulesFile,
+          parseModules,
+        );
         // parseModules(property.value, m2pmap, defmap);
         break;
       default:

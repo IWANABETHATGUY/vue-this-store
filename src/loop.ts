@@ -83,6 +83,7 @@ export default class VueThis$Store {
       storeInfo,
       setStoreActionStatus,
     ] = this.startFromEntry();
+    debugger;
     this._statusBarItem.setStatus(setStoreActionStatus);
     this._watcher = generateWatcher(storeAbsolutePath);
 
