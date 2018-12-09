@@ -1,7 +1,7 @@
 {
   "name": "vue-this-store",
-  "displayName": "Vue This $Store",
-  "version": "0.0.1",
+  "displayName": "VueThis$Store",
+  "version": "0.0.2",
   "publisher": "IWANABETHATGUY",
   "repository": {
     "type": "git",
