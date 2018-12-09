@@ -41,7 +41,7 @@
 - 支持 mapActions 参数为数组和对象提示
   ![mapActions](http://vue-this-store.test.upcdn.net/mapActions.gif)
 
-##  一些提示
+## 一些提示
 
 因为我没有什么使用大型的应用的经验，所以测试的项目不是很多，我再 github 上找了一
 个比较经典的项目[vue-elm](https://github.com/bailicangdu/vue2-elm), 并通过了测试
