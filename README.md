@@ -23,7 +23,7 @@
 
 - 支持最基本的`this.$store.state.count`类型的提示，当你在其他的 module 中定义了
   其他的 state 时， 可以得到下一层 module 和所有相应 state 的提示。
-  ![state](http://vue-this-store.test.upcdn.net/state.gif)
+  ![state](https://camo.githubusercontent.com/254611df3a09c9272d92ca5d992fd7550944e1a3/687474703a2f2f7675652d746869732d73746f72652e746573742e757063646e2e6e65742f73746174652e676966)
 - 同时支持 mapState，当输入第一个参数时，仅仅提示所有可能的下一个 module（设置了
   namespace 的 module） 和官网的机制一致。当设置了命名空间，只会提示当前命名空间
   下的 state。 ![mapState](http://vue-this-store.test.upcdn.net/mapstate.gif)
