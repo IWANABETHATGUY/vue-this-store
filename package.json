@@ -1,15 +1,15 @@
 {
   "name": "vue-this-store",
   "displayName": "VueThis$Store",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "IWANABETHATGUY",
   "description": "一个通过ast和正则表达式，获取store中的所有定义信息，并在.vue文件中给出vuex中state，actions, getters, mutations提示的vscode插件",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Microsoft/vscode-extension-samples"
+    "url": "https://github.com/IWANABETHATGUY/vue-this-store"
   },
   "bugs": {
-    "url": "https://github.com/Microsoft/vscode-extension-samples/issues"
+    "url": "https://github.com/IWANABETHATGUY/vue-this-store/issues"
   },
   "engines": {
     "vscode": "^1.29.1"
