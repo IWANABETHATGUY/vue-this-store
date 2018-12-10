@@ -15,28 +15,36 @@ import {
   ObjectProperty,
   Identifier,
 } from '@babel/types';
-
+type CursorType = 'ast' | 'regexp';
 export function getCursorInfoFromRegExp(
   reg: RegExp,
   document: vscode.TextDocument,
   position: vscode.Position,
   parseMatchFn: Function,
+  type: CursorType,
 ) {
   let docContent = document.getText();
-
+  let cursorInfo = null;
   let match = null;
   let matchList = [];
   while ((match = reg.exec(docContent))) {
     matchList.push(match);
   }
   if (!matchList.length) {
-    return undefined;
+    return null;
   }
   let posIndex = getPositionIndex(document, position);
-  let commitExpression = whichCommit(matchList, posIndex);
-  if (!commitExpression) return undefined;
-  let commitAst = parse(commitExpression[0]);
-  let cursorInfo = parseMatchFn(commitAst, posIndex - commitExpression.index);
+  let commitExpression: RegExpExecArray = whichCommit(matchList, posIndex);
+  if (!commitExpression) return null;
+  if (type === 'ast') {
+    let commitAst = parse(commitExpression[0]);
+    cursorInfo = parseMatchFn(commitAst, posIndex - commitExpression.index);
+  } else {
+    cursorInfo = parseMatchFn(
+      commitExpression,
+      posIndex - commitExpression.index,
+    );
+  }
   return cursorInfo;
 }
 function getCommitCursorInfo(commitAst: File, relativePos: number) {
@@ -113,6 +121,7 @@ export class storeMutationsProvider implements vscode.CompletionItemProvider {
       document,
       position,
       getCommitCursorInfo,
+      'ast',
     );
     if (cursorInfo) {
       let fullNamespace = cursorInfo.namespace;
@@ -135,7 +144,7 @@ export class storeMutationsProvider implements vscode.CompletionItemProvider {
         ).map(getterInfo => {
           let getterCompletion = new vscode.CompletionItem(
             getterInfo.rowKey,
-            vscode.CompletionItemKind.Property,
+            vscode.CompletionItemKind.Method,
           );
           getterCompletion.documentation = new vscode.MarkdownString(
             '```' + getterInfo.defination + '```',
@@ -168,6 +177,7 @@ export class storeMapMutationsProvider
       document,
       position,
       getMapGMACursorInfo,
+      'ast',
     );
 
     if (cursorInfo) {
@@ -194,7 +204,7 @@ export class storeMapMutationsProvider
         ).map(getterInfo => {
           let getterCompletion = new vscode.CompletionItem(
             getterInfo.rowKey,
-            vscode.CompletionItemKind.Property,
+            vscode.CompletionItemKind.Method,
           );
           getterCompletion.documentation = new vscode.MarkdownString(
             '```' + getterInfo.defination + '```',

@@ -14,11 +14,12 @@ import {
   StringLiteral,
   ObjectProperty,
   Identifier,
+  Program,
 } from '@babel/types';
 import { getCursorInfoFromRegExp } from './mutationsProvider';
 
 function getDispatchCursorInfo(commitAst: File, relativePos: number) {
-  let program = commitAst.program;
+  let program: Program = commitAst.program;
   let exp: ExpressionStatement = program.body[0] as ExpressionStatement;
   let callExp: CallExpression = exp.expression as CallExpression;
   let args = callExp.arguments;
@@ -127,7 +128,7 @@ export class storeActionsProvider implements vscode.CompletionItemProvider {
         ).map(getterInfo => {
           let getterCompletion = new vscode.CompletionItem(
             getterInfo.rowKey,
-            vscode.CompletionItemKind.Property,
+            vscode.CompletionItemKind.Method,
           );
           getterCompletion.documentation = new vscode.MarkdownString(
             '```' + getterInfo.defination + '```',
@@ -159,6 +160,7 @@ export class storeMapActionsProvider implements vscode.CompletionItemProvider {
       document,
       position,
       getMapGMACursorInfo,
+      'ast',
     );
     if (cursorInfo) {
       let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
@@ -184,7 +186,7 @@ export class storeMapActionsProvider implements vscode.CompletionItemProvider {
         ).map(getterInfo => {
           let getterCompletion = new vscode.CompletionItem(
             getterInfo.rowKey,
-            vscode.CompletionItemKind.Property,
+            vscode.CompletionItemKind.Method,
           );
           getterCompletion.documentation = new vscode.MarkdownString(
             '```' + getterInfo.defination + '```',

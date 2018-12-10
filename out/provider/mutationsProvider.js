@@ -3,22 +3,28 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
 const util_1 = require("./util");
 const parser_1 = require("@babel/parser");
-function getCursorInfoFromRegExp(reg, document, position, parseMatchFn) {
+function getCursorInfoFromRegExp(reg, document, position, parseMatchFn, type) {
     let docContent = document.getText();
+    let cursorInfo = null;
     let match = null;
     let matchList = [];
     while ((match = reg.exec(docContent))) {
         matchList.push(match);
     }
     if (!matchList.length) {
-        return undefined;
+        return null;
     }
     let posIndex = util_1.getPositionIndex(document, position);
     let commitExpression = util_1.whichCommit(matchList, posIndex);
     if (!commitExpression)
-        return undefined;
-    let commitAst = parser_1.parse(commitExpression[0]);
-    let cursorInfo = parseMatchFn(commitAst, posIndex - commitExpression.index);
+        return null;
+    if (type === 'ast') {
+        let commitAst = parser_1.parse(commitExpression[0]);
+        cursorInfo = parseMatchFn(commitAst, posIndex - commitExpression.index);
+    }
+    else {
+        cursorInfo = parseMatchFn(commitExpression, posIndex - commitExpression.index);
+    }
     return cursorInfo;
 }
 exports.getCursorInfoFromRegExp = getCursorInfoFromRegExp;
@@ -84,7 +90,7 @@ class storeMutationsProvider {
     }
     provideCompletionItems(document, position, token) {
         let reg = /((?:this\.)?(?:\$store\.)\n?commit\([\s\S]*?\))/g;
-        let cursorInfo = getCursorInfoFromRegExp(reg, document, position, getCommitCursorInfo);
+        let cursorInfo = getCursorInfoFromRegExp(reg, document, position, getCommitCursorInfo, 'ast');
         if (cursorInfo) {
             let fullNamespace = cursorInfo.namespace;
             let getterCompletionList = [];
@@ -95,7 +101,7 @@ class storeMutationsProvider {
             });
             if (!cursorInfo.isNamespace) {
                 getterCompletionList = getMutationsFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
-                    let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Property);
+                    let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Method);
                     getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
                     getterCompletion.detail = 'mutation';
                     return getterCompletion;
@@ -115,7 +121,7 @@ class storeMapMutationsProvider {
     }
     provideCompletionItems(document, position) {
         let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
-        let cursorInfo = getCursorInfoFromRegExp(reg, document, position, util_1.getMapGMACursorInfo);
+        let cursorInfo = getCursorInfoFromRegExp(reg, document, position, util_1.getMapGMACursorInfo, 'ast');
         if (cursorInfo) {
             let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
                 .map(item => item.split('/').join('.'))
@@ -129,7 +135,7 @@ class storeMapMutationsProvider {
             });
             if (!cursorInfo.isNamespace) {
                 getterCompletionList = getMutationsFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
-                    let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Property);
+                    let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Method);
                     getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
                     getterCompletion.detail = 'mutation';
                     return getterCompletion;

@@ -45,7 +45,7 @@ function getPositionIndex(doc, position) {
 }
 exports.getPositionIndex = getPositionIndex;
 function whichCommit(resMatch, posIndex) {
-    return resMatch.filter(match => posIndex >= match.index && posIndex < match.index + match[0].length)[0];
+    return resMatch.filter(match => posIndex >= match.index && posIndex <= match.index + match[0].length)[0];
 }
 exports.whichCommit = whichCommit;
 function getMapGMACursorInfo(mapGetterAst, relativePos) {

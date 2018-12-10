@@ -41,13 +41,6 @@ function getFileContent(abPath) {
     return { status: -1, fileContent: '' };
 }
 exports.getFileContent = getFileContent;
-/*
- *通过ast获取store中的所有statekey
- *
- * @param {any} ast
- * @param {string[]} storeContent
- * @returns {StateInfo[]}
- */
 function getLocalFromModuleOrPathMap(mOrPMap, moduleOrPath) {
     let localName = '';
     Object.keys(mOrPMap).forEach(key => {
@@ -81,7 +74,7 @@ exports.getModuleOrPathMap = getModuleOrPathMap;
  * 获取store入口文件中的相对路径
  *
  * @export
- * @param {any} ast
+ * @param {any} File
  * @returns {string}
  */
 function getStoreEntryRelativePath(ast) {

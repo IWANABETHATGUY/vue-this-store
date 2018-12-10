@@ -1,13 +1,8 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
-import { getModuleFromPath, getNextNamespace } from './util';
+import { getModuleFromPath, getNextNamespace, CursorInfo } from './util';
 import { getCursorInfoFromRegExp } from './mutationsProvider';
-import {
-  File,
-  ExpressionStatement,
-  CallExpression,
-  ArrayExpression,
-} from '@babel/types';
+import { File, ExpressionStatement, CallExpression } from '@babel/types';
 
 function getStateFromNameSpace(obj: ModuleInfo, namespace: string) {
   // debugger;
@@ -22,6 +17,21 @@ function getStateFromNameSpace(obj: ModuleInfo, namespace: string) {
     });
   }
   return stateInfoList;
+}
+
+function getStateCursorInfo(
+  regExecArray: RegExpExecArray,
+  relativePos: number,
+): CursorInfo {
+  return {
+    isNamespace: false,
+    namespace: '',
+    secondNameSpace: regExecArray[1]
+      .split('.')
+      .map(ns => ns.trim())
+      .filter(ns => ns.length)
+      .join('.'),
+  };
 }
 function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
   let program = mapStateAst.program;
@@ -99,50 +109,50 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
   public provideCompletionItems(
     document: vscode.TextDocument,
     position: vscode.Position,
-    token: vscode.CancellationToken,
   ): vscode.CompletionItem[] {
-    let linePrefix = document
-      .lineAt(position)
-      .text.substr(0, position.character);
-    let trimLinePrefixExpressions = linePrefix.trim().split(' ');
-    let lastPrefixExpression =
-      trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
-    let reg = /(?=return this\.)?(?=\$store\.)?state\.(.*\.)?/;
-    let regRes = reg.exec(lastPrefixExpression);
-    if (!regRes) {
-      return undefined;
-    }
-    let path = regRes[1];
-    let pathArray: string[] | undefined = path
-      ? path.split('.').filter(item => item.length > 0)
-      : undefined;
-    let newModule = getModuleFromPath(this.storeInfo, pathArray);
-    if (!newModule) return undefined;
-    let state = newModule.state;
-    let modules = newModule.modules;
-    return (state
-      ? state.map(stateInfo => {
-          let stateCompletion = new vscode.CompletionItem(
-            stateInfo.rowKey,
-            vscode.CompletionItemKind.Field,
-          );
-          stateCompletion.documentation = new vscode.MarkdownString(
-            '```' + stateInfo.defination + '```',
-          );
-          stateCompletion.detail = 'state';
-          return stateCompletion;
-        })
-      : []
-    ).concat(
-      Object.keys(modules ? modules : {}).map(module => {
-        let moduleCompletion = new vscode.CompletionItem(
-          module,
+    let reg = /this\n?\s*\.\$store\n?\s*\.state((?:\n?\s*\.[\w\$]*)+)/g;
+    let cursorInfo = getCursorInfoFromRegExp(
+      reg,
+      document,
+      position,
+      getStateCursorInfo,
+      'regexp',
+    );
+    if (cursorInfo) {
+      let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
+        .map(item => item.split('/').join('.'))
+        .filter(item => item.length)
+        .join('.');
+      let getterCompletionList = [];
+      let namespaceCompletionList = getNextNamespace(
+        this.storeInfo,
+        fullNamespace,
+      ).map(nextNS => {
+        let NSCompletion = new vscode.CompletionItem(
+          nextNS,
           vscode.CompletionItemKind.Module,
         );
-        moduleCompletion.detail = 'module';
-        return moduleCompletion;
-      }),
-    );
+        NSCompletion.detail = 'module';
+        return NSCompletion;
+      });
+      if (!cursorInfo.isNamespace) {
+        getterCompletionList = getStateFromNameSpace(
+          this.storeInfo,
+          fullNamespace,
+        ).map(getterInfo => {
+          let getterCompletion = new vscode.CompletionItem(
+            getterInfo.rowKey,
+            vscode.CompletionItemKind.Variable,
+          );
+          getterCompletion.documentation = new vscode.MarkdownString(
+            '```' + getterInfo.defination + '```',
+          );
+          getterCompletion.detail = 'state';
+          return getterCompletion;
+        });
+      }
+      return getterCompletionList.concat(namespaceCompletionList);
+    }
   }
 }
 
@@ -165,6 +175,7 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
       document,
       position,
       getMapStateCursorInfo,
+      'ast',
     );
     if (cursorInfo) {
       // debugger;
@@ -191,7 +202,7 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
         ).map(stateInfo => {
           let stateCompletion = new vscode.CompletionItem(
             stateInfo.rowKey,
-            vscode.CompletionItemKind.Property,
+            vscode.CompletionItemKind.Variable,
           );
           stateCompletion.documentation = new vscode.MarkdownString(
             '```' + stateInfo.defination + '```',

@@ -7,8 +7,8 @@ import {
   CallExpression,
 } from '@babel/types';
 
-interface CursorInfo {
-  match: boolean;
+export interface CursorInfo {
+  match?: boolean;
   isNamespace: boolean;
   namespace: string;
   secondNameSpace: string;
@@ -67,7 +67,7 @@ export function getPositionIndex(
 export function whichCommit(resMatch: RegExpExecArray[], posIndex: number) {
   return resMatch.filter(
     match =>
-      posIndex >= match.index && posIndex < match.index + match[0].length,
+      posIndex >= match.index && posIndex <= match.index + match[0].length,
   )[0];
 }
 

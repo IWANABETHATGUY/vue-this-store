@@ -58,7 +58,7 @@ export class storeGettersProvider implements vscode.CompletionItemProvider {
       ? getters.map(getterInfo => {
           let stateCompletion = new vscode.CompletionItem(
             getterInfo.rowKey,
-            vscode.CompletionItemKind.Field,
+            vscode.CompletionItemKind.Variable,
           );
           stateCompletion.documentation = new vscode.MarkdownString(
             '```' + getterInfo.defination + '```',
@@ -88,6 +88,7 @@ export class storeMapGettersProvider implements vscode.CompletionItemProvider {
       document,
       position,
       getMapGMACursorInfo,
+      'ast',
     );
     if (cursorInfo) {
       // debugger;
@@ -114,7 +115,7 @@ export class storeMapGettersProvider implements vscode.CompletionItemProvider {
         ).map(getterInfo => {
           let getterCompletion = new vscode.CompletionItem(
             getterInfo.rowKey,
-            vscode.CompletionItemKind.Property,
+            vscode.CompletionItemKind.Variable,
           );
           getterCompletion.documentation = new vscode.MarkdownString(
             '```' + getterInfo.defination + '```',

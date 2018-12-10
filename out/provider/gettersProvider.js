@@ -45,7 +45,7 @@ class storeGettersProvider {
         let getters = newModule.getters;
         return getters
             ? getters.map(getterInfo => {
-                let stateCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Field);
+                let stateCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Variable);
                 stateCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
                 return stateCompletion;
             })
@@ -63,7 +63,7 @@ class storeMapGettersProvider {
     provideCompletionItems(document, position) {
         console.time('mapState');
         let reg = /\bmapGetters\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
-        let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, util_1.getMapGMACursorInfo);
+        let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, util_1.getMapGMACursorInfo, 'ast');
         if (cursorInfo) {
             // debugger;
             let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
@@ -78,7 +78,7 @@ class storeMapGettersProvider {
             });
             if (!cursorInfo.isNamespace) {
                 getterCompletionList = getGettersFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
-                    let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Property);
+                    let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Variable);
                     getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
                     getterCompletion.detail = 'getter';
                     return getterCompletion;

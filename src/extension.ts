@@ -5,7 +5,6 @@
 'use strict';
 
 import * as vscode from 'vscode';
-// import { vueStoreStateProviderFunciton } from './provider';
 import VueThis$Store from './loop';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -14,7 +13,6 @@ export function activate(context: vscode.ExtensionContext) {
   let rootPath = vscode.workspace.rootPath;
 
   new VueThis$Store(context, rootPath);
-  //init provider
 
   console.timeEnd('generateState');
 }
