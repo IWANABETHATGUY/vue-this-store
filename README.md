@@ -24,10 +24,14 @@
 - 支持最基本的`this.$store.state.count`类型的提示，当你在其他的 module 中定义了
   其他的 state 时， 可以得到下一层 module 和所有相应 state 的提示。
   ![state](https://camo.githubusercontent.com/254611df3a09c9272d92ca5d992fd7550944e1a3/687474703a2f2f7675652d746869732d73746f72652e746573742e757063646e2e6e65742f73746174652e676966)
+
 - 同时支持 mapState，当输入第一个参数时，仅仅提示所有可能的下一个 module（设置了
   namespace 的 module） 和官网的机制一致。当设置了命名空间，只会提示当前命名空间
   下的 state。
   ![mapState](https://camo.githubusercontent.com/8c7db5bed3b832acc875915d590d29c6b139bc81/687474703a2f2f7675652d746869732d73746f72652e746573742e757063646e2e6e65742f6d617073746174652e676966)
+- 支持 mapState 参数为对象的情况，并且支持三种不同函数写法，通过 ast 获取函数的
+  第一个参数给出更加精确的提示。
+  ![mapStateObject](http://pjq9mzp81.bkt.clouddn.com/mapStateObject.gif)
 - 支持 从`this.$store.getters.xxx`这样的形式直接获取 getter,也支持 mapGetters 中
   第二个参数是数组或者对象的形式
   ![mapGetters](https://camo.githubusercontent.com/ed2e36f338acef138ff3cef7ac5ba02292c270b0/687474703a2f2f7675652d746869732d73746f72652e746573742e757063646e2e6e65742f6d6170676574746572732e676966)
