@@ -1,8 +1,17 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
-import { getModuleFromPath, getNextNamespace, CursorInfo } from './util';
+import { getNextNamespace, CursorInfo } from './util';
 import { getCursorInfoFromRegExp } from './mutationsProvider';
-import { File, ExpressionStatement, CallExpression } from '@babel/types';
+import {
+  File,
+  ExpressionStatement,
+  CallExpression,
+  ObjectMethod,
+  Identifier,
+  ObjectProperty,
+  StringLiteral,
+  ObjectExpression,
+} from '@babel/types';
 import traverse from '@babel/traverse';
 import generator from '@babel/generator';
 
@@ -47,11 +56,7 @@ function getStateCursorInfo(
       .join('.'),
   };
 }
-function getMapStateCursorInfo(
-  mapStateAst: File,
-  relativePos: number,
-  triggerCharacter: string,
-) {
+function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
   let program = mapStateAst.program;
   let exp: ExpressionStatement = program.body[0] as ExpressionStatement;
   let callExp: CallExpression = exp.expression as CallExpression;
@@ -83,73 +88,21 @@ function getMapStateCursorInfo(
           secondNameSpace: '',
         };
       }
+    } else if (firstArg.type === 'ObjectExpression') {
+      return getObjectExpressionCursorInfo(mapStateAst, relativePos, firstArg);
     }
-    // else if (firstArg.type === 'ObjectExpression') {
-    //   let triggerProperty = null;
-    //   let cursorAtExp = firstArg.properties.filter(property => {
-    //     let flag =
-    //       (property.type === 'ObjectMethod' ||
-    //         property.type === 'ObjectProperty') &&
-    //       relativePos >= property.start &&
-    //       relativePos <= property.end;
-    //     if (flag) {
-    //       triggerProperty = property;
-    //     }
-    //     return flag;
-    //   })[0];
-
-    //   if (cursorAtExp) {
-    //     if (
-    //       triggerProperty &&
-    //       triggerProperty.type === 'ObjectMethod' &&
-    //       triggerProperty.params.length === 0
-    //     ) {
-    //       return null;
-    //     }
-    //     let retCursorInfo = {
-    //       match: false,
-    //       isNamespace: false,
-    //       namespace: '',
-    //       secondNameSpace: '',
-    //     };
-    //     traverse(mapStateAst, {
-    //       MemberExpression(path) {
-    //         let node: MemberExpression = path.node as MemberExpression;
-    //         if (relativePos >= node.start && relativePos <= node.end) {
-    //           let file = generator(node, {}).code;
-    //           let namespaceList = file.slice(0, -1).split('.');
-    //           if (
-    //             namespaceList.length &&
-    //             namespaceList[0] ===
-    //               ((cursorAtExp as ObjectMethod).params[0] as Identifier).name
-    //           ) {
-    //             retCursorInfo.match = true;
-    //             retCursorInfo.secondNameSpace = namespaceList
-    //               .slice(1)
-    //               .join('.');
-    //             path.stop();
-    //           }
-    //         }
-    //       },
-    //     });
-    //     if (retCursorInfo.match) {
-    //       return retCursorInfo;
-    //     }
-    //     return null;
-    //   }
-    // }
   } else if (args.length === 2) {
     let firstArg = args[0];
     let secondArg = args[1];
     if (firstArg.type === 'StringLiteral') {
+      if (relativePos >= firstArg.start && relativePos < firstArg.end) {
+        return {
+          isNamespace: true,
+          namespace: firstArg.value,
+          secondNameSpace: '',
+        };
+      }
       if (secondArg.type === 'ArrayExpression') {
-        if (relativePos >= firstArg.start && relativePos < firstArg.end) {
-          return {
-            isNamespace: true,
-            namespace: firstArg.value,
-            secondNameSpace: '',
-          };
-        }
         let cursorAtExp = secondArg.elements.filter(item => {
           return relativePos >= item.start && relativePos < item.end;
         })[0];
@@ -163,6 +116,13 @@ function getMapStateCursorInfo(
               .join('.'),
           };
         }
+      } else if (secondArg.type === 'ObjectExpression') {
+        return getObjectExpressionCursorInfo(
+          mapStateAst,
+          relativePos,
+          secondArg,
+          firstArg,
+        );
       }
     }
   }
@@ -243,8 +203,9 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
     token,
     context: vscode.CompletionContext,
   ): vscode.CompletionItem[] {
-    // console.time('mapState');
-    let reg = /\bmapState\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
+    console.time('mapState');
+    let reg = /\bmapState\(([\'\"](.*)[\'\"](?:,\s*)?)?((\[[\s\S]*?\])|(\{[\s\S]*?\}))?\s*\)/g;
+
     let cursorInfo = getCursorInfoFromRegExp(
       reg,
       document,
@@ -286,8 +247,93 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
           return stateCompletion;
         });
       }
+      console.timeEnd('mapState');
       return stateCompletionList.concat(namespaceCompletionList);
     }
     return undefined;
+  }
+}
+
+function getObjectExpressionCursorInfo(
+  mapStateAst: File,
+  relativePos: number,
+  arg: ObjectExpression,
+  namespaceArg?: StringLiteral,
+) {
+  let triggerProperty: ObjectProperty | ObjectMethod = null;
+  let cursorAtExp = arg.properties.filter(property => {
+    let flag =
+      (property.type === 'ObjectMethod' ||
+        property.type === 'ObjectProperty') &&
+      relativePos >= property.start &&
+      relativePos <= property.end;
+    if (flag) {
+      triggerProperty = property as ObjectProperty | ObjectMethod;
+    }
+    return flag;
+  })[0];
+
+  if (cursorAtExp) {
+    if (
+      triggerProperty &&
+      triggerProperty.type === 'ObjectMethod' &&
+      triggerProperty.params.length === 0
+    ) {
+      return null;
+    }
+    let retCursorInfo = {
+      match: false,
+      isNamespace: false,
+      namespace: '',
+      secondNameSpace: '',
+    };
+    traverse(mapStateAst, {
+      Identifier(path) {
+        let node: Identifier = path.node as Identifier;
+        if (relativePos >= node.start && relativePos <= node.end) {
+          let cur = path;
+          while (cur.parent.type === 'MemberExpression') {
+            cur = cur.parentPath;
+          }
+          let file = generator(cur.node, {}).code;
+          let namespaceList = file.slice(0, -1).split('.');
+          if (namespaceList.length) {
+            switch (triggerProperty.type) {
+              case 'ObjectMethod':
+                if (
+                  (triggerProperty.params[0] as Identifier).name ===
+                  namespaceList[0]
+                ) {
+                  retCursorInfo.match = true;
+                }
+                break;
+              case 'ObjectProperty':
+                switch (triggerProperty.value.type) {
+                  case 'ArrowFunctionExpression':
+                  case 'FunctionExpression':
+                    let functionExpression = triggerProperty.value;
+                    if (
+                      (functionExpression.params[0] as Identifier).name ===
+                      namespaceList[0]
+                    ) {
+                      retCursorInfo.match = true;
+                    }
+                }
+            }
+            if (retCursorInfo.match) {
+              retCursorInfo.secondNameSpace = namespaceList.slice(1).join('.');
+              if (namespaceArg) {
+                retCursorInfo.namespace = namespaceArg.value;
+              }
+            }
+            path.stop();
+          }
+        }
+      },
+    });
+    if (retCursorInfo.match) {
+      return retCursorInfo;
+    }
+    return null;
   }
 }

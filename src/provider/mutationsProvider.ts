@@ -52,13 +52,14 @@ export function getCursorInfoFromRegExp(
   if (type === 'ast') {
     if (needToCut) {
       commitExpression[0] = commitExpression[0].replace(
-        /(\b\w+(?:\.\w+)*)(\.)[^\w]/g,
+        /(\b\w+(?:\.\w+)*)(?:\.)([^\w])/g,
         ($, $1, $2) => {
-          return $1 + 'ß';
+          return $1 + 'ß' + $2;
         },
       );
     }
     let commitAst = parse(commitExpression[0]);
+    // debugger;
     cursorInfo = parseMatchFn(commitAst, posIndex - commitExpression.index);
   } else {
     cursorInfo = parseMatchFn(

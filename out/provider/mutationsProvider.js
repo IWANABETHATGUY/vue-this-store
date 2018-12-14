@@ -32,11 +32,12 @@ function getCursorInfoFromRegExp(reg, document, position, parseMatchFn, type, ne
         return null;
     if (type === 'ast') {
         if (needToCut) {
-            commitExpression[0] = commitExpression[0].replace(/(\b\w+(?:\.\w+)*)(\.)[^\w]/g, ($, $1, $2) => {
-                return $1 + 'ß';
+            commitExpression[0] = commitExpression[0].replace(/(\b\w+(?:\.\w+)*)(?:\.)([^\w])/g, ($, $1, $2) => {
+                return $1 + 'ß' + $2;
             });
         }
         let commitAst = parser_1.parse(commitExpression[0]);
+        // debugger;
         cursorInfo = parseMatchFn(commitAst, posIndex - commitExpression.index);
     }
     else {

@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
 const util_1 = require("./util");
 const mutationsProvider_1 = require("./mutationsProvider");
+const traverse_1 = require("@babel/traverse");
+const generator_1 = require("@babel/generator");
 function getNextStateNamespace(obj, namespace) {
     let targetModule = namespace
         .split('.')
@@ -40,7 +42,7 @@ function getStateCursorInfo(regExecArray, relativePos) {
             .join('.'),
     };
 }
-function getMapStateCursorInfo(mapStateAst, relativePos, triggerCharacter) {
+function getMapStateCursorInfo(mapStateAst, relativePos) {
     let program = mapStateAst.program;
     let exp = program.body[0];
     let callExp = exp.expression;
@@ -72,72 +74,22 @@ function getMapStateCursorInfo(mapStateAst, relativePos, triggerCharacter) {
                 };
             }
         }
-        // else if (firstArg.type === 'ObjectExpression') {
-        //   let triggerProperty = null;
-        //   let cursorAtExp = firstArg.properties.filter(property => {
-        //     let flag =
-        //       (property.type === 'ObjectMethod' ||
-        //         property.type === 'ObjectProperty') &&
-        //       relativePos >= property.start &&
-        //       relativePos <= property.end;
-        //     if (flag) {
-        //       triggerProperty = property;
-        //     }
-        //     return flag;
-        //   })[0];
-        //   if (cursorAtExp) {
-        //     if (
-        //       triggerProperty &&
-        //       triggerProperty.type === 'ObjectMethod' &&
-        //       triggerProperty.params.length === 0
-        //     ) {
-        //       return null;
-        //     }
-        //     let retCursorInfo = {
-        //       match: false,
-        //       isNamespace: false,
-        //       namespace: '',
-        //       secondNameSpace: '',
-        //     };
-        //     traverse(mapStateAst, {
-        //       MemberExpression(path) {
-        //         let node: MemberExpression = path.node as MemberExpression;
-        //         if (relativePos >= node.start && relativePos <= node.end) {
-        //           let file = generator(node, {}).code;
-        //           let namespaceList = file.slice(0, -1).split('.');
-        //           if (
-        //             namespaceList.length &&
-        //             namespaceList[0] ===
-        //               ((cursorAtExp as ObjectMethod).params[0] as Identifier).name
-        //           ) {
-        //             retCursorInfo.match = true;
-        //             retCursorInfo.secondNameSpace = namespaceList
-        //               .slice(1)
-        //               .join('.');
-        //             path.stop();
-        //           }
-        //         }
-        //       },
-        //     });
-        //     if (retCursorInfo.match) {
-        //       return retCursorInfo;
-        //     }
-        //     return null;
-        //   }
-        // }
+        else if (firstArg.type === 'ObjectExpression') {
+            return getObjectExpressionCursorInfo(mapStateAst, relativePos, firstArg);
+        }
     }
     else if (args.length === 2) {
         let firstArg = args[0];
         let secondArg = args[1];
         if (firstArg.type === 'StringLiteral') {
+            if (relativePos >= firstArg.start && relativePos < firstArg.end) {
+                return {
+                    isNamespace: true,
+                    namespace: firstArg.value,
+                    secondNameSpace: '',
+                };
+            }
             if (secondArg.type === 'ArrayExpression') {
-                if (relativePos >= firstArg.start && relativePos < firstArg.end) {
-                    return {
-                        isNamespace: true,
-                        namespace: firstArg.value,
-                        secondNameSpace: '',
-                    };
-                }
                 let cursorAtExp = secondArg.elements.filter(item => {
                     return relativePos >= item.start && relativePos < item.end;
                 })[0];
@@ -151,6 +103,9 @@ function getMapStateCursorInfo(mapStateAst, relativePos, triggerCharacter) {
                             .join('.'),
                     };
                 }
+            }
+            else if (secondArg.type === 'ObjectExpression') {
+                return getObjectExpressionCursorInfo(mapStateAst, relativePos, secondArg, firstArg);
             }
         }
     }
@@ -199,8 +154,8 @@ class storeMapStateProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position, token, context) {
-        // console.time('mapState');
-        let reg = /\bmapState\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
+        console.time('mapState');
+        let reg = /\bmapState\(([\'\"](.*)[\'\"](?:,\s*)?)?((\[[\s\S]*?\])|(\{[\s\S]*?\}))?\s*\)/g;
         let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, getMapStateCursorInfo, 'ast', context.triggerCharacter === '.');
         if (cursorInfo) {
             let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
@@ -221,10 +176,81 @@ class storeMapStateProvider {
                     return stateCompletion;
                 });
             }
+            console.timeEnd('mapState');
             return stateCompletionList.concat(namespaceCompletionList);
         }
         return undefined;
     }
 }
 exports.storeMapStateProvider = storeMapStateProvider;
+function getObjectExpressionCursorInfo(mapStateAst, relativePos, arg, namespaceArg) {
+    let triggerProperty = null;
+    let cursorAtExp = arg.properties.filter(property => {
+        let flag = (property.type === 'ObjectMethod' ||
+            property.type === 'ObjectProperty') &&
+            relativePos >= property.start &&
+            relativePos <= property.end;
+        if (flag) {
+            triggerProperty = property;
+        }
+        return flag;
+    })[0];
+    if (cursorAtExp) {
+        if (triggerProperty &&
+            triggerProperty.type === 'ObjectMethod' &&
+            triggerProperty.params.length === 0) {
+            return null;
+        }
+        let retCursorInfo = {
+            match: false,
+            isNamespace: false,
+            namespace: '',
+            secondNameSpace: '',
+        };
+        traverse_1.default(mapStateAst, {
+            Identifier(path) {
+                let node = path.node;
+                if (relativePos >= node.start && relativePos <= node.end) {
+                    let cur = path;
+                    while (cur.parent.type === 'MemberExpression') {
+                        cur = cur.parentPath;
+                    }
+                    let file = generator_1.default(cur.node, {}).code;
+                    let namespaceList = file.slice(0, -1).split('.');
+                    if (namespaceList.length) {
+                        switch (triggerProperty.type) {
+                            case 'ObjectMethod':
+                                if (triggerProperty.params[0].name ===
+                                    namespaceList[0]) {
+                                    retCursorInfo.match = true;
+                                }
+                                break;
+                            case 'ObjectProperty':
+                                switch (triggerProperty.value.type) {
+                                    case 'ArrowFunctionExpression':
+                                    case 'FunctionExpression':
+                                        let functionExpression = triggerProperty.value;
+                                        if (functionExpression.params[0].name ===
+                                            namespaceList[0]) {
+                                            retCursorInfo.match = true;
+                                        }
+                                }
+                        }
+                        if (retCursorInfo.match) {
+                            retCursorInfo.secondNameSpace = namespaceList.slice(1).join('.');
+                            if (namespaceArg) {
+                                retCursorInfo.namespace = namespaceArg.value;
+                            }
+                        }
+                        path.stop();
+                    }
+                }
+            },
+        });
+        if (retCursorInfo.match) {
+            return retCursorInfo;
+        }
+        return null;
+    }
+}
 //# sourceMappingURL=stateProvider.js.map
