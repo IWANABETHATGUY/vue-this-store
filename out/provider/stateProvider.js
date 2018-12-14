@@ -3,18 +3,31 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
 const util_1 = require("./util");
 const mutationsProvider_1 = require("./mutationsProvider");
+function getNextStateNamespace(obj, namespace) {
+    let targetModule = namespace
+        .split('.')
+        .filter(item => item.length)
+        .reduce((acc, cur) => {
+        let modules = acc['modules'];
+        return modules && modules[cur] ? modules[cur] : {};
+    }, obj);
+    if (targetModule.modules) {
+        return Object.keys(targetModule.modules);
+    }
+    return [];
+}
 function getStateFromNameSpace(obj, namespace) {
-    let stateInfoList = [];
-    if (obj.namespace === namespace && obj.state) {
-        stateInfoList.push(...obj.state);
+    let targetModule = namespace
+        .split('.')
+        .filter(item => item.length)
+        .reduce((acc, cur) => {
+        let modules = acc['modules'];
+        return modules && modules[cur] ? modules[cur] : {};
+    }, obj);
+    if (targetModule.state) {
+        return targetModule.state;
     }
-    if (obj.modules) {
-        Object.keys(obj.modules).forEach(key => {
-            let curModule = obj.modules[key];
-            stateInfoList.push(...getStateFromNameSpace(curModule, namespace));
-        });
-    }
-    return stateInfoList;
+    return [];
 }
 function getStateCursorInfo(regExecArray, relativePos) {
     return {
@@ -153,13 +166,14 @@ class storeStateProvider {
     provideCompletionItems(document, position, token, context) {
         let reg = /this\n?\s*\.\$store\n?\s*\.state((?:\n?\s*\.[\w\$]*)+)/g;
         let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, getStateCursorInfo, 'regexp');
+        // debugger;
         if (cursorInfo) {
             let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
                 .map(item => item.split('/').join('.'))
                 .filter(item => item.length)
                 .join('.');
             let getterCompletionList = [];
-            let namespaceCompletionList = util_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
+            let namespaceCompletionList = getNextStateNamespace(this.storeInfo, fullNamespace).map(nextNS => {
                 let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
                 NSCompletion.detail = 'module';
                 return NSCompletion;

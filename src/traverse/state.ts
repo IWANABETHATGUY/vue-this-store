@@ -4,6 +4,7 @@ import {
   getAst,
   getFileDefinationAstMap,
   getModuleOrPathMap,
+  transformShorthand,
 } from './utils';
 import {
   ExportDefaultDeclaration,
@@ -21,6 +22,7 @@ export function walkFile(base: string, relative: string = '') {
   let exportDefault: ExportDefaultDeclaration = ast.program.body.filter(
     item => item.type === 'ExportDefaultDeclaration',
   )[0] as ExportDefaultDeclaration;
+  transformShorthand(exportDefault, defineAstMap);
   return {
     export: exportDefault
       ? (exportDefault.declaration as ObjectExpression)

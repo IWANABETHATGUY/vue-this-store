@@ -4,6 +4,7 @@ import {
   getAst,
   getFileDefinationAstMap,
   getModuleOrPathMap,
+  transformShorthand,
 } from './utils';
 import {
   ObjectExpression,
@@ -168,7 +169,7 @@ export function walkModulesFile(base: string, relative: string = '') {
   let exportDefault: ExportDefaultDeclaration = ast.program.body.filter(
     item => item.type === 'ExportDefaultDeclaration',
   )[0] as ExportDefaultDeclaration;
-
+  transformShorthand(exportDefault, defineAstMap);
   return {
     objAst: exportDefault ? exportDefault.declaration : objectExpression([]),
     lineOfFile: fileContent.split('\n'),
@@ -183,7 +184,14 @@ export function parseModules(
   namespace: string,
 ) {
   let infoObj: ModulesInfo = {};
+
   objAst.properties.forEach((property: ObjectProperty) => {
+    let ParseModuleParam = {
+      m2pmap,
+      defmap,
+      cwf,
+      lineOfFile,
+    };
     let key: Identifier = property.key as Identifier;
     let namespaceProperty: ObjectProperty;
     let value;
@@ -198,10 +206,12 @@ export function parseModules(
           cwf: cwff,
           lineOfFile: lineOfFilee,
         } = walkModulesFile(cwf, m2pmap[key.name]);
-        m2pmap = m2pmapp;
-        defmap = defmapp;
-        cwf = cwff;
-        lineOfFile = lineOfFilee;
+        ParseModuleParam = {
+          m2pmap: m2pmapp,
+          defmap: defmapp,
+          cwf: cwff,
+          lineOfFile: lineOfFilee,
+        };
         value = objAstt;
       }
     }
@@ -226,10 +236,7 @@ export function parseModules(
     parseModuleAst(
       {
         objAst: value,
-        m2pmap,
-        defmap,
-        cwf,
-        lineOfFile,
+        ...ParseModuleParam,
       },
       infoObj[key.name],
     );

@@ -9,6 +9,8 @@ import {
   ImportDeclaration,
   VariableDeclaration,
   Identifier,
+  ExportDefaultDeclaration,
+  ObjectExpression,
 } from '@babel/types';
 import { StoreAstMap } from '../type';
 import { ParseModuleParam } from './modules';
@@ -136,6 +138,25 @@ export function getVuexConfig(storeABPath: string): ParseModuleParam {
   };
 }
 
+export function transformShorthand(
+  exportDefault: ExportDefaultDeclaration,
+  defineAstMap: StoreAstMap,
+) {
+  if (exportDefault) {
+    switch (exportDefault.declaration.type) {
+      case 'Identifier':
+        let name = exportDefault.declaration.name;
+        if (
+          defineAstMap[name] &&
+          defineAstMap[name].type === 'ObjectExpression'
+        ) {
+          exportDefault.declaration = defineAstMap[name] as ObjectExpression;
+        }
+        break;
+      default:
+    }
+  }
+}
 /**
  * 辅助函数用来判断第二个参数传入的对象中的内容是否在a中都一样，如果一样返回true，否则返回false
  *

@@ -2,30 +2,35 @@ import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
 import { getModuleFromPath, getNextNamespace, CursorInfo } from './util';
 import { getCursorInfoFromRegExp } from './mutationsProvider';
-import {
-  File,
-  ExpressionStatement,
-  CallExpression,
-  ObjectProperty,
-  ObjectMethod,
-  MemberExpression,
-  Identifier,
-} from '@babel/types';
+import { File, ExpressionStatement, CallExpression } from '@babel/types';
 import traverse from '@babel/traverse';
 import generator from '@babel/generator';
 
+function getNextStateNamespace(obj: ModuleInfo, namespace) {
+  let targetModule: ModuleInfo = namespace
+    .split('.')
+    .filter(item => item.length)
+    .reduce((acc, cur) => {
+      let modules = acc['modules'];
+      return modules && modules[cur] ? modules[cur] : {};
+    }, obj);
+  if (targetModule.modules) {
+    return Object.keys(targetModule.modules);
+  }
+  return [];
+}
 function getStateFromNameSpace(obj: ModuleInfo, namespace: string) {
-  let stateInfoList = [];
-  if (obj.namespace === namespace && obj.state) {
-    stateInfoList.push(...obj.state);
+  let targetModule: ModuleInfo = namespace
+    .split('.')
+    .filter(item => item.length)
+    .reduce((acc, cur) => {
+      let modules = acc['modules'];
+      return modules && modules[cur] ? modules[cur] : {};
+    }, obj);
+  if (targetModule.state) {
+    return targetModule.state;
   }
-  if (obj.modules) {
-    Object.keys(obj.modules).forEach(key => {
-      let curModule = obj.modules[key];
-      stateInfoList.push(...getStateFromNameSpace(curModule, namespace));
-    });
-  }
-  return stateInfoList;
+  return [];
 }
 
 function getStateCursorInfo(
@@ -185,13 +190,14 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
       getStateCursorInfo,
       'regexp',
     );
+    // debugger;
     if (cursorInfo) {
       let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
         .map(item => item.split('/').join('.'))
         .filter(item => item.length)
         .join('.');
       let getterCompletionList = [];
-      let namespaceCompletionList = getNextNamespace(
+      let namespaceCompletionList = getNextStateNamespace(
         this.storeInfo,
         fullNamespace,
       ).map(nextNS => {

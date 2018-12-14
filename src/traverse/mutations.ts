@@ -4,6 +4,7 @@ import {
   getAst,
   getFileDefinationAstMap,
   getModuleOrPathMap,
+  transformShorthand,
 } from './utils';
 import {
   ExportDefaultDeclaration,
@@ -16,6 +17,7 @@ import {
   StringLiteral,
 } from '@babel/types';
 import traverse from '@babel/traverse';
+
 function evalFromPath(base: string, relative: string, evalMap) {
   let filename = getAbsolutePath(base, relative);
   let fileContent = getFileContent(filename);
@@ -42,6 +44,7 @@ export function walkMutationsFile(base: string, relative: string = '') {
   let exportDefault: ExportDefaultDeclaration = ast.program.body.filter(
     item => item.type === 'ExportDefaultDeclaration',
   )[0] as ExportDefaultDeclaration;
+  transformShorthand(exportDefault, defineAstMap);
   if (exportDefault) {
     let EvalMap = {};
     let pathSet = new Set();

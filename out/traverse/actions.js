@@ -27,6 +27,7 @@ function walkActionsFile(base, relative = '') {
     let defineAstMap = utils_1.getFileDefinationAstMap(ast);
     let moduleOrPathMap = utils_1.getModuleOrPathMap(ast);
     let exportDefault = ast.program.body.filter(item => item.type === 'ExportDefaultDeclaration')[0];
+    utils_1.transformShorthand(exportDefault, defineAstMap);
     if (exportDefault) {
         let EvalMap = {};
         let pathSet = new Set();

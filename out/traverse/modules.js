@@ -89,6 +89,7 @@ function walkModulesFile(base, relative = '') {
     let defineAstMap = utils_1.getFileDefinationAstMap(ast);
     let moduleOrPathMap = utils_1.getModuleOrPathMap(ast);
     let exportDefault = ast.program.body.filter(item => item.type === 'ExportDefaultDeclaration')[0];
+    utils_1.transformShorthand(exportDefault, defineAstMap);
     return {
         objAst: exportDefault ? exportDefault.declaration : types_1.objectExpression([]),
         lineOfFile: fileContent.split('\n'),
@@ -101,6 +102,12 @@ exports.walkModulesFile = walkModulesFile;
 function parseModules({ objAst, m2pmap, defmap, cwf, lineOfFile }, namespace) {
     let infoObj = {};
     objAst.properties.forEach((property) => {
+        let ParseModuleParam = {
+            m2pmap,
+            defmap,
+            cwf,
+            lineOfFile,
+        };
         let key = property.key;
         let namespaceProperty;
         let value;
@@ -110,10 +117,12 @@ function parseModules({ objAst, m2pmap, defmap, cwf, lineOfFile }, namespace) {
         else if (property.shorthand) {
             if (m2pmap[key.name]) {
                 let { objAst: objAstt, m2pmap: m2pmapp, defmap: defmapp, cwf: cwff, lineOfFile: lineOfFilee, } = walkModulesFile(cwf, m2pmap[key.name]);
-                m2pmap = m2pmapp;
-                defmap = defmapp;
-                cwf = cwff;
-                lineOfFile = lineOfFilee;
+                ParseModuleParam = {
+                    m2pmap: m2pmapp,
+                    defmap: defmapp,
+                    cwf: cwff,
+                    lineOfFile: lineOfFilee,
+                };
                 value = objAstt;
             }
         }
@@ -130,13 +139,7 @@ function parseModules({ objAst, m2pmap, defmap, cwf, lineOfFile }, namespace) {
                     .join('.')
                 : namespace,
         };
-        parseModuleAst({
-            objAst: value,
-            m2pmap,
-            defmap,
-            cwf,
-            lineOfFile,
-        }, infoObj[key.name]);
+        parseModuleAst(Object.assign({ objAst: value }, ParseModuleParam), infoObj[key.name]);
     });
     return infoObj;
 }

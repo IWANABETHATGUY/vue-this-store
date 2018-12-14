@@ -129,6 +129,21 @@ function getVuexConfig(storeABPath) {
     };
 }
 exports.getVuexConfig = getVuexConfig;
+function transformShorthand(exportDefault, defineAstMap) {
+    if (exportDefault) {
+        switch (exportDefault.declaration.type) {
+            case 'Identifier':
+                let name = exportDefault.declaration.name;
+                if (defineAstMap[name] &&
+                    defineAstMap[name].type === 'ObjectExpression') {
+                    exportDefault.declaration = defineAstMap[name];
+                }
+                break;
+            default:
+        }
+    }
+}
+exports.transformShorthand = transformShorthand;
 /**
  * 辅助函数用来判断第二个参数传入的对象中的内容是否在a中都一样，如果一样返回true，否则返回false
  *
