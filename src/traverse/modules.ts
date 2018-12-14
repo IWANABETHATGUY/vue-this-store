@@ -22,7 +22,7 @@ import { parseMutations, walkMutationsFile } from './mutations';
 import { walkActionsFile, parseActions } from './actions';
 
 export interface ModuleInfo {
-  namespace: string;
+  namespace?: string;
   modules?: ModulesInfo;
   state?: any[];
   getters?: any[];
