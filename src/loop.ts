@@ -120,6 +120,7 @@ export default class VueThis$Store {
         "'",
         '"',
         '/',
+        '.',
       ),
       languages.registerCompletionItemProvider(
         'vue',

@@ -182,7 +182,6 @@ export function parseModules(
   { objAst, m2pmap, defmap, cwf, lineOfFile }: ParseModuleParam,
   namespace: string,
 ) {
-  // debugger;
   let infoObj: ModulesInfo = {};
   objAst.properties.forEach((property: ObjectProperty) => {
     let key: Identifier = property.key as Identifier;

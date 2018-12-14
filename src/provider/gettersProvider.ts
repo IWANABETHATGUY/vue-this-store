@@ -8,7 +8,6 @@ import {
 import { getCursorInfoFromRegExp } from './mutationsProvider';
 
 function getGettersFromNameSpace(obj: ModuleInfo, namespace: string) {
-  // debugger;
   let getterInfoList = [];
   if (obj.namespace === namespace && obj.getters) {
     getterInfoList.push(...obj.getters);
@@ -91,7 +90,6 @@ export class storeMapGettersProvider implements vscode.CompletionItemProvider {
       'ast',
     );
     if (cursorInfo) {
-      // debugger;
       let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
         .map(item => item.split('/').join('.'))
         .filter(item => item.length)

@@ -43,7 +43,6 @@ function getDispatchCursorInfo(commitAst, relativePos) {
     return null;
 }
 function getActionsFromNameSpace(obj, namespace) {
-    // debugger;
     let actionInfoList = [];
     if (obj.namespace === namespace && obj.actions) {
         actionInfoList.push(...obj.actions);
@@ -69,11 +68,9 @@ class storeActionsProvider {
         let reg = /((?:this\.)?(?:\$store\.)\n?dispatch\([\s\S]*?\))/g;
         let match = null;
         let matchList = [];
-        // debugger;
         while ((match = reg.exec(docContent))) {
             matchList.push(match);
         }
-        // debugger;
         if (!matchList.length) {
             return undefined;
         }
@@ -84,7 +81,6 @@ class storeActionsProvider {
         let commitAst = parser_1.parse(commitExpression[0]);
         let cursorInfo = getDispatchCursorInfo(commitAst, posIndex - commitExpression.index);
         if (cursorInfo) {
-            // debugger;
             let fullNamespace = cursorInfo.namespace;
             let getterCompletionList = [];
             let namespaceCompletionList = util_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {

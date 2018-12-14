@@ -88,7 +88,6 @@ export function getMapGMACursorInfo(mapGetterAst: File, relativePos: number) {
       let cursorAtExp = firstArg.elements.filter(item => {
         return relativePos >= item.start && relativePos < item.end;
       })[0];
-      // debugger;
       if (cursorAtExp && cursorAtExp.type === 'StringLiteral') {
         retCursorInfo.match = true;
         retCursorInfo.secondNameSpace = cursorAtExp.value
@@ -99,7 +98,6 @@ export function getMapGMACursorInfo(mapGetterAst: File, relativePos: number) {
     } else if (firstArg.type === 'StringLiteral' && !retCursorInfo.match) {
       let cursorAtExp =
         relativePos >= firstArg.start && relativePos < firstArg.end;
-      // debugger;
       if (cursorAtExp) {
         retCursorInfo.match = true;
         retCursorInfo.isNamespace = true;
@@ -154,7 +152,6 @@ export function getMapGMACursorInfo(mapGetterAst: File, relativePos: number) {
             return relativePos >= property.start && relativePos < property.end;
           },
         )[0];
-        // debugger;
         if (
           cursorAtProperty &&
           cursorAtProperty.type === 'ObjectProperty' &&

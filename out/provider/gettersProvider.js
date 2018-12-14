@@ -4,7 +4,6 @@ const vscode = require("vscode");
 const util_1 = require("./util");
 const mutationsProvider_1 = require("./mutationsProvider");
 function getGettersFromNameSpace(obj, namespace) {
-    // debugger;
     let getterInfoList = [];
     if (obj.namespace === namespace && obj.getters) {
         getterInfoList.push(...obj.getters);
@@ -65,7 +64,6 @@ class storeMapGettersProvider {
         let reg = /\bmapGetters\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
         let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, util_1.getMapGMACursorInfo, 'ast');
         if (cursorInfo) {
-            // debugger;
             let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
                 .map(item => item.split('/').join('.'))
                 .filter(item => item.length)

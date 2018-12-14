@@ -99,7 +99,6 @@ function walkModulesFile(base, relative = '') {
 }
 exports.walkModulesFile = walkModulesFile;
 function parseModules({ objAst, m2pmap, defmap, cwf, lineOfFile }, namespace) {
-    // debugger;
     let infoObj = {};
     objAst.properties.forEach((property) => {
         let key = property.key;

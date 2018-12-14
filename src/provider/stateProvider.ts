@@ -2,10 +2,19 @@ import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
 import { getModuleFromPath, getNextNamespace, CursorInfo } from './util';
 import { getCursorInfoFromRegExp } from './mutationsProvider';
-import { File, ExpressionStatement, CallExpression } from '@babel/types';
+import {
+  File,
+  ExpressionStatement,
+  CallExpression,
+  ObjectProperty,
+  ObjectMethod,
+  MemberExpression,
+  Identifier,
+} from '@babel/types';
+import traverse from '@babel/traverse';
+import generator from '@babel/generator';
 
 function getStateFromNameSpace(obj: ModuleInfo, namespace: string) {
-  // debugger;
   let stateInfoList = [];
   if (obj.namespace === namespace && obj.state) {
     stateInfoList.push(...obj.state);
@@ -33,7 +42,11 @@ function getStateCursorInfo(
       .join('.'),
   };
 }
-function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
+function getMapStateCursorInfo(
+  mapStateAst: File,
+  relativePos: number,
+  triggerCharacter: string,
+) {
   let program = mapStateAst.program;
   let exp: ExpressionStatement = program.body[0] as ExpressionStatement;
   let callExp: CallExpression = exp.expression as CallExpression;
@@ -45,7 +58,6 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
       let cursorAtExp = firstArg.elements.filter(item => {
         return relativePos >= item.start && relativePos < item.end;
       })[0];
-      // debugger;
       if (cursorAtExp && cursorAtExp.type === 'StringLiteral') {
         return {
           isNamespace: false,
@@ -59,7 +71,6 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
     } else if (firstArg.type === 'StringLiteral') {
       let cursorAtExp =
         relativePos >= firstArg.start && relativePos < firstArg.end;
-      // debugger;
       if (cursorAtExp) {
         return {
           isNamespace: true,
@@ -68,6 +79,60 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
         };
       }
     }
+    // else if (firstArg.type === 'ObjectExpression') {
+    //   let triggerProperty = null;
+    //   let cursorAtExp = firstArg.properties.filter(property => {
+    //     let flag =
+    //       (property.type === 'ObjectMethod' ||
+    //         property.type === 'ObjectProperty') &&
+    //       relativePos >= property.start &&
+    //       relativePos <= property.end;
+    //     if (flag) {
+    //       triggerProperty = property;
+    //     }
+    //     return flag;
+    //   })[0];
+
+    //   if (cursorAtExp) {
+    //     if (
+    //       triggerProperty &&
+    //       triggerProperty.type === 'ObjectMethod' &&
+    //       triggerProperty.params.length === 0
+    //     ) {
+    //       return null;
+    //     }
+    //     let retCursorInfo = {
+    //       match: false,
+    //       isNamespace: false,
+    //       namespace: '',
+    //       secondNameSpace: '',
+    //     };
+    //     traverse(mapStateAst, {
+    //       MemberExpression(path) {
+    //         let node: MemberExpression = path.node as MemberExpression;
+    //         if (relativePos >= node.start && relativePos <= node.end) {
+    //           let file = generator(node, {}).code;
+    //           let namespaceList = file.slice(0, -1).split('.');
+    //           if (
+    //             namespaceList.length &&
+    //             namespaceList[0] ===
+    //               ((cursorAtExp as ObjectMethod).params[0] as Identifier).name
+    //           ) {
+    //             retCursorInfo.match = true;
+    //             retCursorInfo.secondNameSpace = namespaceList
+    //               .slice(1)
+    //               .join('.');
+    //             path.stop();
+    //           }
+    //         }
+    //       },
+    //     });
+    //     if (retCursorInfo.match) {
+    //       return retCursorInfo;
+    //     }
+    //     return null;
+    //   }
+    // }
   } else if (args.length === 2) {
     let firstArg = args[0];
     let secondArg = args[1];
@@ -109,6 +174,8 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
   public provideCompletionItems(
     document: vscode.TextDocument,
     position: vscode.Position,
+    token: vscode.CancellationToken,
+    context: vscode.CompletionContext,
   ): vscode.CompletionItem[] {
     let reg = /this\n?\s*\.\$store\n?\s*\.state((?:\n?\s*\.[\w\$]*)+)/g;
     let cursorInfo = getCursorInfoFromRegExp(
@@ -167,6 +234,8 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
   public provideCompletionItems(
     document: vscode.TextDocument,
     position: vscode.Position,
+    token,
+    context: vscode.CompletionContext,
   ): vscode.CompletionItem[] {
     // console.time('mapState');
     let reg = /\bmapState\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
@@ -176,9 +245,9 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
       position,
       getMapStateCursorInfo,
       'ast',
+      context.triggerCharacter === '.',
     );
     if (cursorInfo) {
-      // debugger;
       let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
         .map(item => item.split('/').join('.'))
         .filter(item => item.length)

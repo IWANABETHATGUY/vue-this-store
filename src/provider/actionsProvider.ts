@@ -58,7 +58,6 @@ function getDispatchCursorInfo(commitAst: File, relativePos: number) {
   return null;
 }
 function getActionsFromNameSpace(obj: ModuleInfo, namespace: string) {
-  // debugger;
   let actionInfoList = [];
   if (obj.namespace === namespace && obj.actions) {
     actionInfoList.push(...obj.actions);
@@ -90,11 +89,11 @@ export class storeActionsProvider implements vscode.CompletionItemProvider {
     let reg = /((?:this\.)?(?:\$store\.)\n?dispatch\([\s\S]*?\))/g;
     let match = null;
     let matchList = [];
-    // debugger;
+
     while ((match = reg.exec(docContent))) {
       matchList.push(match);
     }
-    // debugger;
+
     if (!matchList.length) {
       return undefined;
     }
@@ -107,7 +106,6 @@ export class storeActionsProvider implements vscode.CompletionItemProvider {
       posIndex - commitExpression.index,
     );
     if (cursorInfo) {
-      // debugger;
       let fullNamespace = cursorInfo.namespace;
       let getterCompletionList = [];
       let namespaceCompletionList = getNextNamespace(

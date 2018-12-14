@@ -65,7 +65,6 @@ function getMapGMACursorInfo(mapGetterAst, relativePos) {
             let cursorAtExp = firstArg.elements.filter(item => {
                 return relativePos >= item.start && relativePos < item.end;
             })[0];
-            // debugger;
             if (cursorAtExp && cursorAtExp.type === 'StringLiteral') {
                 retCursorInfo.match = true;
                 retCursorInfo.secondNameSpace = cursorAtExp.value
@@ -76,7 +75,6 @@ function getMapGMACursorInfo(mapGetterAst, relativePos) {
         }
         else if (firstArg.type === 'StringLiteral' && !retCursorInfo.match) {
             let cursorAtExp = relativePos >= firstArg.start && relativePos < firstArg.end;
-            // debugger;
             if (cursorAtExp) {
                 retCursorInfo.match = true;
                 retCursorInfo.isNamespace = true;
@@ -125,7 +123,6 @@ function getMapGMACursorInfo(mapGetterAst, relativePos) {
                 let cursorAtProperty = secondArg.properties.filter((property) => {
                     return relativePos >= property.start && relativePos < property.end;
                 })[0];
-                // debugger;
                 if (cursorAtProperty &&
                     cursorAtProperty.type === 'ObjectProperty' &&
                     cursorAtProperty.value.type === 'StringLiteral') {

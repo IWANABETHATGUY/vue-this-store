@@ -3,7 +3,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
 const util_1 = require("./util");
 const parser_1 = require("@babel/parser");
-function getCursorInfoFromRegExp(reg, document, position, parseMatchFn, type) {
+/**
+ *
+ *
+ * @export
+ * @param {RegExp} reg
+ * @param {vscode.TextDocument} document
+ * @param {vscode.Position} position
+ * @param {Function} parseMatchFn
+ * @param {CursorType} type
+ * @param {boolean} [needToCut=false] 判断是否需要将尾部触发字符切断。
+ * @returns
+ */
+function getCursorInfoFromRegExp(reg, document, position, parseMatchFn, type, needToCut = false) {
     let docContent = document.getText();
     let cursorInfo = null;
     let match = null;
@@ -19,6 +31,11 @@ function getCursorInfoFromRegExp(reg, document, position, parseMatchFn, type) {
     if (!commitExpression)
         return null;
     if (type === 'ast') {
+        if (needToCut) {
+            commitExpression[0] = commitExpression[0].replace(/(\b\w+(?:\.\w+)*)(\.)[^\w]/g, ($, $1, $2) => {
+                return $1 + 'ß';
+            });
+        }
         let commitAst = parser_1.parse(commitExpression[0]);
         cursorInfo = parseMatchFn(commitAst, posIndex - commitExpression.index);
     }
