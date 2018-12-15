@@ -220,7 +220,7 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
         .filter(item => item.length)
         .join('.');
       let stateCompletionList = [];
-      let namespaceCompletionList = getNextNamespace(
+      let namespaceCompletionList = getNextStateNamespace(
         this.storeInfo,
         fullNamespace,
       ).map(nextNS => {

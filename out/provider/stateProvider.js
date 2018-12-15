@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
-const util_1 = require("./util");
 const mutationsProvider_1 = require("./mutationsProvider");
 const traverse_1 = require("@babel/traverse");
 const generator_1 = require("@babel/generator");
@@ -163,7 +162,7 @@ class storeMapStateProvider {
                 .filter(item => item.length)
                 .join('.');
             let stateCompletionList = [];
-            let namespaceCompletionList = util_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
+            let namespaceCompletionList = getNextStateNamespace(this.storeInfo, fullNamespace).map(nextNS => {
                 let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
                 NSCompletion.detail = 'module';
                 return NSCompletion;
