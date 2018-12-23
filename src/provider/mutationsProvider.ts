@@ -193,7 +193,7 @@ export class storeMapMutationsProvider
     document: vscode.TextDocument,
     position: vscode.Position,
   ): vscode.CompletionItem[] {
-    let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
+    let reg = 33;
     let cursorInfo = getCursorInfoFromRegExp(
       reg,
       document,

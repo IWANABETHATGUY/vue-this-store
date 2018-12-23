@@ -37,6 +37,10 @@ class VueThis$Store {
         else {
             this._rootPath = rootPath;
         }
+        vscode_1.window.onDidChangeActiveTextEditor(e => {
+            const abPath = e.document.uri.fsPath;
+            const mapMutationsReg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
+        });
         this._entrancePath = path.resolve(this._rootPath, 'src/main.js');
         this.initCommands();
         this.start();

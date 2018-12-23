@@ -138,7 +138,7 @@ class storeMapMutationsProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position) {
-        let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
+        let reg = 33;
         let cursorInfo = getCursorInfoFromRegExp(reg, document, position, util_1.getMapGMACursorInfo, 'ast');
         if (cursorInfo) {
             let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
