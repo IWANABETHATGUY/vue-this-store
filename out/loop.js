@@ -58,6 +58,7 @@ class VueThis$Store {
     start() {
         this._extensionContext.subscriptions.push(this._statusBarItem);
         let [storeAbsolutePath, storeInfo, setStoreActionStatus,] = this.startFromEntry();
+        debugger;
         this._statusBarItem.setStatus(setStoreActionStatus);
         this._watcher = watcher_1.generateWatcher(storeAbsolutePath);
         this._stateProvider = new stateProvider_1.storeStateProvider(storeInfo);

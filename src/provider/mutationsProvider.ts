@@ -59,7 +59,7 @@ export function getCursorInfoFromRegExp(
       );
     }
     let commitAst = parse(commitExpression[0]);
-    // debugger;
+
     cursorInfo = parseMatchFn(commitAst, posIndex - commitExpression.index);
   } else {
     cursorInfo = parseMatchFn(

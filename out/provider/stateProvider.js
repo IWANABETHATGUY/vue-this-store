@@ -120,7 +120,6 @@ class storeStateProvider {
     provideCompletionItems(document, position, token, context) {
         let reg = /this\n?\s*\.\$store\n?\s*\.state((?:\n?\s*\.[\w\$]*)+)/g;
         let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, getStateCursorInfo, 'regexp');
-        // debugger;
         if (cursorInfo) {
             let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
                 .map(item => item.split('/').join('.'))
