@@ -1,37 +1,97 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
 import {
-  getModuleFromPath,
-  getNextNamespace,
-  getMapGMACursorInfo,
-} from './util';
-import { getCursorInfoFromRegExp } from './mutationsProvider';
+  getMutationsFromNameSpace,
+  storeMapMutationsProvider,
+} from './mutationsProvider';
+import { parse } from '@babel/parser';
+import {
+  File,
+  BaseNode,
+  ExpressionStatement,
+  CallExpression,
+  ObjectExpression,
+  arrayExpression,
+  ArrayExpression,
+  StringLiteral,
+  ObjectProperty,
+  Identifier,
+} from '@babel/types';
 
-function getGettersFromNameSpace(obj: ModuleInfo, namespace: string) {
-  let getterInfoList = [];
-  if (obj.namespace === namespace && obj.getters) {
-    getterInfoList.push(...obj.getters);
-  }
-  if (obj.modules) {
-    Object.keys(obj.modules).forEach(key => {
-      let curModule = obj.modules[key];
-      getterInfoList.push(...getGettersFromNameSpace(curModule, namespace));
+type MutationProperyInfo = {
+  key: string;
+  secondNamespace: string;
+};
+
+function parseMapMutations(mapMutationsContent: string): MutationProperyInfo[] {
+  let mapMutationAst: File = parse(mapMutationsContent);
+  let astArguments = ((mapMutationAst.program.body[0] as ExpressionStatement)
+    .expression as CallExpression).arguments;
+  let mapOrArray =
+    astArguments.length === 1 ? astArguments[0] : astArguments[1];
+  if (mapOrArray.type === 'ArrayExpression') {
+    return mapOrArray.elements.map(element => {
+      const value = (element as StringLiteral).value;
+      return { key: value, secondNamespace: value };
     });
+  } else if (mapOrArray.type === 'ObjectExpression') {
+    let res: MutationProperyInfo[] = [];
+    mapOrArray.properties.forEach(property => {
+      let propertyAst: ObjectProperty = property as ObjectProperty;
+      let key = (propertyAst.key as Identifier).name;
+      let secondNamespace = (propertyAst.value as StringLiteral).value;
+      res.push({ key, secondNamespace });
+    });
+    return res;
   }
-  return getterInfoList;
 }
+function getAllMapMutationContent(document: vscode.TextDocument, reg: RegExp) {
+  let docContent = document.getText();
 
-export class storeGettersProvider implements vscode.CompletionItemProvider {
-  private storeInfo: ModuleInfo;
-  private thisCompletionMap: Map<String, Object>;
+  let match = null;
+  let matchList = [];
+  while ((match = reg.exec(docContent))) {
+    matchList.push(match);
+  }
+  return matchList;
+}
+export class thisProvider implements vscode.CompletionItemProvider {
+  private _storeInfo: ModuleInfo;
+  private _thisCompletionList;
   constructor(storeInfo: ModuleInfo) {
-    this.storeInfo = storeInfo;
+    this._storeInfo = storeInfo;
   }
   public setStoreInfo(newStoreInfo: ModuleInfo) {
-    this.storeInfo = newStoreInfo;
+    this._storeInfo = newStoreInfo;
   }
-  public setThisCompletionMap(newThisComplationMap: Map<String, Object>) {
-    this.thisCompletionMap = newThisComplationMap;
+  public setThisCompletionMap(document: vscode.TextDocument) {
+    console.time('thisCompletion');
+    let completionList = [];
+    const reg = /\bmapMutations\((?:[\'\"](.*?)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
+    let matchList: RegExpMatchArray[] = getAllMapMutationContent(document, reg);
+    matchList.forEach(match => {
+      let [content, namespace] = match;
+
+      let mutationList = getMutationsFromNameSpace(this._storeInfo, namespace);
+
+      let mutationMap = mutationList.reduce((acc, cur) => {
+        acc[cur.rowKey] = cur.defination;
+        return acc;
+      }, {});
+      let mutationInfoList: MutationProperyInfo[] = parseMapMutations(content);
+      mutationInfoList.forEach((mutationInfo: MutationProperyInfo) => {
+        let mutationDefination = mutationMap[mutationInfo.secondNamespace];
+        if (mutationDefination) {
+          completionList.push({
+            computedKey: mutationInfo.key,
+            defination: mutationDefination,
+            type: 'mutation',
+          });
+        }
+      });
+    });
+    console.timeEnd('thisCompletion');
+    this._thisCompletionList = completionList;
   }
   public provideCompletionItems(
     document: vscode.TextDocument,
@@ -41,7 +101,7 @@ export class storeGettersProvider implements vscode.CompletionItemProvider {
     let linePrefix = document
       .lineAt(position)
       .text.substr(0, position.character);
-    let trimLinePrefixExpressions = linePrefix.trim().split(' ');
+    let trimLinePrefixExpressions = linePrefix.trim().split(/\s+/);
     let lastPrefixExpression =
       trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
     let reg = /this/;
@@ -49,15 +109,14 @@ export class storeGettersProvider implements vscode.CompletionItemProvider {
     if (!regRes) {
       return undefined;
     }
-    const thisCompletionMap = this.thisCompletionMap;
-    return Array.from(thisCompletionMap.keys()).map(key => {
-      let value = thisCompletionMap.get(key);
+
+    return this._thisCompletionList.map(completion => {
       let thisCompletion = new vscode.CompletionItem(
-        value.rowKey ? value.rowKey : '',
-        vscode.CompletionItemKind.Variable,
+        completion.computedKey ? completion.computedKey : '',
+        vscode.CompletionItemKind.Method,
       );
       thisCompletion.documentation = new vscode.MarkdownString(
-        '```' + value.defination ? value.defination : '' + '```',
+        '```' + completion.defination ? completion.defination : '' + '```',
       );
       return thisCompletion;
     });

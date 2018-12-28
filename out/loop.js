@@ -20,6 +20,7 @@ const stateProvider_1 = require("./provider/stateProvider");
 const gettersProvider_1 = require("./provider/gettersProvider");
 const mutationsProvider_1 = require("./provider/mutationsProvider");
 const actionsProvider_1 = require("./provider/actionsProvider");
+const thisProvider_1 = require("./provider/thisProvider");
 const emptyModule = {
     namespace: '',
     state: [],
@@ -38,8 +39,7 @@ class VueThis$Store {
             this._rootPath = rootPath;
         }
         vscode_1.window.onDidChangeActiveTextEditor(e => {
-            const abPath = e.document.uri.fsPath;
-            const mapMutationsReg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
+            this._thisProvider.setThisCompletionMap(e.document);
         });
         this._entrancePath = path.resolve(this._rootPath, 'src/main.js');
         this.initCommands();
@@ -62,7 +62,6 @@ class VueThis$Store {
     start() {
         this._extensionContext.subscriptions.push(this._statusBarItem);
         let [storeAbsolutePath, storeInfo, setStoreActionStatus,] = this.startFromEntry();
-        debugger;
         this._statusBarItem.setStatus(setStoreActionStatus);
         this._watcher = watcher_1.generateWatcher(storeAbsolutePath);
         this._stateProvider = new stateProvider_1.storeStateProvider(storeInfo);
@@ -73,13 +72,14 @@ class VueThis$Store {
         this._mapMutationsProvider = new mutationsProvider_1.storeMapMutationsProvider(storeInfo);
         this._actionsProvider = new actionsProvider_1.storeActionsProvider(storeInfo);
         this._mapActionsProvider = new actionsProvider_1.storeMapActionsProvider(storeInfo);
+        this._thisProvider = new thisProvider_1.thisProvider(storeInfo);
         this._watcher.on('change', () => {
             this.restart();
         });
         this.registerCompletionProvider();
     }
     registerCompletionProvider() {
-        this._extensionContext.subscriptions.push(vscode_1.languages.registerCompletionItemProvider('vue', this._stateProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapStateProvider, "'", '"', '/', '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._gettersProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapGettersProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mutationsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapMutationsProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._actionsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapActionsProvider, "'", '"', '/'));
+        this._extensionContext.subscriptions.push(vscode_1.languages.registerCompletionItemProvider('vue', this._stateProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapStateProvider, "'", '"', '/', '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._gettersProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapGettersProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mutationsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapMutationsProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._actionsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapActionsProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._thisProvider, '.'));
     }
     restart() {
         this._statusBarItem.setStatus(0);

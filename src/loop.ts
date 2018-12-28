@@ -27,6 +27,7 @@ import {
   storeActionsProvider,
   storeMapActionsProvider,
 } from './provider/actionsProvider';
+import { thisProvider } from './provider/thisProvider';
 
 type setStoreStatus = 1 | -1;
 const emptyModule: ModuleInfo = {
@@ -50,7 +51,7 @@ export default class VueThis$Store {
   private _mutationsProvider: storeMutationsProvider;
   private _actionsProvider: storeActionsProvider;
   private _mapActionsProvider: storeMapActionsProvider;
-  private _thisCompletion: Map<String, Object>;
+  private _thisProvider: thisProvider;
 
   constructor(ctx: ExtensionContext, rootPath: string) {
     let timeStart = Number(new Date());
@@ -61,8 +62,7 @@ export default class VueThis$Store {
       this._rootPath = rootPath;
     }
     window.onDidChangeActiveTextEditor(e => {
-      const abPath = e.document.uri.fsPath;
-      const mapMutationsReg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
+      this._thisProvider.setThisCompletionMap(e.document);
     });
     this._entrancePath = path.resolve(this._rootPath, 'src/main.js');
     this.initCommands();
@@ -98,7 +98,7 @@ export default class VueThis$Store {
       storeInfo,
       setStoreActionStatus,
     ] = this.startFromEntry();
-    debugger;
+
     this._statusBarItem.setStatus(setStoreActionStatus);
     this._watcher = generateWatcher(storeAbsolutePath);
 
@@ -110,6 +110,7 @@ export default class VueThis$Store {
     this._mapMutationsProvider = new storeMapMutationsProvider(storeInfo);
     this._actionsProvider = new storeActionsProvider(storeInfo);
     this._mapActionsProvider = new storeMapActionsProvider(storeInfo);
+    this._thisProvider = new thisProvider(storeInfo);
 
     this._watcher.on('change', () => {
       this.restart();
@@ -168,6 +169,7 @@ export default class VueThis$Store {
         '"',
         '/',
       ),
+      languages.registerCompletionItemProvider('vue', this._thisProvider, '.'),
     );
   }
   private restart() {

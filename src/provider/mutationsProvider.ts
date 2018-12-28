@@ -110,7 +110,7 @@ function getCommitCursorInfo(commitAst: File, relativePos: number) {
   }
   return null;
 }
-function getMutationsFromNameSpace(obj: ModuleInfo, namespace: string) {
+export function getMutationsFromNameSpace(obj: ModuleInfo, namespace: string) {
   let mutationInfoList = [];
   if (obj.namespace === namespace && obj.mutations) {
     mutationInfoList.push(...obj.mutations);
@@ -193,7 +193,7 @@ export class storeMapMutationsProvider
     document: vscode.TextDocument,
     position: vscode.Position,
   ): vscode.CompletionItem[] {
-    let reg = 33;
+    let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
     let cursorInfo = getCursorInfoFromRegExp(
       reg,
       document,

@@ -98,6 +98,7 @@ function getMutationsFromNameSpace(obj, namespace) {
     }
     return mutationInfoList;
 }
+exports.getMutationsFromNameSpace = getMutationsFromNameSpace;
 class storeMutationsProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
@@ -137,7 +138,7 @@ class storeMapMutationsProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position) {
-        let reg = 33;
+        let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
         let cursorInfo = getCursorInfoFromRegExp(reg, document, position, util_1.getMapGMACursorInfo, 'ast');
         if (cursorInfo) {
             let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
