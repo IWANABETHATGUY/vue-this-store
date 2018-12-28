@@ -14,6 +14,7 @@ import {
   ExportDefaultDeclaration,
   objectExpression,
   BooleanLiteral,
+  StringLiteral,
 } from '@babel/types';
 import { StoreAstMap, ModuleOrPathMap } from '../type';
 import { walkFile, parseState } from './state';
@@ -64,18 +65,17 @@ function getXXXInfo(
   return infoList;
 }
 
-function getModulesInfo(
-  {
-    property,
-    m2pmap,
-    defmap,
-    cwf,
-    lineOfFile,
-    namespace,
-  }: { property: ObjectProperty; [prop: string]: any },
-  walkFileFn: Function,
-  parseFn: Function,
-) {
+function getModulesInfo({
+  property,
+  m2pmap,
+  defmap,
+  cwf,
+  lineOfFile,
+  namespace,
+}: {
+  property: ObjectProperty;
+  [prop: string]: any;
+}) {
   let modules = {};
   let config = {
     lineOfFile,
@@ -92,8 +92,8 @@ function getModulesInfo(
         objAst: objAstt,
         defmap: defmapp,
         lineOfFile: lineOfFilee,
-      } = walkFileFn(cwf, m2pmap[value.name]);
-      modules = parseFn(
+      } = walkModulesFile(cwf, m2pmap[value.name]);
+      modules = parseModules(
         {
           objAst: objAstt as ObjectExpression,
           m2pmap: m2pmapp,
@@ -104,7 +104,7 @@ function getModulesInfo(
         namespace,
       );
     } else if (defmap[value.name]) {
-      modules = parseFn(
+      modules = parseModules(
         {
           objAst: defmap[value.name],
           ...config,
@@ -114,7 +114,7 @@ function getModulesInfo(
     }
   } else {
     if (property.value.type === 'ObjectExpression') {
-      modules = parseFn(
+      modules = parseModules(
         {
           objAst: property.value,
           ...config,
@@ -145,14 +145,10 @@ export function parseModuleAst(
         infoObj.mutations = getXXXInfo(config, walkMutationsFile, parseState);
         break;
       case 'modules':
-        infoObj.modules = getModulesInfo(
-          {
-            ...config,
-            namespace: infoObj.namespace,
-          },
-          walkModulesFile,
-          parseModules,
-        );
+        infoObj.modules = getModulesInfo({
+          ...config,
+          namespace: infoObj.namespace,
+        });
         break;
       default:
     }
@@ -192,20 +188,18 @@ export function parseModules(
       cwf,
       lineOfFile,
     };
-    let key: Identifier = property.key as Identifier;
+    let key: StringLiteral | Identifier = property.key;
     let namespaceProperty: ObjectProperty;
     let value;
-    if (property.value.type === 'ObjectExpression') {
-      value = property.value as ObjectExpression;
-    } else if (property.shorthand) {
-      if (m2pmap[key.name]) {
+    if (property.shorthand) {
+      if (m2pmap[(property.key as Identifier).name]) {
         let {
           objAst: objAstt,
           m2pmap: m2pmapp,
           defmap: defmapp,
           cwf: cwff,
           lineOfFile: lineOfFilee,
-        } = walkModulesFile(cwf, m2pmap[key.name]);
+        } = walkModulesFile(cwf, m2pmap[property.key.name]);
         ParseModuleParam = {
           m2pmap: m2pmapp,
           defmap: defmapp,
@@ -214,7 +208,29 @@ export function parseModules(
         };
         value = objAstt;
       }
+    } else {
+      if (property.value.type === 'ObjectExpression') {
+        value = property.value as ObjectExpression;
+      } else if (property.value.type === 'Identifier') {
+        if (m2pmap[property.value.name]) {
+          let {
+            objAst: objAstt,
+            m2pmap: m2pmapp,
+            defmap: defmapp,
+            cwf: cwff,
+            lineOfFile: lineOfFilee,
+          } = walkModulesFile(cwf, m2pmap[property.value.name]);
+          ParseModuleParam = {
+            m2pmap: m2pmapp,
+            defmap: defmapp,
+            cwf: cwff,
+            lineOfFile: lineOfFilee,
+          };
+          value = objAstt;
+        }
+      }
     }
+
     if (value) {
       namespaceProperty = value.properties.filter(
         (prop: ObjectProperty) => prop.key.name === 'namespaced',
@@ -222,13 +238,13 @@ export function parseModules(
     }
     let needNewSpace: boolean =
       namespaceProperty && (namespaceProperty.value as BooleanLiteral).value;
-
-    infoObj[key.name] = {
+    let moduleName = key.type === 'StringLiteral' ? key.value : key.name;
+    infoObj[moduleName] = {
       namespace: needNewSpace
         ? namespace
             .split('.')
             .filter(item => item.length)
-            .concat([key.name])
+            .concat([moduleName])
             .join('.')
         : namespace,
     };
@@ -238,7 +254,7 @@ export function parseModules(
         objAst: value,
         ...ParseModuleParam,
       },
-      infoObj[key.name],
+      infoObj[moduleName],
     );
   });
   return infoObj;

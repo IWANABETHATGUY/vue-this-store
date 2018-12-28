@@ -150,7 +150,7 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
       getStateCursorInfo,
       'regexp',
     );
-    // debugger;
+
     if (cursorInfo) {
       let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
         .map(item => item.split('/').join('.'))
