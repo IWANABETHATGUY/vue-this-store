@@ -19,7 +19,7 @@ import {
 import { StoreAstMap, ModuleOrPathMap } from '../type';
 import { walkFile, parseState } from './state';
 import { parseGetters } from './getters';
-import { parseMutations, walkMutationsFile } from './mutations';
+import { walkMutationsFile, parseMutations } from './mutations';
 import { walkActionsFile, parseActions } from './actions';
 
 export interface ModuleInfo {
@@ -39,19 +39,12 @@ export interface ParseModuleParam {
   [prop: string]: any;
 }
 
-function getXXXInfo(
-  { property, m2pmap, defmap, cwf, lineOfFile },
-  walkFileFn: Function,
-  parseFn: Function,
-) {
+function getXXXInfo({ property, m2pmap, defmap, cwf, lineOfFile }, walkFileFn: Function, parseFn: Function) {
   let infoList = [];
   if (property.shorthand) {
     let value: Identifier = property.value as Identifier;
     if (m2pmap[value.name]) {
-      let { export: importState, lineOfFile } = walkFileFn(
-        cwf,
-        m2pmap[value.name],
-      );
+      let { export: importState, lineOfFile } = walkFileFn(cwf, m2pmap[value.name]);
       infoList = parseFn(importState, lineOfFile);
     } else if (defmap[value.name]) {
       infoList = parseFn(defmap[value.name], lineOfFile);
@@ -86,13 +79,10 @@ function getModulesInfo({
   if (property.shorthand) {
     let value: Identifier = property.value as Identifier;
     if (m2pmap[value.name]) {
-      let {
-        cwf: cwff,
-        m2pmap: m2pmapp,
-        objAst: objAstt,
-        defmap: defmapp,
-        lineOfFile: lineOfFilee,
-      } = walkModulesFile(cwf, m2pmap[value.name]);
+      let { cwf: cwff, m2pmap: m2pmapp, objAst: objAstt, defmap: defmapp, lineOfFile: lineOfFilee } = walkModulesFile(
+        cwf,
+        m2pmap[value.name],
+      );
       modules = parseModules(
         {
           objAst: objAstt as ObjectExpression,
@@ -125,10 +115,7 @@ function getModulesInfo({
   }
   return modules;
 }
-export function parseModuleAst(
-  { objAst, m2pmap, defmap, cwf, lineOfFile }: ParseModuleParam,
-  infoObj: ModuleInfo,
-) {
+export function parseModuleAst({ objAst, m2pmap, defmap, cwf, lineOfFile }: ParseModuleParam, infoObj: ModuleInfo) {
   objAst.properties.forEach((property: ObjectProperty) => {
     let config = { property, m2pmap, defmap, cwf, lineOfFile };
     switch (property.key.name) {
@@ -142,7 +129,7 @@ export function parseModuleAst(
         infoObj.getters = getXXXInfo(config, walkFile, parseGetters);
         break;
       case 'mutations':
-        infoObj.mutations = getXXXInfo(config, walkMutationsFile, parseState);
+        infoObj.mutations = getXXXInfo(config, walkMutationsFile, parseMutations);
         break;
       case 'modules':
         infoObj.modules = getModulesInfo({
@@ -175,10 +162,7 @@ export function walkModulesFile(base: string, relative: string = '') {
   };
 }
 
-export function parseModules(
-  { objAst, m2pmap, defmap, cwf, lineOfFile }: ParseModuleParam,
-  namespace: string,
-) {
+export function parseModules({ objAst, m2pmap, defmap, cwf, lineOfFile }: ParseModuleParam, namespace: string) {
   let infoObj: ModulesInfo = {};
 
   objAst.properties.forEach((property: ObjectProperty) => {
@@ -193,13 +177,10 @@ export function parseModules(
     let value;
     if (property.shorthand) {
       if (m2pmap[(property.key as Identifier).name]) {
-        let {
-          objAst: objAstt,
-          m2pmap: m2pmapp,
-          defmap: defmapp,
-          cwf: cwff,
-          lineOfFile: lineOfFilee,
-        } = walkModulesFile(cwf, m2pmap[property.key.name]);
+        let { objAst: objAstt, m2pmap: m2pmapp, defmap: defmapp, cwf: cwff, lineOfFile: lineOfFilee } = walkModulesFile(
+          cwf,
+          m2pmap[property.key.name],
+        );
         ParseModuleParam = {
           m2pmap: m2pmapp,
           defmap: defmapp,
@@ -236,8 +217,7 @@ export function parseModules(
         (prop: ObjectProperty) => prop.key.name === 'namespaced',
       )[0] as ObjectProperty;
     }
-    let needNewSpace: boolean =
-      namespaceProperty && (namespaceProperty.value as BooleanLiteral).value;
+    let needNewSpace: boolean = namespaceProperty && (namespaceProperty.value as BooleanLiteral).value;
     let moduleName = key.type === 'StringLiteral' ? key.value : key.name;
     infoObj[moduleName] = {
       namespace: needNewSpace

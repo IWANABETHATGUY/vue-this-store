@@ -1,33 +1,18 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import { window, ExtensionContext, commands, languages } from 'vscode';
-import {
-  getFileContent,
-  getStoreEntryRelativePath,
-  getAstOfCode,
-  getAbsolutePath,
-} from './util';
+import { window, ExtensionContext, commands, languages, SignatureInformation, TextDocument } from 'vscode';
+import { getFileContent, getStoreEntryRelativePath, getAstOfCode, getAbsolutePath } from './util';
 import { parseModuleAst, ModuleInfo } from './traverse/modules';
 import { getVuexConfig } from './traverse/utils';
 import { VueThisStoreStatusBarItem } from './statusBarItem';
 import { generateWatcher } from './watcher';
-import {
-  storeStateProvider,
-  storeMapStateProvider,
-} from './provider/stateProvider';
-import {
-  storeGettersProvider,
-  storeMapGettersProvider,
-} from './provider/gettersProvider';
-import {
-  storeMapMutationsProvider,
-  storeMutationsProvider,
-} from './provider/mutationsProvider';
-import {
-  storeActionsProvider,
-  storeMapActionsProvider,
-} from './provider/actionsProvider';
-import { thisProvider } from './provider/thisProvider';
+import { storeStateProvider, storeMapStateProvider } from './completion/stateProvider';
+import { storeGettersProvider, storeMapGettersProvider } from './completion/gettersProvider';
+import { storeMapMutationsProvider, storeMutationsProvider } from './completion/mutationsProvider';
+import { storeActionsProvider, storeMapActionsProvider } from './completion/actionsProvider';
+import { thisProvider, ThisCompletionInfo } from './completion/thisProvider';
+import { mutationsSignatureProvider } from './signature/mutationsProvider';
+import { TextDecoder } from 'util';
 
 type setStoreStatus = 1 | -1;
 const emptyModule: ModuleInfo = {
@@ -36,6 +21,7 @@ const emptyModule: ModuleInfo = {
 };
 
 export default class VueThis$Store {
+  private thisCompletionList: ThisCompletionInfo[] = [];
   private _outputChannel = window.createOutputChannel('VueThis$Store');
   private _statusBarItem = new VueThisStoreStatusBarItem();
   private _rootPath: string;
@@ -53,6 +39,7 @@ export default class VueThis$Store {
   private _mapActionsProvider: storeMapActionsProvider;
   private _thisProvider: thisProvider;
 
+  private _mutationSignatureProvider: mutationsSignatureProvider;
   constructor(ctx: ExtensionContext, rootPath: string) {
     let timeStart = Number(new Date());
     this._extensionContext = ctx;
@@ -62,15 +49,22 @@ export default class VueThis$Store {
       this._rootPath = rootPath;
     }
     window.onDidChangeActiveTextEditor(e => {
-      this._thisProvider.setThisCompletionMap(e.document);
+      if (e.document.languageId === 'vue') {
+        debugger;
+        this.setNewCompletionList(e.document);
+      }
     });
     this._entrancePath = path.resolve(this._rootPath, 'src/main.js');
     this.initCommands();
     this.start();
     let timeEnd = Number(new Date());
-    this._outputChannel.appendLine(
-      `Init information cost ${timeEnd - timeStart} ms`,
-    );
+    this._outputChannel.appendLine(`Init information cost ${timeEnd - timeStart} ms`);
+  }
+
+  private setNewCompletionList(document: TextDocument) {
+    const newCompletionList = this._thisProvider.getNewThisCompletionList(document);
+    this._thisProvider.setThisCompletionList(newCompletionList);
+    this._mutationSignatureProvider.setThisCompletionList(newCompletionList);
   }
 
   private initCommands() {
@@ -93,12 +87,7 @@ export default class VueThis$Store {
   }
   private start() {
     this._extensionContext.subscriptions.push(this._statusBarItem);
-    let [
-      storeAbsolutePath,
-      storeInfo,
-      setStoreActionStatus,
-    ] = this.startFromEntry();
-
+    let [storeAbsolutePath, storeInfo, setStoreActionStatus] = this.startFromEntry();
     this._statusBarItem.setStatus(setStoreActionStatus);
     this._watcher = generateWatcher(storeAbsolutePath);
 
@@ -110,66 +99,34 @@ export default class VueThis$Store {
     this._mapMutationsProvider = new storeMapMutationsProvider(storeInfo);
     this._actionsProvider = new storeActionsProvider(storeInfo);
     this._mapActionsProvider = new storeMapActionsProvider(storeInfo);
-    this._thisProvider = new thisProvider(storeInfo);
+    this._thisProvider = new thisProvider(storeInfo, this.thisCompletionList);
+
+    this._mutationSignatureProvider = new mutationsSignatureProvider(this.thisCompletionList);
 
     this._watcher.on('change', () => {
       this.restart();
     });
 
     this.registerCompletionProvider();
+    this.registerSignatureProvider();
   }
   private registerCompletionProvider() {
-    this._extensionContext.subscriptions.push(
+    this._extensionContext.subscriptions.unshift(
       languages.registerCompletionItemProvider('vue', this._stateProvider, '.'),
-      languages.registerCompletionItemProvider(
-        'vue',
-        this._mapStateProvider,
-        "'",
-        '"',
-        '/',
-        '.',
-      ),
-      languages.registerCompletionItemProvider(
-        'vue',
-        this._gettersProvider,
-        '.',
-      ),
-      languages.registerCompletionItemProvider(
-        'vue',
-        this._mapGettersProvider,
-        "'",
-        '"',
-        '/',
-      ),
-      languages.registerCompletionItemProvider(
-        'vue',
-        this._mutationsProvider,
-        '"',
-        "'",
-        '/',
-      ),
-      languages.registerCompletionItemProvider(
-        'vue',
-        this._mapMutationsProvider,
-        "'",
-        '"',
-        '/',
-      ),
-      languages.registerCompletionItemProvider(
-        'vue',
-        this._actionsProvider,
-        '"',
-        "'",
-        '/',
-      ),
-      languages.registerCompletionItemProvider(
-        'vue',
-        this._mapActionsProvider,
-        "'",
-        '"',
-        '/',
-      ),
+      languages.registerCompletionItemProvider('vue', this._mapStateProvider, "'", '"', '/', '.'),
+      languages.registerCompletionItemProvider('vue', this._gettersProvider, '.'),
+      languages.registerCompletionItemProvider('vue', this._mapGettersProvider, "'", '"', '/'),
+      languages.registerCompletionItemProvider('vue', this._mutationsProvider, '"', "'", '/'),
+      languages.registerCompletionItemProvider('vue', this._mapMutationsProvider, "'", '"', '/'),
+      languages.registerCompletionItemProvider('vue', this._actionsProvider, '"', "'", '/'),
+      languages.registerCompletionItemProvider('vue', this._mapActionsProvider, "'", '"', '/'),
       languages.registerCompletionItemProvider('vue', this._thisProvider, '.'),
+    );
+  }
+
+  private registerSignatureProvider() {
+    this._extensionContext.subscriptions.unshift(
+      languages.registerSignatureHelpProvider('*', this._mutationSignatureProvider, '(', ','),
     );
   }
   private restart() {
@@ -194,34 +151,22 @@ export default class VueThis$Store {
     if (!fs.existsSync(this._entrancePath)) {
       if (!fs.existsSync(this._rootPath + '/src/index.js')) {
         this._outputChannel.clear();
-        this._outputChannel.appendLine(
-          'please specify your project entrance path',
-        );
+        this._outputChannel.appendLine('please specify your project entrance path');
         this._outputChannel.show();
         return ['', emptyModule, -1];
       } else {
         this._entrancePath = this._rootPath + '/src/index.js';
       }
     }
-    let {
-      fileContent: entryFileContent,
-      status: entryFileStatus,
-    } = getFileContent(this._entrancePath);
+    let { fileContent: entryFileContent, status: entryFileStatus } = getFileContent(this._entrancePath);
     if (entryFileContent === '') {
       return ['', emptyModule, entryFileStatus];
     }
     let entryFileContentAst = getAstOfCode(entryFileContent);
-    let storeRelativePath: string = getStoreEntryRelativePath(
-      entryFileContentAst,
-    );
+    let storeRelativePath: string = getStoreEntryRelativePath(entryFileContentAst);
 
-    let storeAbsolutePath = getAbsolutePath(
-      this._entrancePath,
-      storeRelativePath,
-    );
-    let { objAst, m2pmap, defmap, cwf, lineOfFile } = getVuexConfig(
-      storeAbsolutePath,
-    );
+    let storeAbsolutePath = getAbsolutePath(this._entrancePath, storeRelativePath);
+    let { objAst, m2pmap, defmap, cwf, lineOfFile } = getVuexConfig(storeAbsolutePath);
     try {
       let storeInfo: ModuleInfo = { namespace: '' };
       parseModuleAst(

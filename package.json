@@ -1,7 +1,7 @@
 {
   "name": "vue-this-store",
   "displayName": "VueThis$Store",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "publisher": "IWANABETHATGUY",
   "description": "一个通过ast和正则表达式，获取store中的所有定义信息，并在.vue文件中给出vuex中state，actions, getters, mutations提示的vscode插件",
   "icon": "favicon.png",

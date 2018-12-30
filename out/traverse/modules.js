@@ -37,7 +37,7 @@ function getModulesInfo({ property, m2pmap, defmap, cwf, lineOfFile, namespace, 
     if (property.shorthand) {
         let value = property.value;
         if (m2pmap[value.name]) {
-            let { cwf: cwff, m2pmap: m2pmapp, objAst: objAstt, defmap: defmapp, lineOfFile: lineOfFilee, } = walkModulesFile(cwf, m2pmap[value.name]);
+            let { cwf: cwff, m2pmap: m2pmapp, objAst: objAstt, defmap: defmapp, lineOfFile: lineOfFilee } = walkModulesFile(cwf, m2pmap[value.name]);
             modules = parseModules({
                 objAst: objAstt,
                 m2pmap: m2pmapp,
@@ -71,7 +71,7 @@ function parseModuleAst({ objAst, m2pmap, defmap, cwf, lineOfFile }, infoObj) {
                 infoObj.getters = getXXXInfo(config, state_1.walkFile, getters_1.parseGetters);
                 break;
             case 'mutations':
-                infoObj.mutations = getXXXInfo(config, mutations_1.walkMutationsFile, state_1.parseState);
+                infoObj.mutations = getXXXInfo(config, mutations_1.walkMutationsFile, mutations_1.parseMutations);
                 break;
             case 'modules':
                 infoObj.modules = getModulesInfo(Object.assign({}, config, { namespace: infoObj.namespace }));
@@ -113,7 +113,7 @@ function parseModules({ objAst, m2pmap, defmap, cwf, lineOfFile }, namespace) {
         let value;
         if (property.shorthand) {
             if (m2pmap[property.key.name]) {
-                let { objAst: objAstt, m2pmap: m2pmapp, defmap: defmapp, cwf: cwff, lineOfFile: lineOfFilee, } = walkModulesFile(cwf, m2pmap[property.key.name]);
+                let { objAst: objAstt, m2pmap: m2pmapp, defmap: defmapp, cwf: cwff, lineOfFile: lineOfFilee } = walkModulesFile(cwf, m2pmap[property.key.name]);
                 ParseModuleParam = {
                     m2pmap: m2pmapp,
                     defmap: defmapp,

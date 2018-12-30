@@ -16,17 +16,19 @@ const modules_1 = require("./traverse/modules");
 const utils_1 = require("./traverse/utils");
 const statusBarItem_1 = require("./statusBarItem");
 const watcher_1 = require("./watcher");
-const stateProvider_1 = require("./provider/stateProvider");
-const gettersProvider_1 = require("./provider/gettersProvider");
-const mutationsProvider_1 = require("./provider/mutationsProvider");
-const actionsProvider_1 = require("./provider/actionsProvider");
-const thisProvider_1 = require("./provider/thisProvider");
+const stateProvider_1 = require("./completion/stateProvider");
+const gettersProvider_1 = require("./completion/gettersProvider");
+const mutationsProvider_1 = require("./completion/mutationsProvider");
+const actionsProvider_1 = require("./completion/actionsProvider");
+const thisProvider_1 = require("./completion/thisProvider");
+const mutationsProvider_2 = require("./signature/mutationsProvider");
 const emptyModule = {
     namespace: '',
     state: [],
 };
 class VueThis$Store {
     constructor(ctx, rootPath) {
+        this.thisCompletionList = [];
         this._outputChannel = vscode_1.window.createOutputChannel('VueThis$Store');
         this._statusBarItem = new statusBarItem_1.VueThisStoreStatusBarItem();
         this._watcher = null;
@@ -39,13 +41,21 @@ class VueThis$Store {
             this._rootPath = rootPath;
         }
         vscode_1.window.onDidChangeActiveTextEditor(e => {
-            this._thisProvider.setThisCompletionMap(e.document);
+            if (e.document.languageId === 'vue') {
+                debugger;
+                this.setNewCompletionList(e.document);
+            }
         });
         this._entrancePath = path.resolve(this._rootPath, 'src/main.js');
         this.initCommands();
         this.start();
         let timeEnd = Number(new Date());
         this._outputChannel.appendLine(`Init information cost ${timeEnd - timeStart} ms`);
+    }
+    setNewCompletionList(document) {
+        const newCompletionList = this._thisProvider.getNewThisCompletionList(document);
+        this._thisProvider.setThisCompletionList(newCompletionList);
+        this._mutationSignatureProvider.setThisCompletionList(newCompletionList);
     }
     initCommands() {
         let root = this._rootPath;
@@ -61,7 +71,7 @@ class VueThis$Store {
     }
     start() {
         this._extensionContext.subscriptions.push(this._statusBarItem);
-        let [storeAbsolutePath, storeInfo, setStoreActionStatus,] = this.startFromEntry();
+        let [storeAbsolutePath, storeInfo, setStoreActionStatus] = this.startFromEntry();
         this._statusBarItem.setStatus(setStoreActionStatus);
         this._watcher = watcher_1.generateWatcher(storeAbsolutePath);
         this._stateProvider = new stateProvider_1.storeStateProvider(storeInfo);
@@ -72,14 +82,19 @@ class VueThis$Store {
         this._mapMutationsProvider = new mutationsProvider_1.storeMapMutationsProvider(storeInfo);
         this._actionsProvider = new actionsProvider_1.storeActionsProvider(storeInfo);
         this._mapActionsProvider = new actionsProvider_1.storeMapActionsProvider(storeInfo);
-        this._thisProvider = new thisProvider_1.thisProvider(storeInfo);
+        this._thisProvider = new thisProvider_1.thisProvider(storeInfo, this.thisCompletionList);
+        this._mutationSignatureProvider = new mutationsProvider_2.mutationsSignatureProvider(this.thisCompletionList);
         this._watcher.on('change', () => {
             this.restart();
         });
         this.registerCompletionProvider();
+        this.registerSignatureProvider();
     }
     registerCompletionProvider() {
-        this._extensionContext.subscriptions.push(vscode_1.languages.registerCompletionItemProvider('vue', this._stateProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapStateProvider, "'", '"', '/', '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._gettersProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapGettersProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mutationsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapMutationsProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._actionsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapActionsProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._thisProvider, '.'));
+        this._extensionContext.subscriptions.unshift(vscode_1.languages.registerCompletionItemProvider('vue', this._stateProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapStateProvider, "'", '"', '/', '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._gettersProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapGettersProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mutationsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapMutationsProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._actionsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapActionsProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._thisProvider, '.'));
+    }
+    registerSignatureProvider() {
+        this._extensionContext.subscriptions.unshift(vscode_1.languages.registerSignatureHelpProvider('*', this._mutationSignatureProvider, '(', ','));
     }
     restart() {
         this._statusBarItem.setStatus(0);
@@ -110,7 +125,7 @@ class VueThis$Store {
                 this._entrancePath = this._rootPath + '/src/index.js';
             }
         }
-        let { fileContent: entryFileContent, status: entryFileStatus, } = util_1.getFileContent(this._entrancePath);
+        let { fileContent: entryFileContent, status: entryFileStatus } = util_1.getFileContent(this._entrancePath);
         if (entryFileContent === '') {
             return ['', emptyModule, entryFileStatus];
         }

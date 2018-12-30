@@ -1,21 +1,17 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
-import {
-  getMutationsFromNameSpace,
-  storeMapMutationsProvider,
-} from './mutationsProvider';
+import { getMutationsFromNameSpace } from './mutationsProvider';
 import { parse } from '@babel/parser';
 import {
   File,
-  BaseNode,
   ExpressionStatement,
   CallExpression,
-  ObjectExpression,
-  arrayExpression,
-  ArrayExpression,
   StringLiteral,
   ObjectProperty,
   Identifier,
+  ObjectMethod,
+  FunctionDeclaration,
+  ArrowFunctionExpression,
 } from '@babel/types';
 
 type MutationProperyInfo = {
@@ -23,12 +19,26 @@ type MutationProperyInfo = {
   secondNamespace: string;
 };
 
+export type ThisCompletionInfo = {
+  computedKey: string;
+  defination: string;
+  type: string;
+  paramList?: string[];
+  funcDeclarator?: string;
+};
+function getParamsFromAst(
+  content: string,
+  FunctionAst: ObjectMethod | FunctionDeclaration | ArrowFunctionExpression,
+): string[] {
+  let params = FunctionAst.params;
+  return params.map(param => {
+    return content.slice(param.start, param.end);
+  });
+}
 function parseMapMutations(mapMutationsContent: string): MutationProperyInfo[] {
   let mapMutationAst: File = parse(mapMutationsContent);
-  let astArguments = ((mapMutationAst.program.body[0] as ExpressionStatement)
-    .expression as CallExpression).arguments;
-  let mapOrArray =
-    astArguments.length === 1 ? astArguments[0] : astArguments[1];
+  let astArguments = ((mapMutationAst.program.body[0] as ExpressionStatement).expression as CallExpression).arguments;
+  let mapOrArray = astArguments.length === 1 ? astArguments[0] : astArguments[1];
   if (mapOrArray.type === 'ArrayExpression') {
     return mapOrArray.elements.map(element => {
       const value = (element as StringLiteral).value;
@@ -45,7 +55,7 @@ function parseMapMutations(mapMutationsContent: string): MutationProperyInfo[] {
     return res;
   }
 }
-function getAllMapMutationContent(document: vscode.TextDocument, reg: RegExp) {
+export function getRegExpMatchList(document: vscode.TextDocument, reg: RegExp): RegExpExecArray[] {
   let docContent = document.getText();
 
   let match = null;
@@ -57,79 +67,69 @@ function getAllMapMutationContent(document: vscode.TextDocument, reg: RegExp) {
 }
 export class thisProvider implements vscode.CompletionItemProvider {
   private _storeInfo: ModuleInfo;
-  private _thisCompletionList;
-  constructor(storeInfo: ModuleInfo) {
+  private _thisCompletionList: ThisCompletionInfo[];
+  constructor(storeInfo: ModuleInfo, thisCompletionList: ThisCompletionInfo[]) {
     this._storeInfo = storeInfo;
+    this._thisCompletionList = thisCompletionList;
   }
   public setStoreInfo(newStoreInfo: ModuleInfo) {
     this._storeInfo = newStoreInfo;
   }
-  public setThisCompletionMap(document: vscode.TextDocument) {
+  public setThisCompletionList(newCompletionList: ThisCompletionInfo[]) {
+    this._thisCompletionList = newCompletionList;
+  }
+  public getNewThisCompletionList(document: vscode.TextDocument): ThisCompletionInfo[] {
     console.time('thisCompletion');
-    let completionList = [];
+    let completionList: ThisCompletionInfo[] = [];
     const reg = /\bmapMutations\((?:[\'\"](.*?)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
-    let matchList: RegExpMatchArray[] = getAllMapMutationContent(document, reg);
+    let matchList: RegExpMatchArray[] = getRegExpMatchList(document, reg);
     matchList.forEach(match => {
       let [content, namespace] = match;
-
-      let mutationList = getMutationsFromNameSpace(this._storeInfo, namespace);
-
+      let mutationList = getMutationsFromNameSpace(this._storeInfo, namespace.split('/').join('.'));
+      // debugger;
       let mutationMap = mutationList.reduce((acc, cur) => {
-        acc[cur.rowKey] = cur.defination;
+        acc[cur.rowKey] = {
+          defination: cur.defination,
+          paramList: cur.paramList,
+          funcDeclarator: cur.funcDeclarator,
+        };
         return acc;
       }, {});
       let mutationInfoList: MutationProperyInfo[] = parseMapMutations(content);
       mutationInfoList.forEach((mutationInfo: MutationProperyInfo) => {
-        let mutationDefination = mutationMap[mutationInfo.secondNamespace];
-        if (mutationDefination) {
+        let mutationDefinationInfo = mutationMap[mutationInfo.secondNamespace];
+        if (mutationDefinationInfo) {
           completionList.push({
             computedKey: mutationInfo.key,
-            defination: mutationDefination,
+            ...mutationDefinationInfo,
             type: 'mutation',
           });
         }
       });
     });
     console.timeEnd('thisCompletion');
-    this._thisCompletionList = completionList;
+    return completionList;
   }
-  public provideCompletionItems(
-    document: vscode.TextDocument,
-    position: vscode.Position,
-    token: vscode.CancellationToken,
-  ): vscode.CompletionItem[] {
-    let linePrefix = document
-      .lineAt(position)
-      .text.substr(0, position.character);
+  public provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[] {
+    let linePrefix = document.lineAt(position).text.substr(0, position.character);
     let trimLinePrefixExpressions = linePrefix.trim().split(/\s+/);
-    let lastPrefixExpression =
-      trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
+    let lastPrefixExpression = trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
     let reg = /this/;
     let regRes = reg.exec(lastPrefixExpression);
     if (!regRes) {
       return undefined;
     }
 
-    return this._thisCompletionList.map(completion => {
+    return this._thisCompletionList.map((completion: ThisCompletionInfo) => {
       let thisCompletion = new vscode.CompletionItem(
         completion.computedKey ? completion.computedKey : '',
         vscode.CompletionItemKind.Method,
       );
       thisCompletion.documentation = new vscode.MarkdownString(
-        '```' + completion.defination ? completion.defination : '' + '```',
+        '```' + completion.funcDeclarator ? completion.funcDeclarator : '' + '```',
       );
+      thisCompletion.detail = completion.type;
       return thisCompletion;
     });
-    // ? getters.map(getterInfo => {
-    //     let stateCompletion = new vscode.CompletionItem(
-    //       getterInfo.rowKey,
-    //       vscode.CompletionItemKind.Variable,
-    //     );
-    //     stateCompletion.documentation = new vscode.MarkdownString(
-    //       '```' + getterInfo.defination + '```',
-    //     );
-    //     return stateCompletion;
-    //   })
-    // : [];
   }
 }
