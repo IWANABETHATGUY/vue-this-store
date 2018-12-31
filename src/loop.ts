@@ -50,7 +50,6 @@ export default class VueThis$Store {
     }
     window.onDidChangeActiveTextEditor(e => {
       if (e.document.languageId === 'vue') {
-        debugger;
         this.setNewCompletionList(e.document);
       }
     });

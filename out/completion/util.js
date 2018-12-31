@@ -20,8 +20,7 @@ function getNextNamespace(obj, namespace) {
     let curObjNamespaceList = obj.namespace.split('.');
     if (curObjNamespace &&
         curObjNamespace.startsWith(namespace) &&
-        curObjNamespaceList.length ===
-            namespace.split('.').filter(item => item.length).length + 1) {
+        curObjNamespaceList.length === namespace.split('.').filter(item => item.length).length + 1) {
         nextNamespaceList.push(curObjNamespaceList[curObjNamespaceList.length - 1]);
     }
     if (obj.modules) {
@@ -44,8 +43,11 @@ function getPositionIndex(doc, position) {
     return posIndex;
 }
 exports.getPositionIndex = getPositionIndex;
-function whichCommit(resMatch, posIndex) {
-    return resMatch.filter(match => posIndex >= match.index && posIndex <= match.index + match[0].length)[0];
+function whichCommit(resMatch, posIndex, equal = true) {
+    if (equal) {
+        return resMatch.filter(match => posIndex >= match.index && posIndex <= match.index + match[0].length)[0];
+    }
+    return resMatch.filter(match => posIndex >= match.index && posIndex < match.index + match[0].length)[0];
 }
 exports.whichCommit = whichCommit;
 function getMapGMACursorInfo(mapGetterAst, relativePos) {
@@ -85,9 +87,7 @@ function getMapGMACursorInfo(mapGetterAst, relativePos) {
             let cursorAtExp = firstArg.properties.filter((property) => {
                 return relativePos >= property.start && relativePos < property.end;
             })[0];
-            if (cursorAtExp &&
-                cursorAtExp.type === 'ObjectProperty' &&
-                cursorAtExp.value.type === 'StringLiteral') {
+            if (cursorAtExp && cursorAtExp.type === 'ObjectProperty' && cursorAtExp.value.type === 'StringLiteral') {
                 retCursorInfo.match = true;
                 retCursorInfo.secondNameSpace = cursorAtExp.value.value
                     .split('/')
@@ -118,8 +118,7 @@ function getMapGMACursorInfo(mapGetterAst, relativePos) {
                         .join('.');
                 }
             }
-            else if (secondArg.type === 'ObjectExpression' &&
-                !retCursorInfo.match) {
+            else if (secondArg.type === 'ObjectExpression' && !retCursorInfo.match) {
                 let cursorAtProperty = secondArg.properties.filter((property) => {
                     return relativePos >= property.start && relativePos < property.end;
                 })[0];

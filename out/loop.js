@@ -42,7 +42,6 @@ class VueThis$Store {
         }
         vscode_1.window.onDidChangeActiveTextEditor(e => {
             if (e.document.languageId === 'vue') {
-                debugger;
                 this.setNewCompletionList(e.document);
             }
         });
