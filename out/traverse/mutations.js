@@ -64,7 +64,7 @@ function walkMutationsFile(base, relative = '') {
 }
 exports.walkMutationsFile = walkMutationsFile;
 function parseMutations(objAst, lineOfFile) {
-    let getterInfoList = [];
+    let mutationInfoList = [];
     const content = lineOfFile.join('\n');
     // debugger;
     objAst.properties.forEach((property) => {
@@ -77,14 +77,14 @@ function parseMutations(objAst, lineOfFile) {
             params = property.value.params;
         }
         let paramList = params.map(param => content.slice(param.start, param.end));
-        getterInfoList.push({
+        mutationInfoList.push({
             rowKey: property.key.name,
             defination: lineOfFile.slice(loc.start.line - 1, loc.end.line).join('\n'),
             paramList,
             funcDeclarator: `${property.key.name} (${paramList.join(', ')})`,
         });
     });
-    return getterInfoList;
+    return mutationInfoList;
 }
 exports.parseMutations = parseMutations;
 //# sourceMappingURL=mutations.js.map

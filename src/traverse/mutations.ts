@@ -15,8 +15,6 @@ import {
   Identifier,
   VariableDeclarator,
   StringLiteral,
-  ArrowFunctionExpression,
-  objectProperty,
   BaseNode,
 } from '@babel/types';
 import traverse from '@babel/traverse';
@@ -84,7 +82,7 @@ export function walkMutationsFile(base: string, relative: string = '') {
 }
 
 export function parseMutations(objAst: ObjectExpression, lineOfFile: string[]) {
-  let getterInfoList = [];
+  let mutationInfoList = [];
   const content = lineOfFile.join('\n');
   // debugger;
   objAst.properties.forEach((property: ObjectMethod | ObjectProperty) => {
@@ -97,12 +95,12 @@ export function parseMutations(objAst: ObjectExpression, lineOfFile: string[]) {
     }
     let paramList = params.map(param => content.slice(param.start, param.end));
 
-    getterInfoList.push({
+    mutationInfoList.push({
       rowKey: property.key.name,
       defination: lineOfFile.slice(loc.start.line - 1, loc.end.line).join('\n'),
       paramList,
       funcDeclarator: `${(property.key as Identifier).name} (${paramList.join(', ')})`,
     });
   });
-  return getterInfoList;
+  return mutationInfoList;
 }

@@ -16,6 +16,7 @@ function getGettersFromNameSpace(obj, namespace) {
     }
     return getterInfoList;
 }
+exports.getGettersFromNameSpace = getGettersFromNameSpace;
 class storeGettersProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
@@ -24,9 +25,7 @@ class storeGettersProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position, token) {
-        let linePrefix = document
-            .lineAt(position)
-            .text.substr(0, position.character);
+        let linePrefix = document.lineAt(position).text.substr(0, position.character);
         let trimLinePrefixExpressions = linePrefix.trim().split(' ');
         let lastPrefixExpression = trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
         let reg = /(?=return this\.)?(?=\$store\.)?getters\.(.*\.)?/;
@@ -35,9 +34,7 @@ class storeGettersProvider {
             return undefined;
         }
         let path = regRes[1];
-        let pathArray = path
-            ? path.split('.').filter(item => item.length > 0)
-            : undefined;
+        let pathArray = path ? path.split('.').filter(item => item.length > 0) : undefined;
         let newModule = util_1.getModuleFromPath(this.storeInfo, pathArray);
         if (!newModule)
             return undefined;

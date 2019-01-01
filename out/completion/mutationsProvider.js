@@ -69,8 +69,7 @@ function getCommitCursorInfo(commitAst, relativePos) {
             return key.name === 'type';
         })[0];
         if (typeProperty) {
-            let value = typeProperty
-                .value;
+            let value = typeProperty.value;
             if (relativePos >= value.start && relativePos < value.end) {
                 return {
                     isNamespace: false,

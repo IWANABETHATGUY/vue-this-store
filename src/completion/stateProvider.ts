@@ -28,7 +28,7 @@ function getNextStateNamespace(obj: ModuleInfo, namespace) {
   }
   return [];
 }
-function getStateFromNameSpace(obj: ModuleInfo, namespace: string) {
+export function getStateFromNameSpace(obj: ModuleInfo, namespace: string) {
   let targetModule: ModuleInfo = namespace
     .split('.')
     .filter(item => item.length)
@@ -42,10 +42,7 @@ function getStateFromNameSpace(obj: ModuleInfo, namespace: string) {
   return [];
 }
 
-function getStateCursorInfo(
-  regExecArray: RegExpExecArray,
-  relativePos: number,
-): CursorInfo {
+function getStateCursorInfo(regExecArray: RegExpExecArray, relativePos: number): CursorInfo {
   return {
     isNamespace: false,
     namespace: '',
@@ -79,8 +76,7 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
         };
       }
     } else if (firstArg.type === 'StringLiteral') {
-      let cursorAtExp =
-        relativePos >= firstArg.start && relativePos < firstArg.end;
+      let cursorAtExp = relativePos >= firstArg.start && relativePos < firstArg.end;
       if (cursorAtExp) {
         return {
           isNamespace: true,
@@ -117,12 +113,7 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
           };
         }
       } else if (secondArg.type === 'ObjectExpression') {
-        return getObjectExpressionCursorInfo(
-          mapStateAst,
-          relativePos,
-          secondArg,
-          firstArg,
-        );
+        return getObjectExpressionCursorInfo(mapStateAst, relativePos, secondArg, firstArg);
       }
     }
   }
@@ -136,20 +127,9 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
   public setStoreInfo(newStoreInfo: ModuleInfo) {
     this.storeInfo = newStoreInfo;
   }
-  public provideCompletionItems(
-    document: vscode.TextDocument,
-    position: vscode.Position,
-    token: vscode.CancellationToken,
-    context: vscode.CompletionContext,
-  ): vscode.CompletionItem[] {
+  public provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[] {
     let reg = /this\n?\s*\.\$store\n?\s*\.state((?:\n?\s*\.[\w\$]*)+)/g;
-    let cursorInfo = getCursorInfoFromRegExp(
-      reg,
-      document,
-      position,
-      getStateCursorInfo,
-      'regexp',
-    );
+    let cursorInfo = getCursorInfoFromRegExp(reg, document, position, getStateCursorInfo, 'regexp');
 
     if (cursorInfo) {
       let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
@@ -157,29 +137,15 @@ export class storeStateProvider implements vscode.CompletionItemProvider {
         .filter(item => item.length)
         .join('.');
       let getterCompletionList = [];
-      let namespaceCompletionList = getNextStateNamespace(
-        this.storeInfo,
-        fullNamespace,
-      ).map(nextNS => {
-        let NSCompletion = new vscode.CompletionItem(
-          nextNS,
-          vscode.CompletionItemKind.Module,
-        );
+      let namespaceCompletionList = getNextStateNamespace(this.storeInfo, fullNamespace).map(nextNS => {
+        let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
         NSCompletion.detail = 'module';
         return NSCompletion;
       });
       if (!cursorInfo.isNamespace) {
-        getterCompletionList = getStateFromNameSpace(
-          this.storeInfo,
-          fullNamespace,
-        ).map(getterInfo => {
-          let getterCompletion = new vscode.CompletionItem(
-            getterInfo.rowKey,
-            vscode.CompletionItemKind.Variable,
-          );
-          getterCompletion.documentation = new vscode.MarkdownString(
-            '```' + getterInfo.defination + '```',
-          );
+        getterCompletionList = getStateFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
+          let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Variable);
+          getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
           getterCompletion.detail = 'state';
           return getterCompletion;
         });
@@ -220,29 +186,15 @@ export class storeMapStateProvider implements vscode.CompletionItemProvider {
         .filter(item => item.length)
         .join('.');
       let stateCompletionList = [];
-      let namespaceCompletionList = getNextStateNamespace(
-        this.storeInfo,
-        fullNamespace,
-      ).map(nextNS => {
-        let NSCompletion = new vscode.CompletionItem(
-          nextNS,
-          vscode.CompletionItemKind.Module,
-        );
+      let namespaceCompletionList = getNextStateNamespace(this.storeInfo, fullNamespace).map(nextNS => {
+        let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
         NSCompletion.detail = 'module';
         return NSCompletion;
       });
       if (!cursorInfo.isNamespace) {
-        stateCompletionList = getStateFromNameSpace(
-          this.storeInfo,
-          fullNamespace,
-        ).map(stateInfo => {
-          let stateCompletion = new vscode.CompletionItem(
-            stateInfo.rowKey,
-            vscode.CompletionItemKind.Variable,
-          );
-          stateCompletion.documentation = new vscode.MarkdownString(
-            '```' + stateInfo.defination + '```',
-          );
+        stateCompletionList = getStateFromNameSpace(this.storeInfo, fullNamespace).map(stateInfo => {
+          let stateCompletion = new vscode.CompletionItem(stateInfo.rowKey, vscode.CompletionItemKind.Variable);
+          stateCompletion.documentation = new vscode.MarkdownString('```' + stateInfo.defination + '```');
           stateCompletion.detail = 'state';
           return stateCompletion;
         });
@@ -263,8 +215,7 @@ function getObjectExpressionCursorInfo(
   let triggerProperty: ObjectProperty | ObjectMethod = null;
   let cursorAtExp = arg.properties.filter(property => {
     let flag =
-      (property.type === 'ObjectMethod' ||
-        property.type === 'ObjectProperty') &&
+      (property.type === 'ObjectMethod' || property.type === 'ObjectProperty') &&
       relativePos >= property.start &&
       relativePos <= property.end;
     if (flag) {
@@ -274,11 +225,7 @@ function getObjectExpressionCursorInfo(
   })[0];
 
   if (cursorAtExp) {
-    if (
-      triggerProperty &&
-      triggerProperty.type === 'ObjectMethod' &&
-      triggerProperty.params.length === 0
-    ) {
+    if (triggerProperty && triggerProperty.type === 'ObjectMethod' && triggerProperty.params.length === 0) {
       return null;
     }
     let retCursorInfo = {
@@ -300,10 +247,7 @@ function getObjectExpressionCursorInfo(
           if (namespaceList.length) {
             switch (triggerProperty.type) {
               case 'ObjectMethod':
-                if (
-                  (triggerProperty.params[0] as Identifier).name ===
-                  namespaceList[0]
-                ) {
+                if ((triggerProperty.params[0] as Identifier).name === namespaceList[0]) {
                   retCursorInfo.match = true;
                 }
                 break;
@@ -312,10 +256,7 @@ function getObjectExpressionCursorInfo(
                   case 'ArrowFunctionExpression':
                   case 'FunctionExpression':
                     let functionExpression = triggerProperty.value;
-                    if (
-                      (functionExpression.params[0] as Identifier).name ===
-                      namespaceList[0]
-                    ) {
+                    if ((functionExpression.params[0] as Identifier).name === namespaceList[0]) {
                       retCursorInfo.match = true;
                     }
                 }

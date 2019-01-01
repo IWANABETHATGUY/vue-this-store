@@ -27,8 +27,7 @@ function getDispatchCursorInfo(commitAst, relativePos) {
             return key.name === 'type';
         })[0];
         if (typeProperty) {
-            let value = typeProperty
-                .value;
+            let value = typeProperty.value;
             if (relativePos >= value.start && relativePos < value.end) {
                 return {
                     isNamespace: false,
@@ -55,6 +54,7 @@ function getActionsFromNameSpace(obj, namespace) {
     }
     return actionInfoList;
 }
+exports.getActionsFromNameSpace = getActionsFromNameSpace;
 class storeActionsProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;

@@ -35,8 +35,7 @@ function walkActionsFile(base, relative = '') {
             let key = property.key;
             if (property.computed) {
                 if (defineAstMap[key.name]) {
-                    property.key.name = defineAstMap[key.name]
-                        .init.value;
+                    property.key.name = defineAstMap[key.name].init.value;
                 }
                 else if (moduleOrPathMap[key.name]) {
                     EvalMap[key.name] = '';
@@ -64,13 +63,25 @@ function walkActionsFile(base, relative = '') {
     };
 }
 exports.walkActionsFile = walkActionsFile;
-function parseActions(objAst, lileOfFile) {
+function parseActions(objAst, lineOfFile) {
     let actionInfoList = [];
+    const content = lineOfFile.join('\n');
+    // debugger;
     objAst.properties.forEach((property) => {
         let loc = property.loc;
+        let params;
+        if (property.type === 'ObjectMethod') {
+            params = property.params;
+        }
+        else if (property.type === 'ObjectProperty' && property.value.type === 'ArrowFunctionExpression') {
+            params = property.value.params;
+        }
+        let paramList = params.map(param => content.slice(param.start, param.end));
         actionInfoList.push({
             rowKey: property.key.name,
-            defination: lileOfFile.slice(loc.start.line - 1, loc.end.line).join('\n'),
+            defination: lineOfFile.slice(loc.start.line - 1, loc.end.line).join('\n'),
+            paramList,
+            funcDeclarator: `${property.key.name} (${paramList.join(', ')})`,
         });
     });
     return actionInfoList;

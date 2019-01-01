@@ -41,8 +41,17 @@ class VueThis$Store {
             this._rootPath = rootPath;
         }
         vscode_1.window.onDidChangeActiveTextEditor(e => {
+            console.log('uri', e.document.uri);
             if (e.document.languageId === 'vue') {
-                this.setNewCompletionList(e.document);
+                if (!this._previousVuePath || e.document.uri.path !== this._previousVuePath) {
+                    this.setNewCompletionList(e.document);
+                    this._previousVuePath = e.document.uri.path;
+                }
+            }
+        });
+        vscode_1.workspace.onDidSaveTextDocument((document) => {
+            if (document.uri.path === this._previousVuePath) {
+                this.setNewCompletionList(document);
             }
         });
         this._entrancePath = path.resolve(this._rootPath, 'src/main.js');

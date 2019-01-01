@@ -15,6 +15,7 @@ import {
   Identifier,
   VariableDeclarator,
   StringLiteral,
+  BaseNode,
 } from '@babel/types';
 import traverse from '@babel/traverse';
 function evalFromPath(base: string, relative: string, evalMap) {
@@ -47,34 +48,29 @@ export function walkActionsFile(base: string, relative: string = '') {
   if (exportDefault) {
     let EvalMap = {};
     let pathSet = new Set();
-    (exportDefault.declaration as ObjectExpression).properties.forEach(
-      (property: ObjectMethod) => {
-        let key: Identifier = property.key;
-        if (property.computed) {
-          if (defineAstMap[key.name]) {
-            property.key.name = ((defineAstMap[key.name] as VariableDeclarator)
-              .init as StringLiteral).value;
-          } else if (moduleOrPathMap[key.name]) {
-            EvalMap[key.name] = '';
-            pathSet.add(moduleOrPathMap[key.name]);
-          }
+    (exportDefault.declaration as ObjectExpression).properties.forEach((property: ObjectMethod) => {
+      let key: Identifier = property.key;
+      if (property.computed) {
+        if (defineAstMap[key.name]) {
+          property.key.name = ((defineAstMap[key.name] as VariableDeclarator).init as StringLiteral).value;
+        } else if (moduleOrPathMap[key.name]) {
+          EvalMap[key.name] = '';
+          pathSet.add(moduleOrPathMap[key.name]);
         }
-      },
-    );
+      }
+    });
 
     pathSet.forEach(path => {
       evalFromPath(base, path, EvalMap);
     });
-    (exportDefault.declaration as ObjectExpression).properties.forEach(
-      (property: ObjectMethod) => {
-        let key: Identifier = property.key;
-        if (property.computed) {
-          if (EvalMap[key.name]) {
-            property.key.name = EvalMap[key.name];
-          }
+    (exportDefault.declaration as ObjectExpression).properties.forEach((property: ObjectMethod) => {
+      let key: Identifier = property.key;
+      if (property.computed) {
+        if (EvalMap[key.name]) {
+          property.key.name = EvalMap[key.name];
         }
-      },
-    );
+      }
+    });
   }
   return {
     export: exportDefault
@@ -84,13 +80,25 @@ export function walkActionsFile(base: string, relative: string = '') {
   };
 }
 
-export function parseActions(objAst: ObjectExpression, lileOfFile: string[]) {
+export function parseActions(objAst: ObjectExpression, lineOfFile: string[]) {
   let actionInfoList = [];
-  objAst.properties.forEach((property: ObjectProperty) => {
+  const content = lineOfFile.join('\n');
+  // debugger;
+  objAst.properties.forEach((property: ObjectMethod | ObjectProperty) => {
     let loc = property.loc;
+    let params: BaseNode[];
+    if (property.type === 'ObjectMethod') {
+      params = property.params;
+    } else if (property.type === 'ObjectProperty' && property.value.type === 'ArrowFunctionExpression') {
+      params = property.value.params;
+    }
+    let paramList = params.map(param => content.slice(param.start, param.end));
+
     actionInfoList.push({
       rowKey: property.key.name,
-      defination: lileOfFile.slice(loc.start.line - 1, loc.end.line).join('\n'),
+      defination: lineOfFile.slice(loc.start.line - 1, loc.end.line).join('\n'),
+      paramList,
+      funcDeclarator: `${(property.key as Identifier).name} (${paramList.join(', ')})`,
     });
   });
   return actionInfoList;

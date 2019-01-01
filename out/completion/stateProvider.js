@@ -30,6 +30,7 @@ function getStateFromNameSpace(obj, namespace) {
     }
     return [];
 }
+exports.getStateFromNameSpace = getStateFromNameSpace;
 function getStateCursorInfo(regExecArray, relativePos) {
     return {
         isNamespace: false,
@@ -117,7 +118,7 @@ class storeStateProvider {
     setStoreInfo(newStoreInfo) {
         this.storeInfo = newStoreInfo;
     }
-    provideCompletionItems(document, position, token, context) {
+    provideCompletionItems(document, position) {
         let reg = /this\n?\s*\.\$store\n?\s*\.state((?:\n?\s*\.[\w\$]*)+)/g;
         let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, getStateCursorInfo, 'regexp');
         if (cursorInfo) {
@@ -184,8 +185,7 @@ exports.storeMapStateProvider = storeMapStateProvider;
 function getObjectExpressionCursorInfo(mapStateAst, relativePos, arg, namespaceArg) {
     let triggerProperty = null;
     let cursorAtExp = arg.properties.filter(property => {
-        let flag = (property.type === 'ObjectMethod' ||
-            property.type === 'ObjectProperty') &&
+        let flag = (property.type === 'ObjectMethod' || property.type === 'ObjectProperty') &&
             relativePos >= property.start &&
             relativePos <= property.end;
         if (flag) {
@@ -194,9 +194,7 @@ function getObjectExpressionCursorInfo(mapStateAst, relativePos, arg, namespaceA
         return flag;
     })[0];
     if (cursorAtExp) {
-        if (triggerProperty &&
-            triggerProperty.type === 'ObjectMethod' &&
-            triggerProperty.params.length === 0) {
+        if (triggerProperty && triggerProperty.type === 'ObjectMethod' && triggerProperty.params.length === 0) {
             return null;
         }
         let retCursorInfo = {
@@ -218,8 +216,7 @@ function getObjectExpressionCursorInfo(mapStateAst, relativePos, arg, namespaceA
                     if (namespaceList.length) {
                         switch (triggerProperty.type) {
                             case 'ObjectMethod':
-                                if (triggerProperty.params[0].name ===
-                                    namespaceList[0]) {
+                                if (triggerProperty.params[0].name === namespaceList[0]) {
                                     retCursorInfo.match = true;
                                 }
                                 break;
@@ -228,8 +225,7 @@ function getObjectExpressionCursorInfo(mapStateAst, relativePos, arg, namespaceA
                                     case 'ArrowFunctionExpression':
                                     case 'FunctionExpression':
                                         let functionExpression = triggerProperty.value;
-                                        if (functionExpression.params[0].name ===
-                                            namespaceList[0]) {
+                                        if (functionExpression.params[0].name === namespaceList[0]) {
                                             retCursorInfo.match = true;
                                         }
                                 }

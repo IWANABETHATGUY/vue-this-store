@@ -1,6 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import { window, ExtensionContext, commands, languages, SignatureInformation, TextDocument } from 'vscode';
+import { window, ExtensionContext, commands, languages, TextDocument, workspace } from 'vscode';
 import { getFileContent, getStoreEntryRelativePath, getAstOfCode, getAbsolutePath } from './util';
 import { parseModuleAst, ModuleInfo } from './traverse/modules';
 import { getVuexConfig } from './traverse/utils';
@@ -12,7 +12,6 @@ import { storeMapMutationsProvider, storeMutationsProvider } from './completion/
 import { storeActionsProvider, storeMapActionsProvider } from './completion/actionsProvider';
 import { thisProvider, ThisCompletionInfo } from './completion/thisProvider';
 import { mutationsSignatureProvider } from './signature/mutationsProvider';
-import { TextDecoder } from 'util';
 
 type setStoreStatus = 1 | -1;
 const emptyModule: ModuleInfo = {
@@ -28,6 +27,8 @@ export default class VueThis$Store {
   private _entrancePath: string;
   private _extensionContext: ExtensionContext;
   private _watcher = null;
+
+  private _previousVuePath: string;
 
   private _stateProvider: storeStateProvider;
   private _mapStateProvider: storeMapStateProvider;
@@ -49,10 +50,21 @@ export default class VueThis$Store {
       this._rootPath = rootPath;
     }
     window.onDidChangeActiveTextEditor(e => {
+      console.log('uri', e.document.uri);
       if (e.document.languageId === 'vue') {
-        this.setNewCompletionList(e.document);
+        if (!this._previousVuePath || e.document.uri.path !== this._previousVuePath) {
+          this.setNewCompletionList(e.document);
+          this._previousVuePath = e.document.uri.path;
+        }
       }
     });
+
+    workspace.onDidSaveTextDocument((document: TextDocument) => {
+      if (document.uri.path === this._previousVuePath) {
+        this.setNewCompletionList(document);
+      }
+    });
+
     this._entrancePath = path.resolve(this._rootPath, 'src/main.js');
     this.initCommands();
     this.start();
