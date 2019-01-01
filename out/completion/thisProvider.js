@@ -173,9 +173,8 @@ class thisProvider {
         let linePrefix = document.lineAt(position).text.substr(0, position.character);
         let trimLinePrefixExpressions = linePrefix.trim().split(/\s+/);
         let lastPrefixExpression = trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
-        let reg = /this/;
-        let regRes = reg.exec(lastPrefixExpression);
-        if (!regRes) {
+        let identifierList = lastPrefixExpression.split('.');
+        if (identifierList.length !== 2 || identifierList[0] !== 'this') {
             return undefined;
         }
         return this._thisCompletionList.map((completion) => {
