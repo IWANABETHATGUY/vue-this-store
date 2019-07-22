@@ -37,17 +37,9 @@
   ![mapStateObject](https://user-gold-cdn.xitu.io/2018/12/14/167acd1af1043e07?w=1425&h=761&f=gif&s=1881854)
 - 支持 从`this.$store.getters.xxx`这样的形式直接获取 getter,也支持 mapGetters 中
   第二个参数是数组或者对象的形式
-  <!-- ![mapGetters](http://vuethisstore.flatpeach.xyz/getter.gif) -->
 - 同理支持`this.$store.commit` 和`this.$store.dispatch` 提示
-
-<!-- ![dispatch](http://vuethisstore.flatpeach.xyz/commit.gif) -->
-
 - 支持 mapMutations 参数为数组和对象提示
-
-  <!-- ![mapMutations](http://vuethisstore.flatpeach.xyz/mapmutation.gif) -->
-
 - 支持 mapActions 参数为数组和对象提示
-  <!-- ![mapActions](http://vuethisstore.flatpeach.xyz/mapAction.gif) -->
 - 监听你 store 文件夹的变动，当文件发生变动，会重新收集定义信息，提示也会更新
 
 ## 一些提示
