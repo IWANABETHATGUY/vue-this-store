@@ -35,7 +35,8 @@ function walkMutationsFile(base, relative = '') {
             let key = property.key;
             if (property.computed) {
                 if (defineAstMap[key.name]) {
-                    property.key.name = defineAstMap[key.name].init.value;
+                    property.key.name = defineAstMap[key.name]
+                        .init.value;
                 }
                 else if (moduleOrPathMap[key.name]) {
                     EvalMap[key.name] = '';
@@ -73,7 +74,8 @@ function parseMutations(objAst, lineOfFile) {
         if (property.type === 'ObjectMethod') {
             params = property.params;
         }
-        else if (property.type === 'ObjectProperty' && property.value.type === 'ArrowFunctionExpression') {
+        else if (property.type === 'ObjectProperty' &&
+            property.value.type === 'ArrowFunctionExpression') {
             params = property.value.params;
         }
         let paramList = params.map(param => content.slice(param.start, param.end));

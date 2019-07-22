@@ -1,3 +1,5 @@
+## 0.0.7
+- 添加了this对于getter，action，mutation，state的提示，对于mapMutation得到的新方法，提供了signature help功能
 ## 0.0.6
 
 - 修复了 modules 属性不为缩写时不能给出正确提示的 bug

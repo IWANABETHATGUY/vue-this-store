@@ -47,30 +47,35 @@ export function walkActionsFile(base: string, relative: string = '') {
   transformShorthand(exportDefault, defineAstMap);
   if (exportDefault) {
     let EvalMap = {};
-    let pathSet = new Set();
-    (exportDefault.declaration as ObjectExpression).properties.forEach((property: ObjectMethod) => {
-      let key: Identifier = property.key;
-      if (property.computed) {
-        if (defineAstMap[key.name]) {
-          property.key.name = ((defineAstMap[key.name] as VariableDeclarator).init as StringLiteral).value;
-        } else if (moduleOrPathMap[key.name]) {
-          EvalMap[key.name] = '';
-          pathSet.add(moduleOrPathMap[key.name]);
+    let pathSet = new Set<string>();
+    (exportDefault.declaration as ObjectExpression).properties.forEach(
+      (property: ObjectMethod) => {
+        let key: Identifier = property.key;
+        if (property.computed) {
+          if (defineAstMap[key.name]) {
+            property.key.name = ((defineAstMap[key.name] as VariableDeclarator)
+              .init as StringLiteral).value;
+          } else if (moduleOrPathMap[key.name]) {
+            EvalMap[key.name] = '';
+            pathSet.add(moduleOrPathMap[key.name]);
+          }
         }
-      }
-    });
+      },
+    );
 
     pathSet.forEach(path => {
       evalFromPath(base, path, EvalMap);
     });
-    (exportDefault.declaration as ObjectExpression).properties.forEach((property: ObjectMethod) => {
-      let key: Identifier = property.key;
-      if (property.computed) {
-        if (EvalMap[key.name]) {
-          property.key.name = EvalMap[key.name];
+    (exportDefault.declaration as ObjectExpression).properties.forEach(
+      (property: ObjectMethod) => {
+        let key: Identifier = property.key;
+        if (property.computed) {
+          if (EvalMap[key.name]) {
+            property.key.name = EvalMap[key.name];
+          }
         }
-      }
-    });
+      },
+    );
   }
   return {
     export: exportDefault
@@ -89,7 +94,10 @@ export function parseActions(objAst: ObjectExpression, lineOfFile: string[]) {
     let params: BaseNode[];
     if (property.type === 'ObjectMethod') {
       params = property.params;
-    } else if (property.type === 'ObjectProperty' && property.value.type === 'ArrowFunctionExpression') {
+    } else if (
+      property.type === 'ObjectProperty' &&
+      property.value.type === 'ArrowFunctionExpression'
+    ) {
       params = property.value.params;
     }
     let paramList = params.map(param => content.slice(param.start, param.end));
@@ -98,7 +106,9 @@ export function parseActions(objAst: ObjectExpression, lineOfFile: string[]) {
       rowKey: property.key.name,
       defination: lineOfFile.slice(loc.start.line - 1, loc.end.line).join('\n'),
       paramList,
-      funcDeclarator: `${(property.key as Identifier).name} (${paramList.join(', ')})`,
+      funcDeclarator: `${(property.key as Identifier).name} (${paramList.join(
+        ', ',
+      )})`,
     });
   });
   return actionInfoList;
