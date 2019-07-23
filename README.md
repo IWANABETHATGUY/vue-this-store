@@ -1,5 +1,3 @@
-Vue this store 中 readme 备份
-
 # vue-this-store
 
 通过使用 ast 和正则表达式，获取 store 中所有文件的定义,在用户使用.vue 文件中时给
