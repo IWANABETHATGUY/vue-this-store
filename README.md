@@ -13,7 +13,7 @@
 块，以及模块中的(actions,mutations, getters, state)，保存必要的定义信息以给出提
 示。当你的 vscode 插件的左下角有`VueThis$Store✔️`图标
 
-![statusBarItem](http://vuethisstore.flatpeach.xyz/statusBarItem.jpg)
+![statusBarItem](https://vuethisstore.flatpeach.xyz/statusBarItem.jpg)
 
 那么代表扫描 成功，可以得到正确的提示，如果是`VueThis$Store❌`则表示发生错误（我设置的默
 认的入口路径是工作根路径下的 src/main.js，如果失败，会使用备用入口文件
@@ -26,28 +26,28 @@
 - 支持最基本的`this.$store.state.count`类型的提示，当你在其他的 module 中定义了
   其他的 state 时， 可以得到下一层 module 和所有相应 state 的提示。
 
-  ![state](http://vuethisstore.flatpeach.xyz/state.gif)
+  ![state](https://vuethisstore.flatpeach.xyz/state.gif)
 
 - 同时支持 mapState，当输入第一个参数时，仅仅提示所有可能的下一个 module（设置了
   namespace 的 module） 和官网的机制一致。当设置了命名空间，只会提示当前命名空间
   下的 state。
-  <!-- ![mapState](http://vuethisstore.flatpeach.xyz/mapState.gif) -->
+  ![mapState](https://vuethisstore.flatpeach.xyz/mapState.gif)
 - 支持 mapState 参数为对象的情况，并且支持三种不同函数写法，通过 ast 获取函数的
   第一个参数给出更加精确的提示。
   ![mapStateObject](https://user-gold-cdn.xitu.io/2018/12/14/167acd1af1043e07?w=1425&h=761&f=gif&s=1881854)
 - 支持 从`this.$store.getters.xxx`这样的形式直接获取 getter,也支持 mapGetters 中
   第二个参数是数组或者对象的形式
-  ![mapGetters](http://vuethisstore.flatpeach.xyz/getter.gif)
+  ![mapGetters](https://vuethisstore.flatpeach.xyz/getter.gif)
 - 同理支持`this.$store.commit` 和`this.$store.dispatch` 提示
 
-![dispatch](http://vuethisstore.flatpeach.xyz/commit.gif)
+![dispatch](https://vuethisstore.flatpeach.xyz/commit.gif)
 
 - 支持 mapMutations 参数为数组和对象提示
 
-  ![mapMutations](http://vuethisstore.flatpeach.xyz/mapmutation.gif)
+  ![mapMutations](https://vuethisstore.flatpeach.xyz/mapmutation.gif)
 
 - 支持 mapActions 参数为数组和对象提示
-  ![mapActions](http://vuethisstore.flatpeach.xyz/mapAction.gif)
+  ![mapActions](https://vuethisstore.flatpeach.xyz/mapAction.gif)
 - 监听你 store 文件夹的变动，当文件发生变动，会重新收集定义信息，提示也会更新
 
 ## 一些提示
@@ -69,4 +69,5 @@
   到提示。
 
 ## 补充
+
 之后会持续维护这个项目，如果对你有帮助，给个 star 吧^\_^.
