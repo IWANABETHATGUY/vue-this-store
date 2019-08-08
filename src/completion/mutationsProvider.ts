@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
-import { getNextNamespace, getPositionIndex, whichCommit, getMapGMACursorInfo } from './util';
+import { getNextNamespace, getPositionIndex, whichCommit, getMapGMACursorInfo } from '../util/completionUtil';
 import { parse } from '@babel/parser';
 import { File, ExpressionStatement, CallExpression, StringLiteral, ObjectProperty, Identifier } from '@babel/types';
 type CursorType = 'ast' | 'regexp';

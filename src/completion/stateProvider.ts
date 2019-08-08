@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
-import { getNextNamespace, CursorInfo } from './util';
+import { getNextNamespace, CursorInfo } from '../util/completionUtil';
 import { getCursorInfoFromRegExp } from './mutationsProvider';
 import {
   File,

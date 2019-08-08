@@ -9,7 +9,7 @@ import {
   MarkdownString,
 } from 'vscode';
 import { ThisCompletionInfo, getRegExpMatchList } from '../completion/thisProvider';
-import { getPositionIndex, whichCommit } from '../completion/util';
+import { getPositionIndex, whichCommit } from '../util/completionUtil';
 
 export class mutationsSignatureProvider implements SignatureHelpProvider {
   private _thisCompletionList: ThisCompletionInfo[];
