@@ -13,9 +13,9 @@ import {
   getStoreEntryRelativePath,
   getAstOfCode,
   getAbsolutePath,
-} from './util/util';
+} from './util/commonUtil';
 import { parseModuleAst, ModuleInfo } from './traverse/modules';
-import { getVuexConfig } from './traverse/utils';
+import { getVuexConfig } from './util/traverseUtil';
 import { VueThisStoreStatusBarItem } from './statusBarItem';
 import { generateWatcher } from './watcher';
 import {

@@ -5,7 +5,7 @@ import {
   getPositionIndex,
   whichCommit,
   getMapGMACursorInfo,
-} from './util';
+} from '../util/completionUtil';
 import { parse } from '@babel/parser';
 import {
   File,

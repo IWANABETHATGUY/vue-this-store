@@ -49,8 +49,10 @@ type MapType = 'mutation' | 'action' | 'getter' | 'state';
  */
 function parseMapMGA(mapContent: string): MapProperyInfo[] {
   let mapMutationAst: File = parse(mapContent);
-  let astArguments = ((mapMutationAst.program.body[0] as ExpressionStatement).expression as CallExpression).arguments;
-  let mapOrArray = astArguments.length === 1 ? astArguments[0] : astArguments[1];
+  let astArguments = ((mapMutationAst.program.body[0] as ExpressionStatement)
+    .expression as CallExpression).arguments;
+  let mapOrArray =
+    astArguments.length === 1 ? astArguments[0] : astArguments[1];
   if (mapOrArray.type === 'ArrayExpression') {
     return mapOrArray.elements.map(element => {
       const value = (element as StringLiteral).value;
@@ -70,8 +72,10 @@ function parseMapMGA(mapContent: string): MapProperyInfo[] {
 
 function parseMapState(mapContent: string) {
   let mapMutationAst: File = parse(mapContent);
-  let astArguments = ((mapMutationAst.program.body[0] as ExpressionStatement).expression as CallExpression).arguments;
-  let mapOrArray = astArguments.length === 1 ? astArguments[0] : astArguments[1];
+  let astArguments = ((mapMutationAst.program.body[0] as ExpressionStatement)
+    .expression as CallExpression).arguments;
+  let mapOrArray =
+    astArguments.length === 1 ? astArguments[0] : astArguments[1];
   if (mapOrArray.type === 'ArrayExpression') {
     return mapOrArray.elements.map(element => {
       const value = (element as StringLiteral).value;
@@ -108,7 +112,9 @@ function getStateString(identifier: BaseNode): string {
   return firstParamStringLiteral;
 }
 
-function getRowKAndSecondNameSpace(property: ObjectProperty | ObjectMethod): MapProperyInfo | null {
+function getRowKAndSecondNameSpace(
+  property: ObjectProperty | ObjectMethod,
+): MapProperyInfo | null {
   let stateString: string;
   let key: string = (property.key as Identifier).name;
   if (property.type === 'ObjectMethod') {
@@ -152,7 +158,10 @@ function getRowKAndSecondNameSpace(property: ObjectProperty | ObjectMethod): Map
       traverse(code, {
         MemberExpression(path) {
           let node: MemberExpression = path.node;
-          if (node.object.type === 'Identifier' && node.object.name === stateString) {
+          if (
+            node.object.type === 'Identifier' &&
+            node.object.name === stateString
+          ) {
             ret.key = key;
             ret.secondNamespace = (node.property as Identifier).name;
             path.stop();
@@ -167,11 +176,14 @@ function getRowKAndSecondNameSpace(property: ObjectProperty | ObjectMethod): Map
   return null;
 }
 
-export function getRegExpMatchList(document: TextDocument, reg: RegExp): RegExpExecArray[] {
+export function getRegExpMatchList(
+  document: TextDocument,
+  reg: RegExp,
+): RegExpExecArray[] {
   let docContent = document.getText();
 
   let match = null;
-  let matchList = [];
+  let matchList: RegExpExecArray[] = [];
   while ((match = reg.exec(docContent))) {
     matchList.push(match);
   }
@@ -191,7 +203,9 @@ export class thisProvider implements CompletionItemProvider {
   public setThisCompletionList(newCompletionList: ThisCompletionInfo[]) {
     this._thisCompletionList = newCompletionList;
   }
-  public getNewThisCompletionList(document: TextDocument): ThisCompletionInfo[] {
+  public getNewThisCompletionList(
+    document: TextDocument,
+  ): ThisCompletionInfo[] {
     console.time('thisCompletion');
     let completionList: ThisCompletionInfo[] = [];
     const mutationRegExp = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
@@ -209,28 +223,57 @@ export class thisProvider implements CompletionItemProvider {
       ),
     );
     completionList = completionList.concat(
-      getThisXXXFromNameSpace(document, this._storeInfo, getterRegExp, parseMapMGA, getGettersFromNameSpace, 'getter'),
+      getThisXXXFromNameSpace(
+        document,
+        this._storeInfo,
+        getterRegExp,
+        parseMapMGA,
+        getGettersFromNameSpace,
+        'getter',
+      ),
     );
     completionList = completionList.concat(
-      getThisXXXFromNameSpace(document, this._storeInfo, actionRegExp, parseMapMGA, getActionsFromNameSpace, 'action'),
+      getThisXXXFromNameSpace(
+        document,
+        this._storeInfo,
+        actionRegExp,
+        parseMapMGA,
+        getActionsFromNameSpace,
+        'action',
+      ),
     );
     completionList = completionList.concat(
-      getThisXXXFromNameSpace(document, this._storeInfo, stateRegExp, parseMapState, getStateFromNameSpace, 'state'),
+      getThisXXXFromNameSpace(
+        document,
+        this._storeInfo,
+        stateRegExp,
+        parseMapState,
+        getStateFromNameSpace,
+        'state',
+      ),
     );
     console.timeEnd('thisCompletion');
     return completionList;
   }
-  public provideCompletionItems(document: TextDocument, position: Position): CompletionItem[] {
-    let linePrefix = document.lineAt(position).text.substr(0, position.character);
+  public provideCompletionItems(
+    document: TextDocument,
+    position: Position,
+  ): CompletionItem[] {
+    let linePrefix = document
+      .lineAt(position)
+      .text.substr(0, position.character);
     let trimLinePrefixExpressions = linePrefix.trim().split(/\s+/);
-    let lastPrefixExpression = trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
+    let lastPrefixExpression =
+      trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
     let identifierList = lastPrefixExpression.split('.');
     if (identifierList.length !== 2 || identifierList[0] !== 'this') {
       return undefined;
     }
 
     return this._thisCompletionList.map((completion: ThisCompletionInfo) => {
-      let thisCompletion = new CompletionItem(completion.computedKey ? completion.computedKey : '');
+      let thisCompletion = new CompletionItem(
+        completion.computedKey ? completion.computedKey : '',
+      );
       switch (completion.type) {
         case 'mutation':
         case 'action':
@@ -266,7 +309,10 @@ function getThisXXXFromNameSpace(
   matchList.forEach(match => {
     let [content, _, namespace] = match;
     namespace = namespace ? namespace : '';
-    let mutationList = getMapFromNameSpace(storeInfo, namespace.split('/').join('.'));
+    let mutationList = getMapFromNameSpace(
+      storeInfo,
+      namespace.split('/').join('.'),
+    );
     // debugger;
     let mutationMap = mutationList.reduce((acc, cur) => {
       acc[cur.rowKey] = {

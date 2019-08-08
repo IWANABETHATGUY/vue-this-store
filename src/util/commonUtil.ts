@@ -8,14 +8,13 @@ import {
   ObjectProperty,
   Program,
   File,
-  Node,
 } from '@babel/types';
 import * as fs from 'fs';
 import * as path from 'path';
 
 import { Status, ModuleOrPathMap } from '../type';
 
-import { looksLike } from '../traverse/utils';
+import { looksLike } from './traverseUtil';
 
 interface getFileContentResult {
   status: Status;
@@ -80,17 +79,22 @@ export function getModuleOrPathMap(node: Program): ModuleOrPathMap {
   let importDeclarationList: ImportDeclaration[] = node.body.filter(
     item => item.type === 'ImportDeclaration',
   ) as ImportDeclaration[];
-  let modulelOrPathMap = importDeclarationList.reduce((acc, cur) => {
-    let moduleOrPath = cur.source.value;
-    cur.specifiers
-      .filter(specifier => specifier.type === 'ImportDefaultSpecifier')
-      .forEach(specifier => {
-        acc[specifier.local.name] = moduleOrPath;
-      });
-    return acc;
-  }, {});
+  let modulelOrPathMap = importDeclarationList.reduce(
+    (acc: ModuleOrPathMap, cur) => {
+      let moduleOrPath = cur.source.value;
+
+      cur.specifiers
+        .filter(specifier => specifier.type === 'ImportDefaultSpecifier')
+        .forEach(specifier => {
+          acc[specifier.local.name] = moduleOrPath;
+        });
+      return acc;
+    },
+    {},
+  );
   return modulelOrPathMap;
 }
+
 /**
  * 获取store入口文件中的相对路径
  *

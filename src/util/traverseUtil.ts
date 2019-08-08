@@ -13,7 +13,7 @@ import {
   ObjectExpression,
 } from '@babel/types';
 import { StoreAstMap } from '../type';
-import { ParseModuleParam } from './modules';
+import { ParseModuleParam } from '../traverse/modules';
 
 export function getFileContent(abPath: string): string {
   if (!fs.existsSync(abPath)) {
