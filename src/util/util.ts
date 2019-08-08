@@ -8,13 +8,14 @@ import {
   ObjectProperty,
   Program,
   File,
+  Node,
 } from '@babel/types';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { Status, ModuleOrPathMap } from './type';
+import { Status, ModuleOrPathMap } from '../type';
 
-import { looksLike } from './traverse/utils';
+import { looksLike } from '../traverse/utils';
 
 interface getFileContentResult {
   status: Status;
