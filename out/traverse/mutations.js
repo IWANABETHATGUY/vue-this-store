@@ -1,12 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = require("./utils");
+const traverseUtil_1 = require("../util/traverseUtil");
 const types_1 = require("@babel/types");
 const traverse_1 = require("@babel/traverse");
 function evalFromPath(base, relative, evalMap) {
-    let filename = utils_1.getAbsolutePath(base, relative);
-    let fileContent = utils_1.getFileContent(filename);
-    let ast = utils_1.getAst(fileContent);
+    let filename = traverseUtil_1.getAbsolutePath(base, relative);
+    let fileContent = traverseUtil_1.getFileContent(filename);
+    let ast = traverseUtil_1.getAst(fileContent);
     traverse_1.default(ast, {
         VariableDeclarator(path) {
             let node = path.node;
@@ -21,13 +21,13 @@ function evalFromPath(base, relative, evalMap) {
     });
 }
 function walkMutationsFile(base, relative = '') {
-    let filename = utils_1.getAbsolutePath(base, relative);
-    let fileContent = utils_1.getFileContent(filename);
-    let ast = utils_1.getAst(fileContent);
-    let defineAstMap = utils_1.getFileDefinationAstMap(ast);
-    let moduleOrPathMap = utils_1.getModuleOrPathMap(ast);
+    let filename = traverseUtil_1.getAbsolutePath(base, relative);
+    let fileContent = traverseUtil_1.getFileContent(filename);
+    let ast = traverseUtil_1.getAst(fileContent);
+    let defineAstMap = traverseUtil_1.getFileDefinationAstMap(ast);
+    let moduleOrPathMap = traverseUtil_1.getModuleOrPathMap(ast);
     let exportDefault = ast.program.body.filter(item => item.type === 'ExportDefaultDeclaration')[0];
-    utils_1.transformShorthand(exportDefault, defineAstMap);
+    traverseUtil_1.transformShorthand(exportDefault, defineAstMap);
     if (exportDefault) {
         let EvalMap = {};
         let pathSet = new Set();

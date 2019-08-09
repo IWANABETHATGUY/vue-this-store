@@ -74,7 +74,7 @@ export default class VueThis$Store {
       this._rootPath = rootPath;
     }
     window.onDidChangeActiveTextEditor(e => {
-      console.log('uri', e.document.uri);
+      // console.log('uri', e.document.uri);
       if (e.document.languageId === 'vue') {
         if (
           !this._previousVuePath ||
