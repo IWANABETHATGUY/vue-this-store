@@ -11,7 +11,7 @@ import {
 import { ThisCompletionInfo, getRegExpMatchList } from '../completion/thisProvider';
 import { getPositionIndex, whichCommit } from '../util/completionUtil';
 
-export class mutationsSignatureProvider implements SignatureHelpProvider {
+export class MutationsSignatureProvider implements SignatureHelpProvider {
   private _thisCompletionList: ThisCompletionInfo[];
   constructor(thisCompletionList: ThisCompletionInfo[]) {
     this._thisCompletionList = thisCompletionList;

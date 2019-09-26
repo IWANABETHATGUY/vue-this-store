@@ -17,7 +17,7 @@ export function getGettersFromNameSpace(obj: ModuleInfo, namespace: string) {
   return getterInfoList;
 }
 
-export class storeGettersProvider implements vscode.CompletionItemProvider {
+export class StoreGettersProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;
@@ -54,7 +54,7 @@ export class storeGettersProvider implements vscode.CompletionItemProvider {
   }
 }
 
-export class storeMapGettersProvider implements vscode.CompletionItemProvider {
+export class StoreMapGettersProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;

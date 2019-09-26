@@ -119,7 +119,7 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
   }
   return null;
 }
-export class storeStateProvider implements CompletionItemProvider {
+export class StoreStateProvider implements CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;

@@ -71,7 +71,7 @@ export function getActionsFromNameSpace(obj: ModuleInfo, namespace: string) {
   return actionInfoList;
 }
 
-export class storeActionsProvider implements vscode.CompletionItemProvider {
+export class StoreActionsProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;
@@ -85,7 +85,7 @@ export class storeActionsProvider implements vscode.CompletionItemProvider {
     token: vscode.CancellationToken,
   ): vscode.CompletionItem[] {
     let docContent = document.getText();
-    //TODO: export default 也需要判断是否export default的是一个已经顶一个过的变量，而不是一个obj字面量
+    //TODO: export default 也需要判断是否export default的是一个已经定义过的变量，而不是一个obj字面量
     let reg = /((?:this\.)?(?:\$store\.)\n?dispatch\([\s\S]*?\))/g;
     let match = null;
     let matchList = [];
@@ -140,7 +140,7 @@ export class storeActionsProvider implements vscode.CompletionItemProvider {
   }
 }
 
-export class storeMapActionsProvider implements vscode.CompletionItemProvider {
+export class StoreMapActionsProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;
