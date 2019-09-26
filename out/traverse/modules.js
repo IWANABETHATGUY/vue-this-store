@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = require("./utils");
+const traverseUtil_1 = require("../util/traverseUtil");
 const types_1 = require("@babel/types");
 const state_1 = require("./state");
 const getters_1 = require("./getters");
@@ -37,7 +37,7 @@ function getModulesInfo({ property, m2pmap, defmap, cwf, lineOfFile, namespace, 
     if (property.shorthand) {
         let value = property.value;
         if (m2pmap[value.name]) {
-            let { cwf: cwff, m2pmap: m2pmapp, objAst: objAstt, defmap: defmapp, lineOfFile: lineOfFilee } = walkModulesFile(cwf, m2pmap[value.name]);
+            let { cwf: cwff, m2pmap: m2pmapp, objAst: objAstt, defmap: defmapp, lineOfFile: lineOfFilee, } = walkModulesFile(cwf, m2pmap[value.name]);
             modules = parseModules({
                 objAst: objAstt,
                 m2pmap: m2pmapp,
@@ -83,13 +83,13 @@ function parseModuleAst({ objAst, m2pmap, defmap, cwf, lineOfFile }, infoObj) {
 }
 exports.parseModuleAst = parseModuleAst;
 function walkModulesFile(base, relative = '') {
-    let filename = utils_1.getAbsolutePath(base, relative);
-    let fileContent = utils_1.getFileContent(filename);
-    let ast = utils_1.getAst(fileContent);
-    let defineAstMap = utils_1.getFileDefinationAstMap(ast);
-    let moduleOrPathMap = utils_1.getModuleOrPathMap(ast);
+    let filename = traverseUtil_1.getAbsolutePath(base, relative);
+    let fileContent = traverseUtil_1.getFileContent(filename);
+    let ast = traverseUtil_1.getAst(fileContent);
+    let defineAstMap = traverseUtil_1.getFileDefinationAstMap(ast);
+    let moduleOrPathMap = traverseUtil_1.getModuleOrPathMap(ast);
     let exportDefault = ast.program.body.filter(item => item.type === 'ExportDefaultDeclaration')[0];
-    utils_1.transformShorthand(exportDefault, defineAstMap);
+    traverseUtil_1.transformShorthand(exportDefault, defineAstMap);
     return {
         objAst: exportDefault ? exportDefault.declaration : types_1.objectExpression([]),
         lineOfFile: fileContent.split('\n'),
@@ -113,7 +113,7 @@ function parseModules({ objAst, m2pmap, defmap, cwf, lineOfFile }, namespace) {
         let value;
         if (property.shorthand) {
             if (m2pmap[property.key.name]) {
-                let { objAst: objAstt, m2pmap: m2pmapp, defmap: defmapp, cwf: cwff, lineOfFile: lineOfFilee } = walkModulesFile(cwf, m2pmap[property.key.name]);
+                let { objAst: objAstt, m2pmap: m2pmapp, defmap: defmapp, cwf: cwff, lineOfFile: lineOfFilee, } = walkModulesFile(cwf, m2pmap[property.key.name]);
                 ParseModuleParam = {
                     m2pmap: m2pmapp,
                     defmap: defmapp,

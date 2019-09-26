@@ -16,7 +16,8 @@ const stateProvider_1 = require("./stateProvider");
  */
 function parseMapMGA(mapContent) {
     let mapMutationAst = parser_1.parse(mapContent);
-    let astArguments = mapMutationAst.program.body[0].expression.arguments;
+    let astArguments = mapMutationAst.program.body[0]
+        .expression.arguments;
     let mapOrArray = astArguments.length === 1 ? astArguments[0] : astArguments[1];
     if (mapOrArray.type === 'ArrayExpression') {
         return mapOrArray.elements.map(element => {
@@ -37,7 +38,8 @@ function parseMapMGA(mapContent) {
 }
 function parseMapState(mapContent) {
     let mapMutationAst = parser_1.parse(mapContent);
-    let astArguments = mapMutationAst.program.body[0].expression.arguments;
+    let astArguments = mapMutationAst.program.body[0]
+        .expression.arguments;
     let mapOrArray = astArguments.length === 1 ? astArguments[0] : astArguments[1];
     if (mapOrArray.type === 'ArrayExpression') {
         return mapOrArray.elements.map(element => {
@@ -120,7 +122,8 @@ function getRowKAndSecondNameSpace(property) {
             traverse_1.default(code, {
                 MemberExpression(path) {
                     let node = path.node;
-                    if (node.object.type === 'Identifier' && node.object.name === stateString) {
+                    if (node.object.type === 'Identifier' &&
+                        node.object.name === stateString) {
                         ret.key = key;
                         ret.secondNamespace = node.property.name;
                         path.stop();
@@ -170,7 +173,9 @@ class thisProvider {
         return completionList;
     }
     provideCompletionItems(document, position) {
-        let linePrefix = document.lineAt(position).text.substr(0, position.character);
+        let linePrefix = document
+            .lineAt(position)
+            .text.substr(0, position.character);
         let trimLinePrefixExpressions = linePrefix.trim().split(/\s+/);
         let lastPrefixExpression = trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
         let identifierList = lastPrefixExpression.split('.');

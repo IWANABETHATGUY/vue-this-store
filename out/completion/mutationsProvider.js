@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
-const util_1 = require("./util");
+const completionUtil_1 = require("../util/completionUtil");
 const parser_1 = require("@babel/parser");
 /**
  *
@@ -26,8 +26,8 @@ function getCursorInfoFromRegExp(reg, document, position, parseMatchFn, type, ne
     if (!matchList.length) {
         return null;
     }
-    let posIndex = util_1.getPositionIndex(document, position);
-    let commitExpression = util_1.whichCommit(matchList, posIndex);
+    let posIndex = completionUtil_1.getPositionIndex(document, position);
+    let commitExpression = completionUtil_1.whichCommit(matchList, posIndex);
     if (!commitExpression)
         return null;
     if (type === 'ast') {
@@ -111,7 +111,7 @@ class storeMutationsProvider {
         if (cursorInfo) {
             let fullNamespace = cursorInfo.namespace;
             let getterCompletionList = [];
-            let namespaceCompletionList = util_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
+            let namespaceCompletionList = completionUtil_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
                 let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
                 NSCompletion.detail = 'module';
                 return NSCompletion;
@@ -138,14 +138,14 @@ class storeMapMutationsProvider {
     }
     provideCompletionItems(document, position) {
         let reg = /\bmapMutations\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
-        let cursorInfo = getCursorInfoFromRegExp(reg, document, position, util_1.getMapGMACursorInfo, 'ast');
+        let cursorInfo = getCursorInfoFromRegExp(reg, document, position, completionUtil_1.getMapGMACursorInfo, 'ast');
         if (cursorInfo) {
             let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
                 .map(item => item.split('/').join('.'))
                 .filter(item => item.length)
                 .join('.');
             let getterCompletionList = [];
-            let namespaceCompletionList = util_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
+            let namespaceCompletionList = completionUtil_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
                 let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
                 NSCompletion.detail = 'module';
                 return NSCompletion;

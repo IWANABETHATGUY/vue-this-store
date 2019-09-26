@@ -1,6 +1,11 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
-import { getNextNamespace, getPositionIndex, whichCommit, getMapGMACursorInfo } from './util';
+import {
+  getNextNamespace,
+  getPositionIndex,
+  whichCommit,
+  getMapGMACursorInfo,
+} from '../util/completionUtil';
 import { parse } from '@babel/parser';
 import {
   File,
@@ -30,12 +35,15 @@ function getDispatchCursorInfo(commitAst: File, relativePos: number) {
       };
     }
   } else if (firstArg.type === 'ObjectExpression') {
-    let typeProperty = firstArg.properties.filter((property: ObjectProperty) => {
-      let key: Identifier = property.key as Identifier;
-      return key.name === 'type';
-    })[0];
+    let typeProperty = firstArg.properties.filter(
+      (property: ObjectProperty) => {
+        let key: Identifier = property.key as Identifier;
+        return key.name === 'type';
+      },
+    )[0];
     if (typeProperty) {
-      let value: StringLiteral = (typeProperty as ObjectProperty).value as StringLiteral;
+      let value: StringLiteral = (typeProperty as ObjectProperty)
+        .value as StringLiteral;
       if (relativePos >= value.start && relativePos < value.end) {
         return {
           isNamespace: false,
@@ -93,19 +101,36 @@ export class storeActionsProvider implements vscode.CompletionItemProvider {
     let commitExpression = whichCommit(matchList, posIndex);
     if (!commitExpression) return undefined;
     let commitAst = parse(commitExpression[0]);
-    let cursorInfo = getDispatchCursorInfo(commitAst, posIndex - commitExpression.index);
+    let cursorInfo = getDispatchCursorInfo(
+      commitAst,
+      posIndex - commitExpression.index,
+    );
     if (cursorInfo) {
       let fullNamespace = cursorInfo.namespace;
       let getterCompletionList = [];
-      let namespaceCompletionList = getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
-        let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
+      let namespaceCompletionList = getNextNamespace(
+        this.storeInfo,
+        fullNamespace,
+      ).map(nextNS => {
+        let NSCompletion = new vscode.CompletionItem(
+          nextNS,
+          vscode.CompletionItemKind.Module,
+        );
         NSCompletion.detail = 'module';
         return NSCompletion;
       });
       if (!cursorInfo.isNamespace) {
-        getterCompletionList = getActionsFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
-          let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Method);
-          getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
+        getterCompletionList = getActionsFromNameSpace(
+          this.storeInfo,
+          fullNamespace,
+        ).map(getterInfo => {
+          let getterCompletion = new vscode.CompletionItem(
+            getterInfo.rowKey,
+            vscode.CompletionItemKind.Method,
+          );
+          getterCompletion.documentation = new vscode.MarkdownString(
+            '```' + getterInfo.defination + '```',
+          );
           getterCompletion.detail = 'action';
           return getterCompletion;
         });
@@ -123,24 +148,47 @@ export class storeMapActionsProvider implements vscode.CompletionItemProvider {
   public setStoreInfo(newStoreInfo: ModuleInfo) {
     this.storeInfo = newStoreInfo;
   }
-  public provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[] {
+  public provideCompletionItems(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+  ): vscode.CompletionItem[] {
     let reg = /\bmapActions\(([\'\"](.*)[\'\"],\s*)?(?:[\[\{])?[\s\S]*?(?:[\}\]])?.*?\)/g;
-    let cursorInfo = getCursorInfoFromRegExp(reg, document, position, getMapGMACursorInfo, 'ast');
+    let cursorInfo = getCursorInfoFromRegExp(
+      reg,
+      document,
+      position,
+      getMapGMACursorInfo,
+      'ast',
+    );
     if (cursorInfo) {
       let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
         .map(item => item.split('/').join('.'))
         .filter(item => item.length)
         .join('.');
       let getterCompletionList = [];
-      let namespaceCompletionList = getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
-        let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
+      let namespaceCompletionList = getNextNamespace(
+        this.storeInfo,
+        fullNamespace,
+      ).map(nextNS => {
+        let NSCompletion = new vscode.CompletionItem(
+          nextNS,
+          vscode.CompletionItemKind.Module,
+        );
         NSCompletion.detail = 'module';
         return NSCompletion;
       });
       if (!cursorInfo.isNamespace) {
-        getterCompletionList = getActionsFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
-          let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Method);
-          getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
+        getterCompletionList = getActionsFromNameSpace(
+          this.storeInfo,
+          fullNamespace,
+        ).map(getterInfo => {
+          let getterCompletion = new vscode.CompletionItem(
+            getterInfo.rowKey,
+            vscode.CompletionItemKind.Method,
+          );
+          getterCompletion.documentation = new vscode.MarkdownString(
+            '```' + getterInfo.defination + '```',
+          );
           getterCompletion.detail = 'action';
           return getterCompletion;
         });

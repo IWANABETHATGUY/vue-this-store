@@ -11,9 +11,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path = require("path");
 const fs = require("fs");
 const vscode_1 = require("vscode");
-const util_1 = require("./util");
+const commonUtil_1 = require("./util/commonUtil");
 const modules_1 = require("./traverse/modules");
-const utils_1 = require("./traverse/utils");
+const traverseUtil_1 = require("./util/traverseUtil");
 const statusBarItem_1 = require("./statusBarItem");
 const watcher_1 = require("./watcher");
 const stateProvider_1 = require("./completion/stateProvider");
@@ -41,9 +41,10 @@ class VueThis$Store {
             this._rootPath = rootPath;
         }
         vscode_1.window.onDidChangeActiveTextEditor(e => {
-            console.log('uri', e.document.uri);
+            // console.log('uri', e.document.uri);
             if (e.document.languageId === 'vue') {
-                if (!this._previousVuePath || e.document.uri.path !== this._previousVuePath) {
+                if (!this._previousVuePath ||
+                    e.document.uri.path !== this._previousVuePath) {
                     this.setNewCompletionList(e.document);
                     this._previousVuePath = e.document.uri.path;
                 }
@@ -79,7 +80,7 @@ class VueThis$Store {
     }
     start() {
         this._extensionContext.subscriptions.push(this._statusBarItem);
-        let [storeAbsolutePath, storeInfo, setStoreActionStatus] = this.startFromEntry();
+        let [storeAbsolutePath, storeInfo, setStoreActionStatus,] = this.startFromEntry();
         this._statusBarItem.setStatus(setStoreActionStatus);
         this._watcher = watcher_1.generateWatcher(storeAbsolutePath);
         this._stateProvider = new stateProvider_1.storeStateProvider(storeInfo);
@@ -133,14 +134,14 @@ class VueThis$Store {
                 this._entrancePath = this._rootPath + '/src/index.js';
             }
         }
-        let { fileContent: entryFileContent, status: entryFileStatus } = util_1.getFileContent(this._entrancePath);
+        let { fileContent: entryFileContent, status: entryFileStatus, } = commonUtil_1.getFileContent(this._entrancePath);
         if (entryFileContent === '') {
             return ['', emptyModule, entryFileStatus];
         }
-        let entryFileContentAst = util_1.getAstOfCode(entryFileContent);
-        let storeRelativePath = util_1.getStoreEntryRelativePath(entryFileContentAst);
-        let storeAbsolutePath = util_1.getAbsolutePath(this._entrancePath, storeRelativePath);
-        let { objAst, m2pmap, defmap, cwf, lineOfFile } = utils_1.getVuexConfig(storeAbsolutePath);
+        let entryFileContentAst = commonUtil_1.getAstOfCode(entryFileContent);
+        let storeRelativePath = commonUtil_1.getStoreEntryRelativePath(entryFileContentAst);
+        let storeAbsolutePath = commonUtil_1.getAbsolutePath(this._entrancePath, storeRelativePath);
+        let { objAst, m2pmap, defmap, cwf, lineOfFile } = traverseUtil_1.getVuexConfig(storeAbsolutePath);
         try {
             let storeInfo = { namespace: '' };
             modules_1.parseModuleAst({

@@ -5,7 +5,7 @@ import {
   getFileDefinationAstMap,
   getModuleOrPathMap,
   transformShorthand,
-} from './utils';
+} from '../util/traverseUtil';
 import {
   ExportDefaultDeclaration,
   objectExpression,

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
-import { getModuleFromPath, getNextNamespace, getMapGMACursorInfo } from './util';
+import { getModuleFromPath, getNextNamespace, getMapGMACursorInfo } from '../util/completionUtil';
 import { getCursorInfoFromRegExp } from './mutationsProvider';
 
 export function getGettersFromNameSpace(obj: ModuleInfo, namespace: string) {
