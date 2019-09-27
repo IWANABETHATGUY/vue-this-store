@@ -1,4 +1,12 @@
-import {CompletionItem, TextDocument, Position, CompletionItemKind, MarkdownString, CompletionItemProvider, CompletionContext} from 'vscode';
+import {
+  CompletionItem,
+  TextDocument,
+  Position,
+  CompletionItemKind,
+  MarkdownString,
+  CompletionItemProvider,
+  CompletionContext,
+} from 'vscode';
 import { ModuleInfo } from '../traverse/modules';
 import { getNextNamespace, CursorInfo } from '../util/completionUtil';
 import { getCursorInfoFromRegExp } from './mutationsProvider';
@@ -42,7 +50,10 @@ export function getStateFromNameSpace(obj: ModuleInfo, namespace: string) {
   return [];
 }
 
-function getStateCursorInfo(regExecArray: RegExpExecArray, relativePos: number): CursorInfo {
+function getStateCursorInfo(
+  regExecArray: RegExpExecArray,
+  relativePos: number,
+): CursorInfo {
   return {
     isNamespace: false,
     namespace: '',
@@ -76,7 +87,8 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
         };
       }
     } else if (firstArg.type === 'StringLiteral') {
-      let cursorAtExp = relativePos >= firstArg.start && relativePos < firstArg.end;
+      let cursorAtExp =
+        relativePos >= firstArg.start && relativePos < firstArg.end;
       if (cursorAtExp) {
         return {
           isNamespace: true,
@@ -113,7 +125,12 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
           };
         }
       } else if (secondArg.type === 'ObjectExpression') {
-        return getObjectExpressionCursorInfo(mapStateAst, relativePos, secondArg, firstArg);
+        return getObjectExpressionCursorInfo(
+          mapStateAst,
+          relativePos,
+          secondArg,
+          firstArg,
+        );
       }
     }
   }
@@ -127,37 +144,66 @@ export class StoreStateProvider implements CompletionItemProvider {
   public setStoreInfo(newStoreInfo: ModuleInfo) {
     this.storeInfo = newStoreInfo;
   }
-  public provideCompletionItems(document: TextDocument, position: Position): CompletionItem[] {
-    let a = document.getWordRangeAtPosition(position, /import([\s\n])+\{(.*)\}/)
-    
+  public provideCompletionItems(
+    document: TextDocument,
+    position: Position,
+  ): CompletionItem[] {
+    let a = document.getWordRangeAtPosition(
+      position,
+      /import([\s\n])+\{(.*)\}/,
+    );
+
     let result;
     if (a) {
-      result = document.getText(a)
-      console.log(result)
+      result = document.getText(a);
+      console.log(result);
     }
     let reg = /this\n?\s*\.\$store\n?\s*\.state((?:\n?\s*\.[\w\$]*)+)/g;
-    let cursorInfo = getCursorInfoFromRegExp(reg, document, position, getStateCursorInfo, 'regexp');
+    let cursorInfo = getCursorInfoFromRegExp(
+      reg,
+      document,
+      position,
+      getStateCursorInfo,
+      'regexp',
+    );
 
     if (cursorInfo) {
       let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
         .map(item => item.split('/').join('.'))
         .filter(item => item.length)
         .join('.');
-      let getterCompletionList = [];
-      let namespaceCompletionList = getNextStateNamespace(this.storeInfo, fullNamespace).map(nextNS => {
-        let NSCompletion = new CompletionItem(nextNS, CompletionItemKind.Module);
+      let stateCompletionList: CompletionItem[] = [];
+      let namespaceCompletionList: CompletionItem[] = getNextStateNamespace(
+        this.storeInfo,
+        fullNamespace,
+      ).map(nextNS => {
+        let NSCompletion = new CompletionItem(
+          nextNS,
+          CompletionItemKind.Module,
+        );
         NSCompletion.detail = 'module';
+        NSCompletion.sortText = `0${nextNS}`;
         return NSCompletion;
       });
       if (!cursorInfo.isNamespace) {
-        getterCompletionList = getStateFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
-          let getterCompletion = new CompletionItem(getterInfo.rowKey, CompletionItemKind.Variable);
-          getterCompletion.documentation = new MarkdownString('```' + getterInfo.defination + '```');
-          getterCompletion.detail = 'state';
-          return getterCompletion;
+        stateCompletionList = getStateFromNameSpace(
+          this.storeInfo,
+          fullNamespace,
+        ).map(stateInfo => {
+          let stateCompletion = new CompletionItem(
+            stateInfo.rowKey,
+            CompletionItemKind.Variable,
+            );
+          stateCompletion.sortText = `1${stateInfo.rowKey}`;
+          stateCompletion.documentation = new MarkdownString(
+            '```' + stateInfo.defination + '```',
+          );
+          stateCompletion.detail = 'state';
+          return stateCompletion;
         });
       }
-      return getterCompletionList.concat(namespaceCompletionList);
+      // debugger
+      return stateCompletionList.concat(namespaceCompletionList);
     }
   }
 }
@@ -193,15 +239,29 @@ export class storeMapStateProvider implements CompletionItemProvider {
         .filter(item => item.length)
         .join('.');
       let stateCompletionList = [];
-      let namespaceCompletionList = getNextStateNamespace(this.storeInfo, fullNamespace).map(nextNS => {
-        let NSCompletion = new CompletionItem(nextNS, CompletionItemKind.Module);
+      let namespaceCompletionList = getNextStateNamespace(
+        this.storeInfo,
+        fullNamespace,
+      ).map(nextNS => {
+        let NSCompletion = new CompletionItem(
+          nextNS,
+          CompletionItemKind.Module,
+        );
         NSCompletion.detail = 'module';
         return NSCompletion;
       });
       if (!cursorInfo.isNamespace) {
-        stateCompletionList = getStateFromNameSpace(this.storeInfo, fullNamespace).map(stateInfo => {
-          let stateCompletion = new CompletionItem(stateInfo.rowKey, CompletionItemKind.Variable);
-          stateCompletion.documentation = new MarkdownString('```' + stateInfo.defination + '```');
+        stateCompletionList = getStateFromNameSpace(
+          this.storeInfo,
+          fullNamespace,
+        ).map(stateInfo => {
+          let stateCompletion = new CompletionItem(
+            stateInfo.rowKey,
+            CompletionItemKind.Variable,
+          );
+          stateCompletion.documentation = new MarkdownString(
+            '```' + stateInfo.defination + '```',
+          );
           stateCompletion.detail = 'state';
           return stateCompletion;
         });
@@ -222,7 +282,8 @@ function getObjectExpressionCursorInfo(
   let triggerProperty: ObjectProperty | ObjectMethod = null;
   let cursorAtExp = arg.properties.filter(property => {
     let flag =
-      (property.type === 'ObjectMethod' || property.type === 'ObjectProperty') &&
+      (property.type === 'ObjectMethod' ||
+        property.type === 'ObjectProperty') &&
       relativePos >= property.start &&
       relativePos <= property.end;
     if (flag) {
@@ -232,7 +293,11 @@ function getObjectExpressionCursorInfo(
   })[0];
 
   if (cursorAtExp) {
-    if (triggerProperty && triggerProperty.type === 'ObjectMethod' && triggerProperty.params.length === 0) {
+    if (
+      triggerProperty &&
+      triggerProperty.type === 'ObjectMethod' &&
+      triggerProperty.params.length === 0
+    ) {
       return null;
     }
     let retCursorInfo = {
@@ -254,7 +319,10 @@ function getObjectExpressionCursorInfo(
           if (namespaceList.length) {
             switch (triggerProperty.type) {
               case 'ObjectMethod':
-                if ((triggerProperty.params[0] as Identifier).name === namespaceList[0]) {
+                if (
+                  (triggerProperty.params[0] as Identifier).name ===
+                  namespaceList[0]
+                ) {
                   retCursorInfo.match = true;
                 }
                 break;
@@ -263,7 +331,10 @@ function getObjectExpressionCursorInfo(
                   case 'ArrowFunctionExpression':
                   case 'FunctionExpression':
                     let functionExpression = triggerProperty.value;
-                    if ((functionExpression.params[0] as Identifier).name === namespaceList[0]) {
+                    if (
+                      (functionExpression.params[0] as Identifier).name ===
+                      namespaceList[0]
+                    ) {
                       retCursorInfo.match = true;
                     }
                 }

@@ -107,7 +107,7 @@ export class StoreActionsProvider implements vscode.CompletionItemProvider {
     );
     if (cursorInfo) {
       let fullNamespace = cursorInfo.namespace;
-      let getterCompletionList = [];
+      let actionCompletionList = [];
       let namespaceCompletionList = getNextNamespace(
         this.storeInfo,
         fullNamespace,
@@ -117,25 +117,27 @@ export class StoreActionsProvider implements vscode.CompletionItemProvider {
           vscode.CompletionItemKind.Module,
         );
         NSCompletion.detail = 'module';
+        NSCompletion.sortText = `0${nextNS}`
         return NSCompletion;
       });
       if (!cursorInfo.isNamespace) {
-        getterCompletionList = getActionsFromNameSpace(
+        actionCompletionList = getActionsFromNameSpace(
           this.storeInfo,
           fullNamespace,
-        ).map(getterInfo => {
-          let getterCompletion = new vscode.CompletionItem(
-            getterInfo.rowKey,
+        ).map(actionInfo => {
+          let actionCompletion = new vscode.CompletionItem(
+            actionInfo.rowKey,
             vscode.CompletionItemKind.Method,
           );
-          getterCompletion.documentation = new vscode.MarkdownString(
-            '```' + getterInfo.defination + '```',
+          actionCompletion.documentation = new vscode.MarkdownString(
+            '```' + actionInfo.defination + '```',
           );
-          getterCompletion.detail = 'action';
-          return getterCompletion;
+          actionCompletion.detail = 'action';
+          actionCompletion.sortText = `1${actionInfo.rowKey}`
+          return actionCompletion;
         });
       }
-      return getterCompletionList.concat(namespaceCompletionList);
+      return actionCompletionList.concat(namespaceCompletionList);
     }
   }
 }

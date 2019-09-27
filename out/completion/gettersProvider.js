@@ -17,7 +17,7 @@ function getGettersFromNameSpace(obj, namespace) {
     return getterInfoList;
 }
 exports.getGettersFromNameSpace = getGettersFromNameSpace;
-class storeGettersProvider {
+class StoreGettersProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
     }
@@ -48,8 +48,8 @@ class storeGettersProvider {
             : [];
     }
 }
-exports.storeGettersProvider = storeGettersProvider;
-class storeMapGettersProvider {
+exports.StoreGettersProvider = StoreGettersProvider;
+class StoreMapGettersProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
     }
@@ -69,6 +69,7 @@ class storeMapGettersProvider {
             let namespaceCompletionList = completionUtil_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
                 let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
                 NSCompletion.detail = 'module';
+                NSCompletion.sortText = `0${nextNS}`;
                 return NSCompletion;
             });
             if (!cursorInfo.isNamespace) {
@@ -76,6 +77,7 @@ class storeMapGettersProvider {
                     let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Variable);
                     getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
                     getterCompletion.detail = 'getter';
+                    getterCompletion.sortText = `1${getterInfo.rowKey}`;
                     return getterCompletion;
                 });
             }
@@ -85,5 +87,5 @@ class storeMapGettersProvider {
         return undefined;
     }
 }
-exports.storeMapGettersProvider = storeMapGettersProvider;
+exports.StoreMapGettersProvider = StoreMapGettersProvider;
 //# sourceMappingURL=gettersProvider.js.map

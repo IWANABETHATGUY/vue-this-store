@@ -147,7 +147,7 @@ function getRegExpMatchList(document, reg) {
     return matchList;
 }
 exports.getRegExpMatchList = getRegExpMatchList;
-class thisProvider {
+class ThisProvider {
     constructor(storeInfo, thisCompletionList) {
         this._storeInfo = storeInfo;
         this._thisCompletionList = thisCompletionList;
@@ -205,7 +205,7 @@ class thisProvider {
         });
     }
 }
-exports.thisProvider = thisProvider;
+exports.ThisProvider = ThisProvider;
 function getThisXXXFromNameSpace(document, storeInfo, reg, parseMapFunction, getMapFromNameSpace, type) {
     const completionList = [];
     let matchList = getRegExpMatchList(document, reg);

@@ -83,16 +83,16 @@ class VueThis$Store {
         let [storeAbsolutePath, storeInfo, setStoreActionStatus,] = this.startFromEntry();
         this._statusBarItem.setStatus(setStoreActionStatus);
         this._watcher = watcher_1.generateWatcher(storeAbsolutePath);
-        this._stateProvider = new stateProvider_1.storeStateProvider(storeInfo);
+        this._stateProvider = new stateProvider_1.StoreStateProvider(storeInfo);
         this._mapStateProvider = new stateProvider_1.storeMapStateProvider(storeInfo);
-        this._gettersProvider = new gettersProvider_1.storeGettersProvider(storeInfo);
-        this._mapGettersProvider = new gettersProvider_1.storeMapGettersProvider(storeInfo);
-        this._mutationsProvider = new mutationsProvider_1.storeMutationsProvider(storeInfo);
-        this._mapMutationsProvider = new mutationsProvider_1.storeMapMutationsProvider(storeInfo);
-        this._actionsProvider = new actionsProvider_1.storeActionsProvider(storeInfo);
-        this._mapActionsProvider = new actionsProvider_1.storeMapActionsProvider(storeInfo);
-        this._thisProvider = new thisProvider_1.thisProvider(storeInfo, this.thisCompletionList);
-        this._mutationSignatureProvider = new mutationsProvider_2.mutationsSignatureProvider(this.thisCompletionList);
+        this._gettersProvider = new gettersProvider_1.StoreGettersProvider(storeInfo);
+        this._mapGettersProvider = new gettersProvider_1.StoreMapGettersProvider(storeInfo);
+        this._mutationsProvider = new mutationsProvider_1.StoreMutationsProvider(storeInfo);
+        this._mapMutationsProvider = new mutationsProvider_1.StoreMapMutationsProvider(storeInfo);
+        this._actionsProvider = new actionsProvider_1.StoreActionsProvider(storeInfo);
+        this._mapActionsProvider = new actionsProvider_1.StoreMapActionsProvider(storeInfo);
+        this._thisProvider = new thisProvider_1.ThisProvider(storeInfo, this.thisCompletionList);
+        this._mutationSignatureProvider = new mutationsProvider_2.MutationsSignatureProvider(this.thisCompletionList);
         this._watcher.on('change', () => {
             this.restart();
         });
