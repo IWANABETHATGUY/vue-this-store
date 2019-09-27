@@ -157,7 +157,7 @@ export class StoreMutationsProvider implements vscode.CompletionItemProvider {
           vscode.CompletionItemKind.Module,
         );
         NSCompletion.detail = 'module';
-        NSCompletion.sortText = `0${nextNS}`
+        NSCompletion.sortText = `0${nextNS}`;
         return NSCompletion;
       });
       if (!cursorInfo.isNamespace) {
@@ -173,7 +173,7 @@ export class StoreMutationsProvider implements vscode.CompletionItemProvider {
             '```' + mutationInfo.defination + '```',
           );
           mutationCompletion.detail = 'mutation';
-          mutationCompletion.sortText = `1${mutationInfo.rowKey}`
+          mutationCompletion.sortText = `1${mutationInfo.rowKey}`;
           return mutationCompletion;
         });
       }
@@ -209,7 +209,7 @@ export class StoreMapMutationsProvider
         .map(item => item.split('/').join('.'))
         .filter(item => item.length)
         .join('.');
-      let getterCompletionList = [];
+      let mutationCompletionList = [];
       let namespaceCompletionList = getNextNamespace(
         this.storeInfo,
         fullNamespace,
@@ -219,25 +219,27 @@ export class StoreMapMutationsProvider
           vscode.CompletionItemKind.Module,
         );
         NSCompletion.detail = 'module';
+        NSCompletion.sortText = `0${nextNS}`;
         return NSCompletion;
       });
       if (!cursorInfo.isNamespace) {
-        getterCompletionList = getMutationsFromNameSpace(
+        mutationCompletionList = getMutationsFromNameSpace(
           this.storeInfo,
           fullNamespace,
-        ).map(getterInfo => {
-          let getterCompletion = new vscode.CompletionItem(
-            getterInfo.rowKey,
+        ).map(mutationInfo => {
+          let mutationCompletion = new vscode.CompletionItem(
+            mutationInfo.rowKey,
             vscode.CompletionItemKind.Method,
           );
-          getterCompletion.documentation = new vscode.MarkdownString(
-            '```' + getterInfo.defination + '```',
+          mutationCompletion.documentation = new vscode.MarkdownString(
+            '```' + mutationInfo.defination + '```',
           );
-          getterCompletion.detail = 'mutation';
-          return getterCompletion;
+          mutationCompletion.detail = 'mutation';
+          mutationCompletion.sortText = `1${mutationInfo.rowKey}`;
+          return mutationCompletion;
         });
       }
-      return getterCompletionList.concat(namespaceCompletionList);
+      return mutationCompletionList.concat(namespaceCompletionList);
     }
     return undefined;
   }
