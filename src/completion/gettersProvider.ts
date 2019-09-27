@@ -17,7 +17,7 @@ export function getGettersFromNameSpace(obj: ModuleInfo, namespace: string) {
   return getterInfoList;
 }
 
-export class storeGettersProvider implements vscode.CompletionItemProvider {
+export class StoreGettersProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;
@@ -54,7 +54,7 @@ export class storeGettersProvider implements vscode.CompletionItemProvider {
   }
 }
 
-export class storeMapGettersProvider implements vscode.CompletionItemProvider {
+export class StoreMapGettersProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;
@@ -75,6 +75,7 @@ export class storeMapGettersProvider implements vscode.CompletionItemProvider {
       let namespaceCompletionList = getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
         let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
         NSCompletion.detail = 'module';
+        NSCompletion.sortText = `0${nextNS}`
         return NSCompletion;
       });
       if (!cursorInfo.isNamespace) {
@@ -82,6 +83,7 @@ export class storeMapGettersProvider implements vscode.CompletionItemProvider {
           let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Variable);
           getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
           getterCompletion.detail = 'getter';
+          getterCompletion.sortText = `1${getterInfo.rowKey}`
           return getterCompletion;
         });
       }

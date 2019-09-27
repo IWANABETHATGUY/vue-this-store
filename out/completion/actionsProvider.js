@@ -56,7 +56,7 @@ function getActionsFromNameSpace(obj, namespace) {
     return actionInfoList;
 }
 exports.getActionsFromNameSpace = getActionsFromNameSpace;
-class storeActionsProvider {
+class StoreActionsProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
     }
@@ -65,7 +65,7 @@ class storeActionsProvider {
     }
     provideCompletionItems(document, position, token) {
         let docContent = document.getText();
-        //TODO: export default 也需要判断是否export default的是一个已经顶一个过的变量，而不是一个obj字面量
+        //TODO: export default 也需要判断是否export default的是一个已经定义过的变量，而不是一个obj字面量
         let reg = /((?:this\.)?(?:\$store\.)\n?dispatch\([\s\S]*?\))/g;
         let match = null;
         let matchList = [];
@@ -83,26 +83,28 @@ class storeActionsProvider {
         let cursorInfo = getDispatchCursorInfo(commitAst, posIndex - commitExpression.index);
         if (cursorInfo) {
             let fullNamespace = cursorInfo.namespace;
-            let getterCompletionList = [];
+            let actionCompletionList = [];
             let namespaceCompletionList = completionUtil_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
                 let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
                 NSCompletion.detail = 'module';
+                NSCompletion.sortText = `0${nextNS}`;
                 return NSCompletion;
             });
             if (!cursorInfo.isNamespace) {
-                getterCompletionList = getActionsFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
-                    let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Method);
-                    getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
-                    getterCompletion.detail = 'action';
-                    return getterCompletion;
+                actionCompletionList = getActionsFromNameSpace(this.storeInfo, fullNamespace).map(actionInfo => {
+                    let actionCompletion = new vscode.CompletionItem(actionInfo.rowKey, vscode.CompletionItemKind.Method);
+                    actionCompletion.documentation = new vscode.MarkdownString('```' + actionInfo.defination + '```');
+                    actionCompletion.detail = 'action';
+                    actionCompletion.sortText = `1${actionInfo.rowKey}`;
+                    return actionCompletion;
                 });
             }
-            return getterCompletionList.concat(namespaceCompletionList);
+            return actionCompletionList.concat(namespaceCompletionList);
         }
     }
 }
-exports.storeActionsProvider = storeActionsProvider;
-class storeMapActionsProvider {
+exports.StoreActionsProvider = StoreActionsProvider;
+class StoreMapActionsProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
     }
@@ -136,5 +138,5 @@ class storeMapActionsProvider {
         return undefined;
     }
 }
-exports.storeMapActionsProvider = storeMapActionsProvider;
+exports.StoreMapActionsProvider = StoreMapActionsProvider;
 //# sourceMappingURL=actionsProvider.js.map

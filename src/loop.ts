@@ -19,23 +19,23 @@ import { getVuexConfig } from './util/traverseUtil';
 import { VueThisStoreStatusBarItem } from './statusBarItem';
 import { generateWatcher } from './watcher';
 import {
-  storeStateProvider,
+  StoreStateProvider,
   storeMapStateProvider,
 } from './completion/stateProvider';
 import {
-  storeGettersProvider,
-  storeMapGettersProvider,
+  StoreGettersProvider,
+  StoreMapGettersProvider,
 } from './completion/gettersProvider';
 import {
-  storeMapMutationsProvider,
-  storeMutationsProvider,
+  StoreMapMutationsProvider,
+  StoreMutationsProvider,
 } from './completion/mutationsProvider';
 import {
-  storeActionsProvider,
-  storeMapActionsProvider,
+  StoreActionsProvider,
+  StoreMapActionsProvider,
 } from './completion/actionsProvider';
-import { thisProvider, ThisCompletionInfo } from './completion/thisProvider';
-import { mutationsSignatureProvider } from './signature/mutationsProvider';
+import { ThisProvider, ThisCompletionInfo } from './completion/thisProvider';
+import { MutationsSignatureProvider } from './signature/mutationsProvider';
 
 type setStoreStatus = 1 | -1;
 const emptyModule: ModuleInfo = {
@@ -54,17 +54,17 @@ export default class VueThis$Store {
 
   private _previousVuePath: string;
 
-  private _stateProvider: storeStateProvider;
+  private _stateProvider: StoreStateProvider;
   private _mapStateProvider: storeMapStateProvider;
-  private _gettersProvider: storeGettersProvider;
-  private _mapGettersProvider: storeMapGettersProvider;
-  private _mapMutationsProvider: storeMapMutationsProvider;
-  private _mutationsProvider: storeMutationsProvider;
-  private _actionsProvider: storeActionsProvider;
-  private _mapActionsProvider: storeMapActionsProvider;
-  private _thisProvider: thisProvider;
+  private _gettersProvider: StoreGettersProvider;
+  private _mapGettersProvider: StoreMapGettersProvider;
+  private _mapMutationsProvider: StoreMapMutationsProvider;
+  private _mutationsProvider: StoreMutationsProvider;
+  private _actionsProvider: StoreActionsProvider;
+  private _mapActionsProvider: StoreMapActionsProvider;
+  private _thisProvider: ThisProvider;
 
-  private _mutationSignatureProvider: mutationsSignatureProvider;
+  private _mutationSignatureProvider: MutationsSignatureProvider;
   constructor(ctx: ExtensionContext, rootPath: string) {
     let timeStart = Number(new Date());
     this._extensionContext = ctx;
@@ -137,17 +137,17 @@ export default class VueThis$Store {
     this._statusBarItem.setStatus(setStoreActionStatus);
     this._watcher = generateWatcher(storeAbsolutePath);
 
-    this._stateProvider = new storeStateProvider(storeInfo);
+    this._stateProvider = new StoreStateProvider(storeInfo);
     this._mapStateProvider = new storeMapStateProvider(storeInfo);
-    this._gettersProvider = new storeGettersProvider(storeInfo);
-    this._mapGettersProvider = new storeMapGettersProvider(storeInfo);
-    this._mutationsProvider = new storeMutationsProvider(storeInfo);
-    this._mapMutationsProvider = new storeMapMutationsProvider(storeInfo);
-    this._actionsProvider = new storeActionsProvider(storeInfo);
-    this._mapActionsProvider = new storeMapActionsProvider(storeInfo);
-    this._thisProvider = new thisProvider(storeInfo, this.thisCompletionList);
+    this._gettersProvider = new StoreGettersProvider(storeInfo);
+    this._mapGettersProvider = new StoreMapGettersProvider(storeInfo);
+    this._mutationsProvider = new StoreMutationsProvider(storeInfo);
+    this._mapMutationsProvider = new StoreMapMutationsProvider(storeInfo);
+    this._actionsProvider = new StoreActionsProvider(storeInfo);
+    this._mapActionsProvider = new StoreMapActionsProvider(storeInfo);
+    this._thisProvider = new ThisProvider(storeInfo, this.thisCompletionList);
 
-    this._mutationSignatureProvider = new mutationsSignatureProvider(
+    this._mutationSignatureProvider = new MutationsSignatureProvider(
       this.thisCompletionList,
     );
 

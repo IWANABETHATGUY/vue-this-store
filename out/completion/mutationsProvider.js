@@ -69,7 +69,8 @@ function getCommitCursorInfo(commitAst, relativePos) {
             return key.name === 'type';
         })[0];
         if (typeProperty) {
-            let value = typeProperty.value;
+            let value = typeProperty
+                .value;
             if (relativePos >= value.start && relativePos < value.end) {
                 return {
                     isNamespace: false,
@@ -98,7 +99,7 @@ function getMutationsFromNameSpace(obj, namespace) {
     return mutationInfoList;
 }
 exports.getMutationsFromNameSpace = getMutationsFromNameSpace;
-class storeMutationsProvider {
+class StoreMutationsProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
     }
@@ -110,26 +111,28 @@ class storeMutationsProvider {
         let cursorInfo = getCursorInfoFromRegExp(reg, document, position, getCommitCursorInfo, 'ast');
         if (cursorInfo) {
             let fullNamespace = cursorInfo.namespace;
-            let getterCompletionList = [];
+            let mutationCompletionList = [];
             let namespaceCompletionList = completionUtil_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
                 let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
                 NSCompletion.detail = 'module';
+                NSCompletion.sortText = `0${nextNS}`;
                 return NSCompletion;
             });
             if (!cursorInfo.isNamespace) {
-                getterCompletionList = getMutationsFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
-                    let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Method);
-                    getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
-                    getterCompletion.detail = 'mutation';
-                    return getterCompletion;
+                mutationCompletionList = getMutationsFromNameSpace(this.storeInfo, fullNamespace).map(mutationInfo => {
+                    let mutationCompletion = new vscode.CompletionItem(mutationInfo.rowKey, vscode.CompletionItemKind.Method);
+                    mutationCompletion.documentation = new vscode.MarkdownString('```' + mutationInfo.defination + '```');
+                    mutationCompletion.detail = 'mutation';
+                    mutationCompletion.sortText = `1${mutationInfo.rowKey}`;
+                    return mutationCompletion;
                 });
             }
-            return getterCompletionList.concat(namespaceCompletionList);
+            return mutationCompletionList.concat(namespaceCompletionList);
         }
     }
 }
-exports.storeMutationsProvider = storeMutationsProvider;
-class storeMapMutationsProvider {
+exports.StoreMutationsProvider = StoreMutationsProvider;
+class StoreMapMutationsProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
     }
@@ -163,5 +166,5 @@ class storeMapMutationsProvider {
         return undefined;
     }
 }
-exports.storeMapMutationsProvider = storeMapMutationsProvider;
+exports.StoreMapMutationsProvider = StoreMapMutationsProvider;
 //# sourceMappingURL=mutationsProvider.js.map

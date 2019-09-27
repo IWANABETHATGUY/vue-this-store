@@ -190,7 +190,7 @@ export function getRegExpMatchList(
   return matchList;
 }
 
-export class thisProvider implements CompletionItemProvider {
+export class ThisProvider implements CompletionItemProvider {
   private _storeInfo: ModuleInfo;
   private _thisCompletionList: ThisCompletionInfo[];
   constructor(storeInfo: ModuleInfo, thisCompletionList: ThisCompletionInfo[]) {

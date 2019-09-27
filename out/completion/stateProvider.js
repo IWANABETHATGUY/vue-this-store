@@ -111,7 +111,7 @@ function getMapStateCursorInfo(mapStateAst, relativePos) {
     }
     return null;
 }
-class storeStateProvider {
+class StoreStateProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
     }
@@ -132,25 +132,28 @@ class storeStateProvider {
                 .map(item => item.split('/').join('.'))
                 .filter(item => item.length)
                 .join('.');
-            let getterCompletionList = [];
+            let stateCompletionList = [];
             let namespaceCompletionList = getNextStateNamespace(this.storeInfo, fullNamespace).map(nextNS => {
                 let NSCompletion = new vscode_1.CompletionItem(nextNS, vscode_1.CompletionItemKind.Module);
                 NSCompletion.detail = 'module';
+                NSCompletion.sortText = `0${nextNS}`;
                 return NSCompletion;
             });
             if (!cursorInfo.isNamespace) {
-                getterCompletionList = getStateFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
-                    let getterCompletion = new vscode_1.CompletionItem(getterInfo.rowKey, vscode_1.CompletionItemKind.Variable);
-                    getterCompletion.documentation = new vscode_1.MarkdownString('```' + getterInfo.defination + '```');
-                    getterCompletion.detail = 'state';
-                    return getterCompletion;
+                stateCompletionList = getStateFromNameSpace(this.storeInfo, fullNamespace).map(stateInfo => {
+                    let stateCompletion = new vscode_1.CompletionItem(stateInfo.rowKey, vscode_1.CompletionItemKind.Variable);
+                    stateCompletion.sortText = `1${stateInfo.rowKey}`;
+                    stateCompletion.documentation = new vscode_1.MarkdownString('```' + stateInfo.defination + '```');
+                    stateCompletion.detail = 'state';
+                    return stateCompletion;
                 });
             }
-            return getterCompletionList.concat(namespaceCompletionList);
+            // debugger
+            return stateCompletionList.concat(namespaceCompletionList);
         }
     }
 }
-exports.storeStateProvider = storeStateProvider;
+exports.StoreStateProvider = StoreStateProvider;
 class storeMapStateProvider {
     constructor(storeInfo) {
         this.storeInfo = storeInfo;
@@ -191,7 +194,8 @@ exports.storeMapStateProvider = storeMapStateProvider;
 function getObjectExpressionCursorInfo(mapStateAst, relativePos, arg, namespaceArg) {
     let triggerProperty = null;
     let cursorAtExp = arg.properties.filter(property => {
-        let flag = (property.type === 'ObjectMethod' || property.type === 'ObjectProperty') &&
+        let flag = (property.type === 'ObjectMethod' ||
+            property.type === 'ObjectProperty') &&
             relativePos >= property.start &&
             relativePos <= property.end;
         if (flag) {
@@ -200,7 +204,9 @@ function getObjectExpressionCursorInfo(mapStateAst, relativePos, arg, namespaceA
         return flag;
     })[0];
     if (cursorAtExp) {
-        if (triggerProperty && triggerProperty.type === 'ObjectMethod' && triggerProperty.params.length === 0) {
+        if (triggerProperty &&
+            triggerProperty.type === 'ObjectMethod' &&
+            triggerProperty.params.length === 0) {
             return null;
         }
         let retCursorInfo = {
@@ -222,7 +228,8 @@ function getObjectExpressionCursorInfo(mapStateAst, relativePos, arg, namespaceA
                     if (namespaceList.length) {
                         switch (triggerProperty.type) {
                             case 'ObjectMethod':
-                                if (triggerProperty.params[0].name === namespaceList[0]) {
+                                if (triggerProperty.params[0].name ===
+                                    namespaceList[0]) {
                                     retCursorInfo.match = true;
                                 }
                                 break;
@@ -231,7 +238,8 @@ function getObjectExpressionCursorInfo(mapStateAst, relativePos, arg, namespaceA
                                     case 'ArrowFunctionExpression':
                                     case 'FunctionExpression':
                                         let functionExpression = triggerProperty.value;
-                                        if (functionExpression.params[0].name === namespaceList[0]) {
+                                        if (functionExpression.params[0].name ===
+                                            namespaceList[0]) {
                                             retCursorInfo.match = true;
                                         }
                                 }

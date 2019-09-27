@@ -71,7 +71,7 @@ export function getActionsFromNameSpace(obj: ModuleInfo, namespace: string) {
   return actionInfoList;
 }
 
-export class storeActionsProvider implements vscode.CompletionItemProvider {
+export class StoreActionsProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;
@@ -85,7 +85,7 @@ export class storeActionsProvider implements vscode.CompletionItemProvider {
     token: vscode.CancellationToken,
   ): vscode.CompletionItem[] {
     let docContent = document.getText();
-    //TODO: export default 也需要判断是否export default的是一个已经顶一个过的变量，而不是一个obj字面量
+    //TODO: export default 也需要判断是否export default的是一个已经定义过的变量，而不是一个obj字面量
     let reg = /((?:this\.)?(?:\$store\.)\n?dispatch\([\s\S]*?\))/g;
     let match = null;
     let matchList = [];
@@ -107,7 +107,7 @@ export class storeActionsProvider implements vscode.CompletionItemProvider {
     );
     if (cursorInfo) {
       let fullNamespace = cursorInfo.namespace;
-      let getterCompletionList = [];
+      let actionCompletionList = [];
       let namespaceCompletionList = getNextNamespace(
         this.storeInfo,
         fullNamespace,
@@ -117,30 +117,32 @@ export class storeActionsProvider implements vscode.CompletionItemProvider {
           vscode.CompletionItemKind.Module,
         );
         NSCompletion.detail = 'module';
+        NSCompletion.sortText = `0${nextNS}`
         return NSCompletion;
       });
       if (!cursorInfo.isNamespace) {
-        getterCompletionList = getActionsFromNameSpace(
+        actionCompletionList = getActionsFromNameSpace(
           this.storeInfo,
           fullNamespace,
-        ).map(getterInfo => {
-          let getterCompletion = new vscode.CompletionItem(
-            getterInfo.rowKey,
+        ).map(actionInfo => {
+          let actionCompletion = new vscode.CompletionItem(
+            actionInfo.rowKey,
             vscode.CompletionItemKind.Method,
           );
-          getterCompletion.documentation = new vscode.MarkdownString(
-            '```' + getterInfo.defination + '```',
+          actionCompletion.documentation = new vscode.MarkdownString(
+            '```' + actionInfo.defination + '```',
           );
-          getterCompletion.detail = 'action';
-          return getterCompletion;
+          actionCompletion.detail = 'action';
+          actionCompletion.sortText = `1${actionInfo.rowKey}`
+          return actionCompletion;
         });
       }
-      return getterCompletionList.concat(namespaceCompletionList);
+      return actionCompletionList.concat(namespaceCompletionList);
     }
   }
 }
 
-export class storeMapActionsProvider implements vscode.CompletionItemProvider {
+export class StoreMapActionsProvider implements vscode.CompletionItemProvider {
   private storeInfo: ModuleInfo;
   constructor(storeInfo: ModuleInfo) {
     this.storeInfo = storeInfo;

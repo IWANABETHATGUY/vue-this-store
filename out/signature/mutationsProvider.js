@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const vscode_1 = require("vscode");
-class mutationsSignatureProvider {
+class MutationsSignatureProvider {
     constructor(thisCompletionList) {
         this._thisCompletionList = thisCompletionList;
     }
@@ -29,7 +29,7 @@ class mutationsSignatureProvider {
         return signature;
     }
 }
-exports.mutationsSignatureProvider = mutationsSignatureProvider;
+exports.MutationsSignatureProvider = MutationsSignatureProvider;
 function walkBackwardsToBeginningOfCall(document, position) {
     let parenBalance = 0;
     let commas = [];
