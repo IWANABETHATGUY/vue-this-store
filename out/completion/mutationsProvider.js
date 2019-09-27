@@ -147,21 +147,23 @@ class StoreMapMutationsProvider {
                 .map(item => item.split('/').join('.'))
                 .filter(item => item.length)
                 .join('.');
-            let getterCompletionList = [];
+            let mutationCompletionList = [];
             let namespaceCompletionList = completionUtil_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
                 let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
                 NSCompletion.detail = 'module';
+                NSCompletion.sortText = `0${nextNS}`;
                 return NSCompletion;
             });
             if (!cursorInfo.isNamespace) {
-                getterCompletionList = getMutationsFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
-                    let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Method);
-                    getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
-                    getterCompletion.detail = 'mutation';
-                    return getterCompletion;
+                mutationCompletionList = getMutationsFromNameSpace(this.storeInfo, fullNamespace).map(mutationInfo => {
+                    let mutationCompletion = new vscode.CompletionItem(mutationInfo.rowKey, vscode.CompletionItemKind.Method);
+                    mutationCompletion.documentation = new vscode.MarkdownString('```' + mutationInfo.defination + '```');
+                    mutationCompletion.detail = 'mutation';
+                    mutationCompletion.sortText = `1${mutationInfo.rowKey}`;
+                    return mutationCompletion;
                 });
             }
-            return getterCompletionList.concat(namespaceCompletionList);
+            return mutationCompletionList.concat(namespaceCompletionList);
         }
         return undefined;
     }

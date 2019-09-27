@@ -123,14 +123,16 @@ class StoreMapActionsProvider {
             let namespaceCompletionList = completionUtil_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
                 let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
                 NSCompletion.detail = 'module';
+                NSCompletion.sortText = `1${nextNS}`;
                 return NSCompletion;
             });
             if (!cursorInfo.isNamespace) {
-                getterCompletionList = getActionsFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
-                    let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Method);
-                    getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
-                    getterCompletion.detail = 'action';
-                    return getterCompletion;
+                getterCompletionList = getActionsFromNameSpace(this.storeInfo, fullNamespace).map(actionInfo => {
+                    let actionCompletion = new vscode.CompletionItem(actionInfo.rowKey, vscode.CompletionItemKind.Method);
+                    actionCompletion.documentation = new vscode.MarkdownString('```' + actionInfo.defination + '```');
+                    actionCompletion.detail = 'action';
+                    actionCompletion.sortText = `1${actionInfo.rowKey}`;
+                    return actionCompletion;
                 });
             }
             return getterCompletionList.concat(namespaceCompletionList);

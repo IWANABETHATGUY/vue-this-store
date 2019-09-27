@@ -23,6 +23,144 @@ import {
 import traverse from '@babel/traverse';
 import generator from '@babel/generator';
 
+export class StoreStateProvider implements CompletionItemProvider {
+  private storeInfo: ModuleInfo;
+  constructor(storeInfo: ModuleInfo) {
+    this.storeInfo = storeInfo;
+  }
+  public setStoreInfo(newStoreInfo: ModuleInfo) {
+    this.storeInfo = newStoreInfo;
+  }
+  public provideCompletionItems(
+    document: TextDocument,
+    position: Position,
+  ): CompletionItem[] {
+    let a = document.getWordRangeAtPosition(
+      position,
+      /import([\s\n])+\{(.*)\}/,
+    );
+
+    let result;
+    if (a) {
+      result = document.getText(a);
+      console.log(result);
+    }
+    let reg = /this\n?\s*\.\$store\n?\s*\.state((?:\n?\s*\.[\w\$]*)+)/g;
+    let cursorInfo = getCursorInfoFromRegExp(
+      reg,
+      document,
+      position,
+      getStateCursorInfo,
+      'regexp',
+    );
+
+    if (cursorInfo) {
+      let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
+        .map(item => item.split('/').join('.'))
+        .filter(item => item.length)
+        .join('.');
+      let stateCompletionList: CompletionItem[] = [];
+      let namespaceCompletionList: CompletionItem[] = getNextStateNamespace(
+        this.storeInfo,
+        fullNamespace,
+      ).map(nextNS => {
+        let NSCompletion = new CompletionItem(
+          nextNS,
+          CompletionItemKind.Module,
+        );
+        NSCompletion.detail = 'module';
+        NSCompletion.sortText = `0${nextNS}`;
+        return NSCompletion;
+      });
+      if (!cursorInfo.isNamespace) {
+        stateCompletionList = getStateFromNameSpace(
+          this.storeInfo,
+          fullNamespace,
+        ).map(stateInfo => {
+          let stateCompletion = new CompletionItem(
+            stateInfo.rowKey,
+            CompletionItemKind.Variable,
+          );
+          stateCompletion.sortText = `1${stateInfo.rowKey}`;
+          stateCompletion.documentation = new MarkdownString(
+            '```' + stateInfo.defination + '```',
+          );
+          stateCompletion.detail = 'state';
+          return stateCompletion;
+        });
+      }
+      // debugger
+      return stateCompletionList.concat(namespaceCompletionList);
+    }
+  }
+}
+export class storeMapStateProvider implements CompletionItemProvider {
+  private storeInfo: ModuleInfo;
+  constructor(storeInfo: ModuleInfo) {
+    this.storeInfo = storeInfo;
+  }
+  public setStoreInfo(newStoreInfo: ModuleInfo) {
+    this.storeInfo = newStoreInfo;
+  }
+  public provideCompletionItems(
+    document: TextDocument,
+    position: Position,
+    token,
+    context: CompletionContext,
+  ): CompletionItem[] {
+    console.time('mapState');
+    let reg = /\bmapState\(([\'\"](.*)[\'\"](?:,\s*)?)?((\[[\s\S]*?\])|(\{[\s\S]*?\}))?\s*\)/g;
+
+    let cursorInfo = getCursorInfoFromRegExp(
+      reg,
+      document,
+      position,
+      getMapStateCursorInfo,
+      'ast',
+      context.triggerCharacter === '.',
+    );
+    if (cursorInfo) {
+      let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
+        .map(item => item.split('/').join('.'))
+        .filter(item => item.length)
+        .join('.');
+      let stateCompletionList = [];
+      let namespaceCompletionList = getNextStateNamespace(
+        this.storeInfo,
+        fullNamespace,
+      ).map(nextNS => {
+        let NSCompletion = new CompletionItem(
+          nextNS,
+          CompletionItemKind.Module,
+        );
+        NSCompletion.detail = 'module';
+        NSCompletion.sortText = `0${nextNS}`;
+        return NSCompletion;
+      });
+      if (!cursorInfo.isNamespace) {
+        stateCompletionList = getStateFromNameSpace(
+          this.storeInfo,
+          fullNamespace,
+        ).map(stateInfo => {
+          let stateCompletion = new CompletionItem(
+            stateInfo.rowKey,
+            CompletionItemKind.Variable,
+          );
+          stateCompletion.documentation = new MarkdownString(
+            '```' + stateInfo.defination + '```',
+          );
+          stateCompletion.detail = 'state';
+          stateCompletion.sortText = `1${stateInfo.rowKey}`
+          return stateCompletion;
+        });
+      }
+      console.timeEnd('mapState');
+      return stateCompletionList.concat(namespaceCompletionList);
+    }
+    return undefined;
+  }
+}
+
 function getNextStateNamespace(obj: ModuleInfo, namespace) {
   let targetModule: ModuleInfo = namespace
     .split('.')
@@ -135,142 +273,6 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
     }
   }
   return null;
-}
-export class StoreStateProvider implements CompletionItemProvider {
-  private storeInfo: ModuleInfo;
-  constructor(storeInfo: ModuleInfo) {
-    this.storeInfo = storeInfo;
-  }
-  public setStoreInfo(newStoreInfo: ModuleInfo) {
-    this.storeInfo = newStoreInfo;
-  }
-  public provideCompletionItems(
-    document: TextDocument,
-    position: Position,
-  ): CompletionItem[] {
-    let a = document.getWordRangeAtPosition(
-      position,
-      /import([\s\n])+\{(.*)\}/,
-    );
-
-    let result;
-    if (a) {
-      result = document.getText(a);
-      console.log(result);
-    }
-    let reg = /this\n?\s*\.\$store\n?\s*\.state((?:\n?\s*\.[\w\$]*)+)/g;
-    let cursorInfo = getCursorInfoFromRegExp(
-      reg,
-      document,
-      position,
-      getStateCursorInfo,
-      'regexp',
-    );
-
-    if (cursorInfo) {
-      let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
-        .map(item => item.split('/').join('.'))
-        .filter(item => item.length)
-        .join('.');
-      let stateCompletionList: CompletionItem[] = [];
-      let namespaceCompletionList: CompletionItem[] = getNextStateNamespace(
-        this.storeInfo,
-        fullNamespace,
-      ).map(nextNS => {
-        let NSCompletion = new CompletionItem(
-          nextNS,
-          CompletionItemKind.Module,
-        );
-        NSCompletion.detail = 'module';
-        NSCompletion.sortText = `0${nextNS}`;
-        return NSCompletion;
-      });
-      if (!cursorInfo.isNamespace) {
-        stateCompletionList = getStateFromNameSpace(
-          this.storeInfo,
-          fullNamespace,
-        ).map(stateInfo => {
-          let stateCompletion = new CompletionItem(
-            stateInfo.rowKey,
-            CompletionItemKind.Variable,
-            );
-          stateCompletion.sortText = `1${stateInfo.rowKey}`;
-          stateCompletion.documentation = new MarkdownString(
-            '```' + stateInfo.defination + '```',
-          );
-          stateCompletion.detail = 'state';
-          return stateCompletion;
-        });
-      }
-      // debugger
-      return stateCompletionList.concat(namespaceCompletionList);
-    }
-  }
-}
-
-export class storeMapStateProvider implements CompletionItemProvider {
-  private storeInfo: ModuleInfo;
-  constructor(storeInfo: ModuleInfo) {
-    this.storeInfo = storeInfo;
-  }
-  public setStoreInfo(newStoreInfo: ModuleInfo) {
-    this.storeInfo = newStoreInfo;
-  }
-  public provideCompletionItems(
-    document: TextDocument,
-    position: Position,
-    token,
-    context: CompletionContext,
-  ): CompletionItem[] {
-    console.time('mapState');
-    let reg = /\bmapState\(([\'\"](.*)[\'\"](?:,\s*)?)?((\[[\s\S]*?\])|(\{[\s\S]*?\}))?\s*\)/g;
-
-    let cursorInfo = getCursorInfoFromRegExp(
-      reg,
-      document,
-      position,
-      getMapStateCursorInfo,
-      'ast',
-      context.triggerCharacter === '.',
-    );
-    if (cursorInfo) {
-      let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
-        .map(item => item.split('/').join('.'))
-        .filter(item => item.length)
-        .join('.');
-      let stateCompletionList = [];
-      let namespaceCompletionList = getNextStateNamespace(
-        this.storeInfo,
-        fullNamespace,
-      ).map(nextNS => {
-        let NSCompletion = new CompletionItem(
-          nextNS,
-          CompletionItemKind.Module,
-        );
-        NSCompletion.detail = 'module';
-        return NSCompletion;
-      });
-      if (!cursorInfo.isNamespace) {
-        stateCompletionList = getStateFromNameSpace(
-          this.storeInfo,
-          fullNamespace,
-        ).map(stateInfo => {
-          let stateCompletion = new CompletionItem(
-            stateInfo.rowKey,
-            CompletionItemKind.Variable,
-          );
-          stateCompletion.documentation = new MarkdownString(
-            '```' + stateInfo.defination + '```',
-          );
-          stateCompletion.detail = 'state';
-          return stateCompletion;
-        });
-      }
-      console.timeEnd('mapState');
-      return stateCompletionList.concat(namespaceCompletionList);
-    }
-    return undefined;
-  }
 }
 
 function getObjectExpressionCursorInfo(

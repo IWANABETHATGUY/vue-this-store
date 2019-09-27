@@ -25,7 +25,9 @@ class StoreGettersProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position, token) {
-        let linePrefix = document.lineAt(position).text.substr(0, position.character);
+        let linePrefix = document
+            .lineAt(position)
+            .text.substr(0, position.character);
         let trimLinePrefixExpressions = linePrefix.trim().split(' ');
         let lastPrefixExpression = trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
         let reg = /(?=return this\.)?(?=\$store\.)?getters\.(.*\.)?/;
@@ -34,16 +36,19 @@ class StoreGettersProvider {
             return undefined;
         }
         let path = regRes[1];
-        let pathArray = path ? path.split('.').filter(item => item.length > 0) : undefined;
+        let pathArray = path
+            ? path.split('.').filter(item => item.length > 0)
+            : undefined;
         let newModule = completionUtil_1.getModuleFromPath(this.storeInfo, pathArray);
         if (!newModule)
             return undefined;
         let getters = newModule.getters;
         return getters
             ? getters.map(getterInfo => {
-                let stateCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Variable);
-                stateCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
-                return stateCompletion;
+                let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Variable);
+                getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
+                getterCompletion.sortText = `1${getterInfo.rowKey}`;
+                return getterCompletion;
             })
             : [];
     }
