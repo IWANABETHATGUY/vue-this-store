@@ -120,10 +120,10 @@ class StoreMutationsProvider {
             });
             if (!cursorInfo.isNamespace) {
                 mutationCompletionList = getMutationsFromNameSpace(this.storeInfo, fullNamespace).map(mutationInfo => {
-                    let mutationCompletion = new vscode.CompletionItem(mutationInfo.rowKey, vscode.CompletionItemKind.Method);
+                    let mutationCompletion = new vscode.CompletionItem(mutationInfo.identifier, vscode.CompletionItemKind.Method);
                     mutationCompletion.documentation = mutationInfo.defination;
                     mutationCompletion.detail = 'mutation';
-                    mutationCompletion.sortText = `1${mutationInfo.rowKey}`;
+                    mutationCompletion.sortText = `1${mutationInfo.identifier}`;
                     return mutationCompletion;
                 });
             }
@@ -156,10 +156,10 @@ class StoreMapMutationsProvider {
             });
             if (!cursorInfo.isNamespace) {
                 mutationCompletionList = getMutationsFromNameSpace(this.storeInfo, fullNamespace).map(mutationInfo => {
-                    let mutationCompletion = new vscode.CompletionItem(mutationInfo.rowKey, vscode.CompletionItemKind.Method);
+                    let mutationCompletion = new vscode.CompletionItem(mutationInfo.identifier, vscode.CompletionItemKind.Method);
                     mutationCompletion.documentation = mutationInfo.defination;
                     mutationCompletion.detail = 'mutation';
-                    mutationCompletion.sortText = `1${mutationInfo.rowKey}`;
+                    mutationCompletion.sortText = `1${mutationInfo.identifier}`;
                     return mutationCompletion;
                 });
             }

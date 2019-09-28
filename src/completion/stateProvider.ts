@@ -34,16 +34,6 @@ export class StoreStateProvider implements CompletionItemProvider {
     document: TextDocument,
     position: Position,
   ): CompletionItem[] {
-    let a = document.getWordRangeAtPosition(
-      position,
-      /import([\s\n])+\{(.*)\}/,
-    );
-
-    let result;
-    if (a) {
-      result = document.getText(a);
-      console.log(result);
-    }
     let reg = /this\n?\s*\.\$store\n?\s*\.state((?:\n?\s*\.[\w\$]*)+)/g;
     let cursorInfo = getCursorInfoFromRegExp(
       reg,
@@ -77,10 +67,10 @@ export class StoreStateProvider implements CompletionItemProvider {
           fullNamespace,
         ).map(stateInfo => {
           let stateCompletion = new CompletionItem(
-            stateInfo.rowKey,
+            stateInfo.identifier,
             CompletionItemKind.Variable,
           );
-          stateCompletion.sortText = `1${stateInfo.rowKey}`;
+          stateCompletion.sortText = `1${stateInfo.identifier}`;
           stateCompletion.documentation = stateInfo.defination
           stateCompletion.detail = 'state';
           return stateCompletion;
@@ -140,12 +130,12 @@ export class storeMapStateProvider implements CompletionItemProvider {
           fullNamespace,
         ).map(stateInfo => {
           let stateCompletion = new CompletionItem(
-            stateInfo.rowKey,
+            stateInfo.identifier,
             CompletionItemKind.Variable,
           );
           stateCompletion.documentation = stateInfo.defination
           stateCompletion.detail = 'state';
-          stateCompletion.sortText = `1${stateInfo.rowKey}`
+          stateCompletion.sortText = `1${stateInfo.identifier}`
           return stateCompletion;
         });
       }
@@ -183,9 +173,8 @@ export function getStateFromNameSpace(obj: StoreTreeInfo, namespace: string) {
   return [];
 }
 
-function getStateCursorInfo(
+export function getStateCursorInfo(
   regExecArray: RegExpExecArray,
-  relativePos: number,
 ): CursorInfo {
   return {
     isNamespace: false,

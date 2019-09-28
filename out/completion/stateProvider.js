@@ -12,12 +12,6 @@ class StoreStateProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position) {
-        let a = document.getWordRangeAtPosition(position, /import([\s\n])+\{(.*)\}/);
-        let result;
-        if (a) {
-            result = document.getText(a);
-            console.log(result);
-        }
         let reg = /this\n?\s*\.\$store\n?\s*\.state((?:\n?\s*\.[\w\$]*)+)/g;
         let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, getStateCursorInfo, 'regexp');
         if (cursorInfo) {
@@ -34,8 +28,8 @@ class StoreStateProvider {
             });
             if (!cursorInfo.isNamespace) {
                 stateCompletionList = getStateFromNameSpace(this.storeInfo, fullNamespace).map(stateInfo => {
-                    let stateCompletion = new vscode_1.CompletionItem(stateInfo.rowKey, vscode_1.CompletionItemKind.Variable);
-                    stateCompletion.sortText = `1${stateInfo.rowKey}`;
+                    let stateCompletion = new vscode_1.CompletionItem(stateInfo.identifier, vscode_1.CompletionItemKind.Variable);
+                    stateCompletion.sortText = `1${stateInfo.identifier}`;
                     stateCompletion.documentation = stateInfo.defination;
                     stateCompletion.detail = 'state';
                     return stateCompletion;
@@ -72,10 +66,10 @@ class storeMapStateProvider {
             });
             if (!cursorInfo.isNamespace) {
                 stateCompletionList = getStateFromNameSpace(this.storeInfo, fullNamespace).map(stateInfo => {
-                    let stateCompletion = new vscode_1.CompletionItem(stateInfo.rowKey, vscode_1.CompletionItemKind.Variable);
+                    let stateCompletion = new vscode_1.CompletionItem(stateInfo.identifier, vscode_1.CompletionItemKind.Variable);
                     stateCompletion.documentation = stateInfo.defination;
                     stateCompletion.detail = 'state';
-                    stateCompletion.sortText = `1${stateInfo.rowKey}`;
+                    stateCompletion.sortText = `1${stateInfo.identifier}`;
                     return stateCompletion;
                 });
             }
@@ -113,7 +107,7 @@ function getStateFromNameSpace(obj, namespace) {
     return [];
 }
 exports.getStateFromNameSpace = getStateFromNameSpace;
-function getStateCursorInfo(regExecArray, relativePos) {
+function getStateCursorInfo(regExecArray) {
     return {
         isNamespace: false,
         namespace: '',
@@ -124,6 +118,7 @@ function getStateCursorInfo(regExecArray, relativePos) {
             .join('.'),
     };
 }
+exports.getStateCursorInfo = getStateCursorInfo;
 function getMapStateCursorInfo(mapStateAst, relativePos) {
     let program = mapStateAst.program;
     let exp = program.body[0];

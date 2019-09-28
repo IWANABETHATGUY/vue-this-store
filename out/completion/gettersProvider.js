@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const vscode = require("vscode");
 const completionUtil_1 = require("../util/completionUtil");
 const mutationsProvider_1 = require("./mutationsProvider");
+const vscode_1 = require("vscode");
+const stateProvider_1 = require("./stateProvider");
 function getGettersFromNameSpace(obj, namespace) {
     let getterInfoList = [];
     if (obj.namespace === namespace && obj.getters) {
@@ -24,33 +26,34 @@ class StoreGettersProvider {
     setStoreInfo(newStoreInfo) {
         this.storeInfo = newStoreInfo;
     }
-    provideCompletionItems(document, position, token) {
-        let linePrefix = document
-            .lineAt(position)
-            .text.substr(0, position.character);
-        let trimLinePrefixExpressions = linePrefix.trim().split(' ');
-        let lastPrefixExpression = trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
-        let reg = /(?=return this\.)?(?=\$store\.)?getters\.(.*\.)?/;
-        let regRes = reg.exec(lastPrefixExpression);
-        if (!regRes) {
-            return undefined;
+    provideCompletionItems(document, position) {
+        let reg = /this\n?\s*\.\$store\n?\s*\.getters((?:\n?\s*\.[\w\$]*)+)/g;
+        let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, stateProvider_1.getStateCursorInfo, 'regexp');
+        // debugger
+        if (cursorInfo) {
+            let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
+                .map(item => item.split('/').join('.'))
+                .filter(item => item.length)
+                .join('.');
+            let getterCompletionList = [];
+            let namespaceCompletionList = completionUtil_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
+                let NSCompletionList = new vscode_1.CompletionItem(nextNS, vscode_1.CompletionItemKind.Module);
+                NSCompletionList.detail = 'module';
+                NSCompletionList.sortText = `0${nextNS}`;
+                return NSCompletionList;
+            });
+            if (!cursorInfo.isNamespace) {
+                getterCompletionList = getGettersFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
+                    let getterCompletion = new vscode_1.CompletionItem(getterInfo.identifier, vscode_1.CompletionItemKind.Variable);
+                    getterCompletion.sortText = `1${getterInfo.identifier}`;
+                    getterCompletion.documentation = getterInfo.defination;
+                    getterCompletion.detail = 'state';
+                    return getterCompletion;
+                });
+            }
+            // debugger
+            return getterCompletionList.concat(namespaceCompletionList);
         }
-        let path = regRes[1];
-        let pathArray = path
-            ? path.split('.').filter(item => item.length > 0)
-            : undefined;
-        let newModule = completionUtil_1.getModuleFromPath(this.storeInfo, pathArray);
-        if (!newModule)
-            return undefined;
-        let getters = newModule.getters;
-        return getters
-            ? getters.map(getterInfo => {
-                let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Variable);
-                getterCompletion.documentation = getterInfo.defination;
-                getterCompletion.sortText = `1${getterInfo.rowKey}`;
-                return getterCompletion;
-            })
-            : [];
     }
 }
 exports.StoreGettersProvider = StoreGettersProvider;
@@ -79,10 +82,10 @@ class StoreMapGettersProvider {
             });
             if (!cursorInfo.isNamespace) {
                 getterCompletionList = getGettersFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
-                    let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Variable);
+                    let getterCompletion = new vscode.CompletionItem(getterInfo.identifier, vscode.CompletionItemKind.Variable);
                     getterCompletion.documentation = getterInfo.defination;
                     getterCompletion.detail = 'getter';
-                    getterCompletion.sortText = `1${getterInfo.rowKey}`;
+                    getterCompletion.sortText = `1${getterInfo.identifier}`;
                     return getterCompletion;
                 });
             }

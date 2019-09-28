@@ -73,5 +73,5 @@
 之后会持续维护这个项目，如果对你有帮助，给个 star 吧^\_^.
 
 ## TODO
-- [ ] 没有做getter 的命名空间的补全
-- [ ] module中定义的action补全有点问题
+- [x] 没有做getter 的命名空间的补全
+- [x] module中定义的action补全有点问题
