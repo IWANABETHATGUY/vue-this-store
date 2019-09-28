@@ -12,12 +12,6 @@ class StoreStateProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position) {
-        let a = document.getWordRangeAtPosition(position, /import([\s\n])+\{(.*)\}/);
-        let result;
-        if (a) {
-            result = document.getText(a);
-            console.log(result);
-        }
         let reg = /this\n?\s*\.\$store\n?\s*\.state((?:\n?\s*\.[\w\$]*)+)/g;
         let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, getStateCursorInfo, 'regexp');
         if (cursorInfo) {
@@ -113,7 +107,7 @@ function getStateFromNameSpace(obj, namespace) {
     return [];
 }
 exports.getStateFromNameSpace = getStateFromNameSpace;
-function getStateCursorInfo(regExecArray, relativePos) {
+function getStateCursorInfo(regExecArray) {
     return {
         isNamespace: false,
         namespace: '',
@@ -124,6 +118,7 @@ function getStateCursorInfo(regExecArray, relativePos) {
             .join('.'),
     };
 }
+exports.getStateCursorInfo = getStateCursorInfo;
 function getMapStateCursorInfo(mapStateAst, relativePos) {
     let program = mapStateAst.program;
     let exp = program.body[0];

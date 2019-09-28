@@ -34,16 +34,6 @@ export class StoreStateProvider implements CompletionItemProvider {
     document: TextDocument,
     position: Position,
   ): CompletionItem[] {
-    let a = document.getWordRangeAtPosition(
-      position,
-      /import([\s\n])+\{(.*)\}/,
-    );
-
-    let result;
-    if (a) {
-      result = document.getText(a);
-      console.log(result);
-    }
     let reg = /this\n?\s*\.\$store\n?\s*\.state((?:\n?\s*\.[\w\$]*)+)/g;
     let cursorInfo = getCursorInfoFromRegExp(
       reg,
@@ -183,9 +173,8 @@ export function getStateFromNameSpace(obj: StoreTreeInfo, namespace: string) {
   return [];
 }
 
-function getStateCursorInfo(
+export function getStateCursorInfo(
   regExecArray: RegExpExecArray,
-  relativePos: number,
 ): CursorInfo {
   return {
     isNamespace: false,

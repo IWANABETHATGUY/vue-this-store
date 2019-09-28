@@ -6,6 +6,8 @@ import {
   getMapGMACursorInfo,
 } from '../util/completionUtil';
 import { getCursorInfoFromRegExp } from './mutationsProvider';
+import { CompletionItem, CompletionItemKind } from 'vscode';
+import { getStateCursorInfo } from './stateProvider';
 
 export function getGettersFromNameSpace(obj: StoreTreeInfo, namespace: string) {
   let getterInfoList: GetterInfo[] = [];
@@ -32,38 +34,54 @@ export class StoreGettersProvider implements vscode.CompletionItemProvider {
   public provideCompletionItems(
     document: vscode.TextDocument,
     position: vscode.Position,
-    token: vscode.CancellationToken,
   ): vscode.CompletionItem[] {
-    let linePrefix = document
-      .lineAt(position)
-      .text.substr(0, position.character);
-    let trimLinePrefixExpressions = linePrefix.trim().split(' ');
-    let lastPrefixExpression =
-      trimLinePrefixExpressions[trimLinePrefixExpressions.length - 1];
-    let reg = /(?=return this\.)?(?=\$store\.)?getters\.(.*\.)?/;
-    let regRes = reg.exec(lastPrefixExpression);
-    if (!regRes) {
-      return undefined;
-    }
-    let path = regRes[1];
-    let pathArray: string[] | undefined = path
-      ? path.split('.').filter(item => item.length > 0)
-      : undefined;
-    let newModule = getModuleFromPath(this.storeInfo, pathArray);
-    if (!newModule) return undefined;
-    let getters = newModule.getters;
 
-    return getters
-      ? getters.map(getterInfo => {
-          let getterCompletion = new vscode.CompletionItem(
+
+    let reg = /this\n?\s*\.\$store\n?\s*\.getters((?:\n?\s*\.[\w\$]*)+)/g;
+    let cursorInfo = getCursorInfoFromRegExp(
+      reg,
+      document,
+      position,
+      getStateCursorInfo,
+      'regexp',
+    );
+    // debugger
+    if (cursorInfo) {
+      let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
+        .map(item => item.split('/').join('.'))
+        .filter(item => item.length)
+        .join('.');
+      let getterCompletionList: CompletionItem[] = [];
+      let namespaceCompletionList: CompletionItem[] = getNextNamespace(
+        this.storeInfo,
+        fullNamespace,
+      ).map(nextNS => {
+        let NSCompletionList = new CompletionItem(
+          nextNS,
+          CompletionItemKind.Module,
+        );
+        NSCompletionList.detail = 'module';
+        NSCompletionList.sortText = `0${nextNS}`;
+        return NSCompletionList;
+      });
+      if (!cursorInfo.isNamespace) {
+        getterCompletionList = getGettersFromNameSpace(
+          this.storeInfo,
+          fullNamespace,
+        ).map(getterInfo => {
+          let getterCompletion = new CompletionItem(
             getterInfo.identifier,
-            vscode.CompletionItemKind.Variable,
+            CompletionItemKind.Variable,
           );
-          getterCompletion.documentation = getterInfo.defination
           getterCompletion.sortText = `1${getterInfo.identifier}`;
+          getterCompletion.documentation = getterInfo.defination
+          getterCompletion.detail = 'state';
           return getterCompletion;
-        })
-      : [];
+        });
+      }
+      // debugger
+      return getterCompletionList.concat(namespaceCompletionList);
+    }
   }
 }
 
