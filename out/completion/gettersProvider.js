@@ -46,7 +46,7 @@ class StoreGettersProvider {
         return getters
             ? getters.map(getterInfo => {
                 let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Variable);
-                getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
+                getterCompletion.documentation = getterInfo.defination;
                 getterCompletion.sortText = `1${getterInfo.rowKey}`;
                 return getterCompletion;
             })
@@ -80,7 +80,7 @@ class StoreMapGettersProvider {
             if (!cursorInfo.isNamespace) {
                 getterCompletionList = getGettersFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
                     let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Variable);
-                    getterCompletion.documentation = new vscode.MarkdownString('```' + getterInfo.defination + '```');
+                    getterCompletion.documentation = getterInfo.defination;
                     getterCompletion.detail = 'getter';
                     getterCompletion.sortText = `1${getterInfo.rowKey}`;
                     return getterCompletion;

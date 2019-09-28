@@ -1,4 +1,4 @@
-import { ModuleInfo } from '../traverse/modules';
+import { StoreTreeInfo } from '../traverse/modules';
 import { getMutationsFromNameSpace } from './mutationsProvider';
 import { parse } from '@babel/parser';
 import generator from '@babel/generator';
@@ -21,7 +21,6 @@ import {
   Position,
   CompletionItem,
   CompletionItemKind,
-  MarkdownString,
 } from 'vscode';
 import { getGettersFromNameSpace } from './gettersProvider';
 import { getActionsFromNameSpace } from './actionsProvider';
@@ -191,13 +190,16 @@ export function getRegExpMatchList(
 }
 
 export class ThisProvider implements CompletionItemProvider {
-  private _storeInfo: ModuleInfo;
+  private _storeInfo: StoreTreeInfo;
   private _thisCompletionList: ThisCompletionInfo[];
-  constructor(storeInfo: ModuleInfo, thisCompletionList: ThisCompletionInfo[]) {
+  constructor(
+    storeInfo: StoreTreeInfo,
+    thisCompletionList: ThisCompletionInfo[],
+  ) {
     this._storeInfo = storeInfo;
     this._thisCompletionList = thisCompletionList;
   }
-  public setStoreInfo(newStoreInfo: ModuleInfo) {
+  public setStoreInfo(newStoreInfo: StoreTreeInfo) {
     this._storeInfo = newStoreInfo;
   }
   public setThisCompletionList(newCompletionList: ThisCompletionInfo[]) {
@@ -280,15 +282,11 @@ export class ThisProvider implements CompletionItemProvider {
           thisCompletion.kind = CompletionItemKind.Method;
           thisCompletion.documentation = completion.funcDeclarator
             ? completion.funcDeclarator
-            : completion.defination
-            ? new MarkdownString('```' + completion.defination + '```')
-            : '';
+            : completion.defination;
           break;
         default:
           thisCompletion.kind = CompletionItemKind.Variable;
-          thisCompletion.documentation = completion.defination
-            ? new MarkdownString('```' + completion.defination + '```')
-            : '';
+          thisCompletion.documentation = completion.defination;
       }
       thisCompletion.detail = completion.type;
       return thisCompletion;
@@ -298,7 +296,7 @@ export class ThisProvider implements CompletionItemProvider {
 
 function getThisXXXFromNameSpace(
   document: TextDocument,
-  storeInfo: ModuleInfo,
+  storeInfo: StoreTreeInfo,
   reg: RegExp,
   parseMapFunction: ParseMapFunction,
   getMapFromNameSpace,

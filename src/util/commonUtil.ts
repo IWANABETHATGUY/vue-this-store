@@ -135,3 +135,15 @@ export function getStoreEntryRelativePath(ast: File): string {
   });
   return storeRelativePath;
 }
+
+/**
+ * 返回当前路径下是否有nuxt.config.js文件
+ *
+ * @export
+ * @param {string} rootPath
+ * @returns {Boolean}
+ */
+export function hasNuxtConfig(rootPath: string): Boolean {
+  const nuxtConfigAbsolutePath = path.resolve(rootPath, 'nuxt.config.js');
+  return fs.existsSync(nuxtConfigAbsolutePath);
+}

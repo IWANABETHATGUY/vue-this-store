@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ModuleInfo } from '../traverse/modules';
+import { StoreTreeInfo } from '../traverse/modules';
 import {
   getNextNamespace,
   getPositionIndex,
@@ -57,7 +57,7 @@ function getDispatchCursorInfo(commitAst: File, relativePos: number) {
   }
   return null;
 }
-export function getActionsFromNameSpace(obj: ModuleInfo, namespace: string) {
+export function getActionsFromNameSpace(obj: StoreTreeInfo, namespace: string) {
   let actionInfoList = [];
   if (obj.namespace === namespace && obj.actions) {
     actionInfoList.push(...obj.actions);
@@ -72,11 +72,11 @@ export function getActionsFromNameSpace(obj: ModuleInfo, namespace: string) {
 }
 
 export class StoreActionsProvider implements vscode.CompletionItemProvider {
-  private storeInfo: ModuleInfo;
-  constructor(storeInfo: ModuleInfo) {
+  private storeInfo: StoreTreeInfo;
+  constructor(storeInfo: StoreTreeInfo) {
     this.storeInfo = storeInfo;
   }
-  public setStoreInfo(newStoreInfo: ModuleInfo) {
+  public setStoreInfo(newStoreInfo: StoreTreeInfo) {
     this.storeInfo = newStoreInfo;
   }
   public provideCompletionItems(
@@ -129,9 +129,7 @@ export class StoreActionsProvider implements vscode.CompletionItemProvider {
             actionInfo.rowKey,
             vscode.CompletionItemKind.Method,
           );
-          actionCompletion.documentation = new vscode.MarkdownString(
-            '```' + actionInfo.defination + '```',
-          );
+          actionCompletion.documentation = actionInfo.defination
           actionCompletion.detail = 'action';
           actionCompletion.sortText = `1${actionInfo.rowKey}`;
           return actionCompletion;
@@ -143,11 +141,11 @@ export class StoreActionsProvider implements vscode.CompletionItemProvider {
 }
 
 export class StoreMapActionsProvider implements vscode.CompletionItemProvider {
-  private storeInfo: ModuleInfo;
-  constructor(storeInfo: ModuleInfo) {
+  private storeInfo: StoreTreeInfo;
+  constructor(storeInfo: StoreTreeInfo) {
     this.storeInfo = storeInfo;
   }
-  public setStoreInfo(newStoreInfo: ModuleInfo) {
+  public setStoreInfo(newStoreInfo: StoreTreeInfo) {
     this.storeInfo = newStoreInfo;
   }
   public provideCompletionItems(
@@ -189,9 +187,7 @@ export class StoreMapActionsProvider implements vscode.CompletionItemProvider {
             actionInfo.rowKey,
             vscode.CompletionItemKind.Method,
           );
-          actionCompletion.documentation = new vscode.MarkdownString(
-            '```' + actionInfo.defination + '```',
-          );
+          actionCompletion.documentation = actionInfo.defination
           actionCompletion.detail = 'action';
           actionCompletion.sortText = `1${actionInfo.rowKey}`;
           return actionCompletion;

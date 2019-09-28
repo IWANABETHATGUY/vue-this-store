@@ -6,7 +6,6 @@ import {
   SignatureInformation,
   ParameterInformation,
   ProviderResult,
-  MarkdownString,
 } from 'vscode';
 import { ThisCompletionInfo, getRegExpMatchList } from '../completion/thisProvider';
 import { getPositionIndex, whichCommit } from '../util/completionUtil';

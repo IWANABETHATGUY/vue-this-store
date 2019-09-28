@@ -121,7 +121,7 @@ class StoreMutationsProvider {
             if (!cursorInfo.isNamespace) {
                 mutationCompletionList = getMutationsFromNameSpace(this.storeInfo, fullNamespace).map(mutationInfo => {
                     let mutationCompletion = new vscode.CompletionItem(mutationInfo.rowKey, vscode.CompletionItemKind.Method);
-                    mutationCompletion.documentation = new vscode.MarkdownString('```' + mutationInfo.defination + '```');
+                    mutationCompletion.documentation = mutationInfo.defination;
                     mutationCompletion.detail = 'mutation';
                     mutationCompletion.sortText = `1${mutationInfo.rowKey}`;
                     return mutationCompletion;
@@ -157,7 +157,7 @@ class StoreMapMutationsProvider {
             if (!cursorInfo.isNamespace) {
                 mutationCompletionList = getMutationsFromNameSpace(this.storeInfo, fullNamespace).map(mutationInfo => {
                     let mutationCompletion = new vscode.CompletionItem(mutationInfo.rowKey, vscode.CompletionItemKind.Method);
-                    mutationCompletion.documentation = new vscode.MarkdownString('```' + mutationInfo.defination + '```');
+                    mutationCompletion.documentation = mutationInfo.defination;
                     mutationCompletion.detail = 'mutation';
                     mutationCompletion.sortText = `1${mutationInfo.rowKey}`;
                     return mutationCompletion;

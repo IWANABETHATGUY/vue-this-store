@@ -22,7 +22,7 @@ import { parseGetters } from './getters';
 import { walkMutationsFile, parseMutations } from './mutations';
 import { walkActionsFile, parseActions } from './actions';
 
-export interface ModuleInfo {
+export interface StoreTreeInfo {
   namespace?: string;
   modules?: ModulesInfo;
   state?: any[];
@@ -32,7 +32,7 @@ export interface ModuleInfo {
   [prop: string]: {};
 }
 export interface ModulesInfo {
-  [prop: string]: ModuleInfo;
+  [prop: string]: StoreTreeInfo;
 }
 export interface ParseModuleParam {
   objAst: ObjectExpression;
@@ -127,7 +127,7 @@ function getModulesInfo({
 }
 export function parseModuleAst(
   { objAst, m2pmap, defmap, cwf, lineOfFile }: ParseModuleParam,
-  infoObj: ModuleInfo,
+  infoObj: StoreTreeInfo,
 ) {
   objAst.properties.forEach((property: ObjectProperty) => {
     let config = { property, m2pmap, defmap, cwf, lineOfFile };

@@ -190,15 +190,11 @@ class ThisProvider {
                     thisCompletion.kind = vscode_1.CompletionItemKind.Method;
                     thisCompletion.documentation = completion.funcDeclarator
                         ? completion.funcDeclarator
-                        : completion.defination
-                            ? new vscode_1.MarkdownString('```' + completion.defination + '```')
-                            : '';
+                        : completion.defination;
                     break;
                 default:
                     thisCompletion.kind = vscode_1.CompletionItemKind.Variable;
-                    thisCompletion.documentation = completion.defination
-                        ? new vscode_1.MarkdownString('```' + completion.defination + '```')
-                        : '';
+                    thisCompletion.documentation = completion.defination;
             }
             thisCompletion.detail = completion.type;
             return thisCompletion;

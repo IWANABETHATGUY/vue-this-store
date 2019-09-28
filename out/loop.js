@@ -32,16 +32,21 @@ class VueThis$Store {
         this._outputChannel = vscode_1.window.createOutputChannel('VueThis$Store');
         this._statusBarItem = new statusBarItem_1.VueThisStoreStatusBarItem();
         this._watcher = null;
-        let timeStart = Number(new Date());
+        this._attemptionEntryPathList = [
+            'src/index.js',
+            'src/app.js',
+            'src/main.js',
+        ];
+        let timeStart = Date.now();
         this._extensionContext = ctx;
         if (rootPath === undefined) {
+            this._mode = 'error';
             return;
         }
         else {
             this._rootPath = rootPath;
         }
         vscode_1.window.onDidChangeActiveTextEditor(e => {
-            // console.log('uri', e.document.uri);
             if (e.document.languageId === 'vue') {
                 if (!this._previousVuePath ||
                     e.document.uri.path !== this._previousVuePath) {
@@ -55,10 +60,9 @@ class VueThis$Store {
                 this.setNewCompletionList(document);
             }
         });
-        this._entrancePath = path.resolve(this._rootPath, 'src/main.js');
         this.initCommands();
         this.start();
-        let timeEnd = Number(new Date());
+        let timeEnd = Date.now();
         this._outputChannel.appendLine(`Init information cost ${timeEnd - timeStart} ms`);
     }
     setNewCompletionList(document) {
@@ -125,22 +129,24 @@ class VueThis$Store {
      *从给定的入口初始化Store的树状信息
      *
      * @private
-     * @returns {[string , ModuleInfo]}
-     *
+     * @returns {[string , StoreTreeInfo]}
+     * @return absolutePathOfEntry
      * @memberOf VueThis$Store
      */
     startFromEntry() {
-        if (!fs.existsSync(this._entrancePath)) {
-            if (!fs.existsSync(this._rootPath + '/src/index.js')) {
-                this._outputChannel.clear();
-                this._outputChannel.appendLine('please specify your project entrance path');
-                this._outputChannel.show();
-                return ['', emptyModule];
-            }
-            else {
-                this._entrancePath = this._rootPath + '/src/index.js';
-            }
+        if (commonUtil_1.hasNuxtConfig(this._rootPath)) {
+            this.setEntrancePath(path.resolve(this._rootPath, 'nuxt.config.js'));
+            this._mode = 'nuxt';
         }
+        else {
+            return this.generateNormalStoreInfo();
+        }
+    }
+    generateNormalStoreInfo() {
+        if (!this.attemptEntryPath()) {
+            return ['', emptyModule];
+        }
+        this._mode = 'normal';
         let entryFileContent = commonUtil_1.getFileContent(this._entrancePath);
         if (entryFileContent === '') {
             return ['', emptyModule];
@@ -163,8 +169,31 @@ class VueThis$Store {
         catch (err) {
             this._outputChannel.clear();
             this._outputChannel.appendLine(err);
-            return [storeAbsolutePath, emptyModule];
+            return ['', emptyModule];
         }
+    }
+    /**
+     * 尝试可能的入口
+     *
+     * @private
+     * @returns
+     *
+     * @memberOf VueThis$Store
+     */
+    attemptEntryPath() {
+        const result = this._attemptionEntryPathList.some(relativePath => {
+            const absolutePath = path.resolve(this._rootPath, relativePath);
+            if (fs.existsSync(absolutePath)) {
+                this.setEntrancePath(absolutePath);
+                return true;
+            }
+        });
+        if (!result) {
+            this._outputChannel.clear();
+            this._outputChannel.appendLine('please specify your project entrance path');
+            this._outputChannel.show();
+        }
+        return result;
     }
 }
 exports.default = VueThis$Store;

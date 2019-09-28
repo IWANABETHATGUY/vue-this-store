@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ModuleInfo } from '../traverse/modules';
+import { StoreTreeInfo } from '../traverse/modules';
 import {
   getNextNamespace,
   getPositionIndex,
@@ -110,7 +110,7 @@ function getCommitCursorInfo(commitAst: File, relativePos: number) {
   }
   return null;
 }
-export function getMutationsFromNameSpace(obj: ModuleInfo, namespace: string) {
+export function getMutationsFromNameSpace(obj: StoreTreeInfo, namespace: string) {
   let mutationInfoList = [];
   if (obj.namespace === namespace && obj.mutations) {
     mutationInfoList.push(...obj.mutations);
@@ -125,11 +125,11 @@ export function getMutationsFromNameSpace(obj: ModuleInfo, namespace: string) {
 }
 
 export class StoreMutationsProvider implements vscode.CompletionItemProvider {
-  private storeInfo: ModuleInfo;
-  constructor(storeInfo: ModuleInfo) {
+  private storeInfo: StoreTreeInfo;
+  constructor(storeInfo: StoreTreeInfo) {
     this.storeInfo = storeInfo;
   }
-  public setStoreInfo(newStoreInfo: ModuleInfo) {
+  public setStoreInfo(newStoreInfo: StoreTreeInfo) {
     this.storeInfo = newStoreInfo;
   }
   public provideCompletionItems(
@@ -169,9 +169,7 @@ export class StoreMutationsProvider implements vscode.CompletionItemProvider {
             mutationInfo.rowKey,
             vscode.CompletionItemKind.Method,
           );
-          mutationCompletion.documentation = new vscode.MarkdownString(
-            '```' + mutationInfo.defination + '```',
-          );
+          mutationCompletion.documentation = mutationInfo.defination
           mutationCompletion.detail = 'mutation';
           mutationCompletion.sortText = `1${mutationInfo.rowKey}`;
           return mutationCompletion;
@@ -184,11 +182,11 @@ export class StoreMutationsProvider implements vscode.CompletionItemProvider {
 
 export class StoreMapMutationsProvider
   implements vscode.CompletionItemProvider {
-  private storeInfo: ModuleInfo;
-  constructor(storeInfo: ModuleInfo) {
+  private storeInfo: StoreTreeInfo;
+  constructor(storeInfo: StoreTreeInfo) {
     this.storeInfo = storeInfo;
   }
-  public setStoreInfo(newStoreInfo: ModuleInfo) {
+  public setStoreInfo(newStoreInfo: StoreTreeInfo) {
     this.storeInfo = newStoreInfo;
   }
   public provideCompletionItems(
@@ -231,9 +229,7 @@ export class StoreMapMutationsProvider
             mutationInfo.rowKey,
             vscode.CompletionItemKind.Method,
           );
-          mutationCompletion.documentation = new vscode.MarkdownString(
-            '```' + mutationInfo.defination + '```',
-          );
+          mutationCompletion.documentation = mutationInfo.defination
           mutationCompletion.detail = 'mutation';
           mutationCompletion.sortText = `1${mutationInfo.rowKey}`;
           return mutationCompletion;

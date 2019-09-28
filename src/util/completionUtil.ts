@@ -1,4 +1,4 @@
-import { ModuleInfo } from '../traverse/modules';
+import { StoreTreeInfo } from '../traverse/modules';
 import * as vscode from 'vscode';
 import { ObjectProperty, File, ExpressionStatement, CallExpression } from '@babel/types';
 
@@ -9,7 +9,7 @@ export interface CursorInfo {
   secondNameSpace: string;
 }
 
-export function getModuleFromPath(obj: ModuleInfo, path: string[] | undefined): ModuleInfo | undefined {
+export function getModuleFromPath(obj: StoreTreeInfo, path: string[] | undefined): StoreTreeInfo | undefined {
   if (path === undefined) {
     return obj;
   }
@@ -22,7 +22,7 @@ export function getModuleFromPath(obj: ModuleInfo, path: string[] | undefined): 
   }
 }
 
-export function getNextNamespace(obj: ModuleInfo, namespace: string) {
+export function getNextNamespace(obj: StoreTreeInfo, namespace: string) {
   let nextNamespaceList = [];
   let curObjNamespace = obj.namespace;
   let curObjNamespaceList = obj.namespace.split('.');

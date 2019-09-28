@@ -93,7 +93,7 @@ class StoreActionsProvider {
             if (!cursorInfo.isNamespace) {
                 actionCompletionList = getActionsFromNameSpace(this.storeInfo, fullNamespace).map(actionInfo => {
                     let actionCompletion = new vscode.CompletionItem(actionInfo.rowKey, vscode.CompletionItemKind.Method);
-                    actionCompletion.documentation = new vscode.MarkdownString('```' + actionInfo.defination + '```');
+                    actionCompletion.documentation = actionInfo.defination;
                     actionCompletion.detail = 'action';
                     actionCompletion.sortText = `1${actionInfo.rowKey}`;
                     return actionCompletion;
@@ -129,7 +129,7 @@ class StoreMapActionsProvider {
             if (!cursorInfo.isNamespace) {
                 getterCompletionList = getActionsFromNameSpace(this.storeInfo, fullNamespace).map(actionInfo => {
                     let actionCompletion = new vscode.CompletionItem(actionInfo.rowKey, vscode.CompletionItemKind.Method);
-                    actionCompletion.documentation = new vscode.MarkdownString('```' + actionInfo.defination + '```');
+                    actionCompletion.documentation = actionInfo.defination;
                     actionCompletion.detail = 'action';
                     actionCompletion.sortText = `1${actionInfo.rowKey}`;
                     return actionCompletion;
