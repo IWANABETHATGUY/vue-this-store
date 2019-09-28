@@ -1,4 +1,3 @@
-import { parse } from '@babel/parser';
 import traverse from '@babel/traverse';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -14,6 +13,7 @@ import {
 } from '@babel/types';
 import { StoreAstMap } from '../type';
 import { ParseModuleParam } from '../traverse/normal/modules';
+import { getAstOfCode } from './commonUtil';
 
 export function getFileContent(abPath: string): string {
   let fileContent = '';
@@ -54,10 +54,6 @@ export function getAbsolutePath(base: string, relative: string): string {
     }
   }
   return abPath;
-}
-
-export function getAst(fileContent: string): File {
-  return parse(fileContent, { sourceType: 'module' });
 }
 
 /**
@@ -108,7 +104,7 @@ export function getFileDefinationAstMap(ast: File): StoreAstMap {
 export function getVuexConfig(storeABPath: string): ParseModuleParam {
   storeABPath = getAbsolutePath(storeABPath, '');
   let entryFile = getFileContent(storeABPath);
-  let entryAst = getAst(entryFile);
+  let entryAst = getAstOfCode(entryFile);
   let entryDefineAstMap = getFileDefinationAstMap(entryAst);
   let entryModuleOrPathMap = getModuleOrPathMap(entryAst);
   let config;

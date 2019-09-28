@@ -1,7 +1,6 @@
 import {
   getAbsolutePath,
   getFileContent,
-  getAst,
   getFileDefinationAstMap,
   getModuleOrPathMap,
   transformShorthand,
@@ -21,6 +20,7 @@ import { walkFile, parseState } from './state';
 import { parseGetters } from './getters';
 import { walkMutationsFile, parseMutations } from './mutations';
 import { walkActionsFile, parseActions } from './actions';
+import { getAstOfCode } from '../../util/commonUtil';
 
 export interface StoreTreeInfo {
   namespace?: string;
@@ -163,7 +163,7 @@ export function parseModuleAst(
 export function walkModulesFile(base: string, relative: string = '') {
   let filename: string = getAbsolutePath(base, relative);
   let fileContent: string = getFileContent(filename);
-  let ast: File = getAst(fileContent);
+  let ast: File = getAstOfCode(fileContent);
   let defineAstMap: StoreAstMap = getFileDefinationAstMap(ast);
   let moduleOrPathMap: ModuleOrPathMap = getModuleOrPathMap(ast);
   let exportDefault: ExportDefaultDeclaration = ast.program.body.filter(

@@ -1,7 +1,6 @@
 import {
   getAbsolutePath,
   getFileContent,
-  getAst,
   getFileDefinationAstMap,
   getModuleOrPathMap,
   transformShorthand,
@@ -12,11 +11,12 @@ import {
   ObjectExpression,
   ObjectProperty,
 } from '@babel/types';
+import { getAstOfCode } from '../../util/commonUtil';
 
 function walkFile(base: string, relative: string = '') {
   let filename = getAbsolutePath(base, relative);
   let fileContent = getFileContent(filename);
-  let ast = getAst(fileContent);
+  let ast = getAstOfCode(fileContent);
   let defineAstMap = getFileDefinationAstMap(ast);
   let moduleOrPathMap = getModuleOrPathMap(ast);
   let exportDefault: ExportDefaultDeclaration = ast.program.body.filter(

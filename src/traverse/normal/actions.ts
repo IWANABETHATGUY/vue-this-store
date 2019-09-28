@@ -1,7 +1,6 @@
 import {
   getAbsolutePath,
   getFileContent,
-  getAst,
   getFileDefinationAstMap,
   getModuleOrPathMap,
   transformShorthand,
@@ -18,10 +17,11 @@ import {
   BaseNode,
 } from '@babel/types';
 import traverse from '@babel/traverse';
+import { getAstOfCode } from '../../util/commonUtil';
 function evalFromPath(base: string, relative: string, evalMap) {
   let filename = getAbsolutePath(base, relative);
   let fileContent = getFileContent(filename);
-  let ast = getAst(fileContent);
+  let ast = getAstOfCode(fileContent);
   traverse(ast, {
     VariableDeclarator(path) {
       let node: VariableDeclarator = path.node;
@@ -38,7 +38,7 @@ function evalFromPath(base: string, relative: string, evalMap) {
 export function walkActionsFile(base: string, relative: string = '') {
   let filename = getAbsolutePath(base, relative);
   let fileContent = getFileContent(filename);
-  let ast = getAst(fileContent);
+  let ast = getAstOfCode(fileContent);
   let defineAstMap = getFileDefinationAstMap(ast);
   let moduleOrPathMap = getModuleOrPathMap(ast);
   let exportDefault: ExportDefaultDeclaration = ast.program.body.filter(
