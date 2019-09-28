@@ -3,11 +3,10 @@ import {
   TextDocument,
   Position,
   CompletionItemKind,
-  MarkdownString,
   CompletionItemProvider,
   CompletionContext,
 } from 'vscode';
-import { ModuleInfo } from '../traverse/modules';
+import { StoreTreeInfo } from '../traverse/normal/modules';
 import { getNextNamespace, CursorInfo } from '../util/completionUtil';
 import { getCursorInfoFromRegExp } from './mutationsProvider';
 import {
@@ -24,11 +23,11 @@ import traverse from '@babel/traverse';
 import generator from '@babel/generator';
 
 export class StoreStateProvider implements CompletionItemProvider {
-  private storeInfo: ModuleInfo;
-  constructor(storeInfo: ModuleInfo) {
+  private storeInfo: StoreTreeInfo;
+  constructor(storeInfo: StoreTreeInfo) {
     this.storeInfo = storeInfo;
   }
-  public setStoreInfo(newStoreInfo: ModuleInfo) {
+  public setStoreInfo(newStoreInfo: StoreTreeInfo) {
     this.storeInfo = newStoreInfo;
   }
   public provideCompletionItems(
@@ -82,9 +81,7 @@ export class StoreStateProvider implements CompletionItemProvider {
             CompletionItemKind.Variable,
           );
           stateCompletion.sortText = `1${stateInfo.rowKey}`;
-          stateCompletion.documentation = new MarkdownString(
-            '```' + stateInfo.defination + '```',
-          );
+          stateCompletion.documentation = stateInfo.defination
           stateCompletion.detail = 'state';
           return stateCompletion;
         });
@@ -95,11 +92,11 @@ export class StoreStateProvider implements CompletionItemProvider {
   }
 }
 export class storeMapStateProvider implements CompletionItemProvider {
-  private storeInfo: ModuleInfo;
-  constructor(storeInfo: ModuleInfo) {
+  private storeInfo: StoreTreeInfo;
+  constructor(storeInfo: StoreTreeInfo) {
     this.storeInfo = storeInfo;
   }
-  public setStoreInfo(newStoreInfo: ModuleInfo) {
+  public setStoreInfo(newStoreInfo: StoreTreeInfo) {
     this.storeInfo = newStoreInfo;
   }
   public provideCompletionItems(
@@ -146,9 +143,7 @@ export class storeMapStateProvider implements CompletionItemProvider {
             stateInfo.rowKey,
             CompletionItemKind.Variable,
           );
-          stateCompletion.documentation = new MarkdownString(
-            '```' + stateInfo.defination + '```',
-          );
+          stateCompletion.documentation = stateInfo.defination
           stateCompletion.detail = 'state';
           stateCompletion.sortText = `1${stateInfo.rowKey}`
           return stateCompletion;
@@ -161,8 +156,8 @@ export class storeMapStateProvider implements CompletionItemProvider {
   }
 }
 
-function getNextStateNamespace(obj: ModuleInfo, namespace) {
-  let targetModule: ModuleInfo = namespace
+function getNextStateNamespace(obj: StoreTreeInfo, namespace) {
+  let targetModule: StoreTreeInfo = namespace
     .split('.')
     .filter(item => item.length)
     .reduce((acc, cur) => {
@@ -174,8 +169,8 @@ function getNextStateNamespace(obj: ModuleInfo, namespace) {
   }
   return [];
 }
-export function getStateFromNameSpace(obj: ModuleInfo, namespace: string) {
-  let targetModule: ModuleInfo = namespace
+export function getStateFromNameSpace(obj: StoreTreeInfo, namespace: string) {
+  let targetModule: StoreTreeInfo = namespace
     .split('.')
     .filter(item => item.length)
     .reduce((acc, cur) => {

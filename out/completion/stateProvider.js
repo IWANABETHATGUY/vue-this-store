@@ -36,7 +36,7 @@ class StoreStateProvider {
                 stateCompletionList = getStateFromNameSpace(this.storeInfo, fullNamespace).map(stateInfo => {
                     let stateCompletion = new vscode_1.CompletionItem(stateInfo.rowKey, vscode_1.CompletionItemKind.Variable);
                     stateCompletion.sortText = `1${stateInfo.rowKey}`;
-                    stateCompletion.documentation = new vscode_1.MarkdownString('```' + stateInfo.defination + '```');
+                    stateCompletion.documentation = stateInfo.defination;
                     stateCompletion.detail = 'state';
                     return stateCompletion;
                 });
@@ -73,7 +73,7 @@ class storeMapStateProvider {
             if (!cursorInfo.isNamespace) {
                 stateCompletionList = getStateFromNameSpace(this.storeInfo, fullNamespace).map(stateInfo => {
                     let stateCompletion = new vscode_1.CompletionItem(stateInfo.rowKey, vscode_1.CompletionItemKind.Variable);
-                    stateCompletion.documentation = new vscode_1.MarkdownString('```' + stateInfo.defination + '```');
+                    stateCompletion.documentation = stateInfo.defination;
                     stateCompletion.detail = 'state';
                     stateCompletion.sortText = `1${stateInfo.rowKey}`;
                     return stateCompletion;

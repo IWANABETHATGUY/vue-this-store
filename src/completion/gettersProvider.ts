@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ModuleInfo } from '../traverse/modules';
+import { StoreTreeInfo } from '../traverse/normal/modules';
 import {
   getModuleFromPath,
   getNextNamespace,
@@ -7,7 +7,7 @@ import {
 } from '../util/completionUtil';
 import { getCursorInfoFromRegExp } from './mutationsProvider';
 
-export function getGettersFromNameSpace(obj: ModuleInfo, namespace: string) {
+export function getGettersFromNameSpace(obj: StoreTreeInfo, namespace: string) {
   let getterInfoList = [];
   if (obj.namespace === namespace && obj.getters) {
     getterInfoList.push(...obj.getters);
@@ -22,11 +22,11 @@ export function getGettersFromNameSpace(obj: ModuleInfo, namespace: string) {
 }
 
 export class StoreGettersProvider implements vscode.CompletionItemProvider {
-  private storeInfo: ModuleInfo;
-  constructor(storeInfo: ModuleInfo) {
+  private storeInfo: StoreTreeInfo;
+  constructor(storeInfo: StoreTreeInfo) {
     this.storeInfo = storeInfo;
   }
-  public setStoreInfo(newStoreInfo: ModuleInfo) {
+  public setStoreInfo(newStoreInfo: StoreTreeInfo) {
     this.storeInfo = newStoreInfo;
   }
   public provideCompletionItems(
@@ -59,9 +59,7 @@ export class StoreGettersProvider implements vscode.CompletionItemProvider {
             getterInfo.rowKey,
             vscode.CompletionItemKind.Variable,
           );
-          getterCompletion.documentation = new vscode.MarkdownString(
-            '```' + getterInfo.defination + '```',
-          );
+          getterCompletion.documentation = getterInfo.defination
           getterCompletion.sortText = `1${getterInfo.rowKey}`;
           return getterCompletion;
         })
@@ -70,11 +68,11 @@ export class StoreGettersProvider implements vscode.CompletionItemProvider {
 }
 
 export class StoreMapGettersProvider implements vscode.CompletionItemProvider {
-  private storeInfo: ModuleInfo;
-  constructor(storeInfo: ModuleInfo) {
+  private storeInfo: StoreTreeInfo;
+  constructor(storeInfo: StoreTreeInfo) {
     this.storeInfo = storeInfo;
   }
-  public setStoreInfo(newStoreInfo: ModuleInfo) {
+  public setStoreInfo(newStoreInfo: StoreTreeInfo) {
     this.storeInfo = newStoreInfo;
   }
   public provideCompletionItems(
@@ -117,9 +115,7 @@ export class StoreMapGettersProvider implements vscode.CompletionItemProvider {
             getterInfo.rowKey,
             vscode.CompletionItemKind.Variable,
           );
-          getterCompletion.documentation = new vscode.MarkdownString(
-            '```' + getterInfo.defination + '```',
-          );
+          getterCompletion.documentation = getterInfo.defination
           getterCompletion.detail = 'getter';
           getterCompletion.sortText = `1${getterInfo.rowKey}`;
           return getterCompletion;

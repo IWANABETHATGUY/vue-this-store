@@ -1,11 +1,10 @@
 import {
   getAbsolutePath,
   getFileContent,
-  getAst,
   getFileDefinationAstMap,
   getModuleOrPathMap,
   transformShorthand,
-} from '../util/traverseUtil';
+} from '../../util/traverseUtil';
 import {
   ExportDefaultDeclaration,
   objectExpression,
@@ -18,10 +17,12 @@ import {
   BaseNode,
 } from '@babel/types';
 import traverse from '@babel/traverse';
+import { getAstOfCode } from '../../util/commonUtil';
+
 function evalFromPath(base: string, relative: string, evalMap) {
   let filename = getAbsolutePath(base, relative);
   let fileContent = getFileContent(filename);
-  let ast = getAst(fileContent);
+  let ast = getAstOfCode(fileContent);
   traverse(ast, {
     VariableDeclarator(path) {
       let node: VariableDeclarator = path.node;
@@ -35,10 +36,10 @@ function evalFromPath(base: string, relative: string, evalMap) {
     },
   });
 }
-export function walkActionsFile(base: string, relative: string = '') {
+export function walkMutationsFile(base: string, relative: string = '') {
   let filename = getAbsolutePath(base, relative);
   let fileContent = getFileContent(filename);
-  let ast = getAst(fileContent);
+  let ast = getAstOfCode(fileContent);
   let defineAstMap = getFileDefinationAstMap(ast);
   let moduleOrPathMap = getModuleOrPathMap(ast);
   let exportDefault: ExportDefaultDeclaration = ast.program.body.filter(
@@ -85,8 +86,8 @@ export function walkActionsFile(base: string, relative: string = '') {
   };
 }
 
-export function parseActions(objAst: ObjectExpression, lineOfFile: string[]) {
-  let actionInfoList = [];
+export function parseMutations(objAst: ObjectExpression, lineOfFile: string[]) {
+  let mutationInfoList = [];
   const content = lineOfFile.join('\n');
   // debugger;
   objAst.properties.forEach((property: ObjectMethod | ObjectProperty) => {
@@ -102,7 +103,7 @@ export function parseActions(objAst: ObjectExpression, lineOfFile: string[]) {
     }
     let paramList = params.map(param => content.slice(param.start, param.end));
 
-    actionInfoList.push({
+    mutationInfoList.push({
       rowKey: property.key.name,
       defination: lineOfFile.slice(loc.start.line - 1, loc.end.line).join('\n'),
       paramList,
@@ -111,5 +112,5 @@ export function parseActions(objAst: ObjectExpression, lineOfFile: string[]) {
       )})`,
     });
   });
-  return actionInfoList;
+  return mutationInfoList;
 }

@@ -13,8 +13,9 @@ import {
   getStoreEntryRelativePath,
   getAstOfCode,
   getAbsolutePath,
+  hasNuxtConfig,
 } from './util/commonUtil';
-import { parseModuleAst, ModuleInfo } from './traverse/modules';
+import { parseModuleAst, StoreTreeInfo } from './traverse/normal/modules';
 import { getVuexConfig } from './util/traverseUtil';
 import { VueThisStoreStatusBarItem } from './statusBarItem';
 import { generateWatcher } from './watcher';
@@ -36,9 +37,9 @@ import {
 } from './completion/actionsProvider';
 import { ThisProvider, ThisCompletionInfo } from './completion/thisProvider';
 import { MutationsSignatureProvider } from './signature/mutationsProvider';
+import { StatusBarItemStatus } from './type';
 
-type setStoreStatus = 1 | -1;
-const emptyModule: ModuleInfo = {
+const emptyModule: StoreTreeInfo = {
   namespace: '',
   state: [],
 };
@@ -65,16 +66,22 @@ export default class VueThis$Store {
   private _thisProvider: ThisProvider;
 
   private _mutationSignatureProvider: MutationsSignatureProvider;
+  private _mode: 'nuxt' | 'normal' | 'error';
+  private _attemptionEntryPathList = [
+    'src/index.js',
+    'src/app.js',
+    'src/main.js',
+  ];
   constructor(ctx: ExtensionContext, rootPath: string) {
-    let timeStart = Number(new Date());
+    let timeStart = Date.now();
     this._extensionContext = ctx;
     if (rootPath === undefined) {
+      this._mode = 'error';
       return;
     } else {
       this._rootPath = rootPath;
     }
     window.onDidChangeActiveTextEditor(e => {
-      // console.log('uri', e.document.uri);
       if (e.document.languageId === 'vue') {
         if (
           !this._previousVuePath ||
@@ -92,10 +99,9 @@ export default class VueThis$Store {
       }
     });
 
-    this._entrancePath = path.resolve(this._rootPath, 'src/main.js');
     this.initCommands();
     this.start();
-    let timeEnd = Number(new Date());
+    let timeEnd = Date.now();
     this._outputChannel.appendLine(
       `Init information cost ${timeEnd - timeStart} ms`,
     );
@@ -129,12 +135,9 @@ export default class VueThis$Store {
   }
   private start() {
     this._extensionContext.subscriptions.push(this._statusBarItem);
-    let [
-      storeAbsolutePath,
-      storeInfo,
-      setStoreActionStatus,
-    ] = this.startFromEntry();
-    this._statusBarItem.setStatus(setStoreActionStatus);
+    let [storeAbsolutePath, storeInfo] = this.startFromEntry();
+    const status: StatusBarItemStatus = storeAbsolutePath ? 1 : -1;
+    this._statusBarItem.setStatus(status);
     this._watcher = generateWatcher(storeAbsolutePath);
 
     this._stateProvider = new StoreStateProvider(storeInfo);
@@ -225,41 +228,55 @@ export default class VueThis$Store {
   }
   private restart() {
     this._statusBarItem.setStatus(0);
-    let [_, storeInfo, setStoreActionStatus] = this.startFromEntry();
+    let [storeAbsolutePath, storeInfo] = this.startFromEntry();
+    const status: StatusBarItemStatus = storeAbsolutePath ? 1 : -1;
+
     this._stateProvider.setStoreInfo(storeInfo);
     this._mapStateProvider.setStoreInfo(storeInfo);
     this._gettersProvider.setStoreInfo(storeInfo);
     this._mapGettersProvider.setStoreInfo(storeInfo);
-    this._mapMutationsProvider.setStoreInfo(storeInfo);
     this._mutationsProvider.setStoreInfo(storeInfo);
-    if (setStoreActionStatus === -1) {
-    }
-    this._statusBarItem.setStatus(setStoreActionStatus);
+    this._mapMutationsProvider.setStoreInfo(storeInfo);
+    this._actionsProvider.setStoreInfo(storeInfo);
+    this._mapActionsProvider.setStoreInfo(storeInfo);
+    this._thisProvider.setStoreInfo(storeInfo);
+    this._statusBarItem.setStatus(status);
   }
+
   public setEntrancePath(entrancePath: string) {
     this._entrancePath = entrancePath;
   }
 
-  private startFromEntry(): [string, ModuleInfo, setStoreStatus] {
-    // TODO: 这里可能会修改别人传入的新entrance:
-    if (!fs.existsSync(this._entrancePath)) {
-      if (!fs.existsSync(this._rootPath + '/src/index.js')) {
-        this._outputChannel.clear();
-        this._outputChannel.appendLine(
-          'please specify your project entrance path',
-        );
-        this._outputChannel.show();
-        return ['', emptyModule, -1];
-      } else {
-        this._entrancePath = this._rootPath + '/src/index.js';
-      }
+  /**
+   *从给定的入口初始化Store的树状信息
+   *
+   * @private
+   * @returns {[string , StoreTreeInfo]}
+   * @return absolutePathOfEntry
+   * @memberOf VueThis$Store
+   */
+  private startFromEntry(): [string, StoreTreeInfo] {
+    if (hasNuxtConfig(this._rootPath)) {
+      this.setEntrancePath(path.resolve(this._rootPath, 'store'));
+      this._mode = 'nuxt';
+      return this.generateNuxtStoreInfo();
+    } else {
+      return this.generateNormalStoreInfo();
     }
-    let {
-      fileContent: entryFileContent,
-      status: entryFileStatus,
-    } = getFileContent(this._entrancePath);
+  }
+
+  generateNuxtStoreInfo(): [string, StoreTreeInfo] {
+    return [this._entrancePath, emptyModule];
+  }
+
+  private generateNormalStoreInfo(): [string, StoreTreeInfo] {
+    if (!this.attemptEntryPath()) {
+      return ['', emptyModule];
+    }
+    this._mode = 'normal';
+    let entryFileContent = getFileContent(this._entrancePath);
     if (entryFileContent === '') {
-      return ['', emptyModule, entryFileStatus];
+      return ['', emptyModule];
     }
     let entryFileContentAst = getAstOfCode(entryFileContent);
     let storeRelativePath: string = getStoreEntryRelativePath(
@@ -274,7 +291,7 @@ export default class VueThis$Store {
       storeAbsolutePath,
     );
     try {
-      let storeInfo: ModuleInfo = { namespace: '' };
+      let storeInfo: StoreTreeInfo = { namespace: '' };
       parseModuleAst(
         {
           objAst,
@@ -285,11 +302,37 @@ export default class VueThis$Store {
         },
         storeInfo,
       );
-      return [storeAbsolutePath, storeInfo, 1];
+      return [storeAbsolutePath, storeInfo];
     } catch (err) {
       this._outputChannel.clear();
       this._outputChannel.appendLine(err);
-      return [storeAbsolutePath, emptyModule, -1];
+      return ['', emptyModule];
     }
+  }
+
+  /**
+   * 尝试可能的入口
+   *
+   * @private
+   * @returns
+   *
+   * @memberOf VueThis$Store
+   */
+  private attemptEntryPath(): Boolean {
+    const result = this._attemptionEntryPathList.some(relativePath => {
+      const absolutePath = path.resolve(this._rootPath, relativePath);
+      if (fs.existsSync(absolutePath)) {
+        this.setEntrancePath(absolutePath);
+        return true;
+      }
+    });
+    if (!result) {
+      this._outputChannel.clear();
+      this._outputChannel.appendLine(
+        'please specify your project entrance path',
+      );
+      this._outputChannel.show();
+    }
+    return result;
   }
 }

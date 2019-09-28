@@ -1,11 +1,10 @@
 import {
   getAbsolutePath,
   getFileContent,
-  getAst,
   getFileDefinationAstMap,
   getModuleOrPathMap,
   transformShorthand,
-} from '../util/traverseUtil';
+} from '../../util/traverseUtil';
 import {
   ObjectExpression,
   ObjectProperty,
@@ -16,13 +15,14 @@ import {
   BooleanLiteral,
   StringLiteral,
 } from '@babel/types';
-import { StoreAstMap, ModuleOrPathMap } from '../type';
+import { StoreAstMap, ModuleOrPathMap } from '../../type';
 import { walkFile, parseState } from './state';
 import { parseGetters } from './getters';
 import { walkMutationsFile, parseMutations } from './mutations';
 import { walkActionsFile, parseActions } from './actions';
+import { getAstOfCode } from '../../util/commonUtil';
 
-export interface ModuleInfo {
+export interface StoreTreeInfo {
   namespace?: string;
   modules?: ModulesInfo;
   state?: any[];
@@ -32,7 +32,7 @@ export interface ModuleInfo {
   [prop: string]: {};
 }
 export interface ModulesInfo {
-  [prop: string]: ModuleInfo;
+  [prop: string]: StoreTreeInfo;
 }
 export interface ParseModuleParam {
   objAst: ObjectExpression;
@@ -127,7 +127,7 @@ function getModulesInfo({
 }
 export function parseModuleAst(
   { objAst, m2pmap, defmap, cwf, lineOfFile }: ParseModuleParam,
-  infoObj: ModuleInfo,
+  infoObj: StoreTreeInfo,
 ) {
   objAst.properties.forEach((property: ObjectProperty) => {
     let config = { property, m2pmap, defmap, cwf, lineOfFile };
@@ -163,7 +163,7 @@ export function parseModuleAst(
 export function walkModulesFile(base: string, relative: string = '') {
   let filename: string = getAbsolutePath(base, relative);
   let fileContent: string = getFileContent(filename);
-  let ast: File = getAst(fileContent);
+  let ast: File = getAstOfCode(fileContent);
   let defineAstMap: StoreAstMap = getFileDefinationAstMap(ast);
   let moduleOrPathMap: ModuleOrPathMap = getModuleOrPathMap(ast);
   let exportDefault: ExportDefaultDeclaration = ast.program.body.filter(
