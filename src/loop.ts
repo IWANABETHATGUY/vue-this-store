@@ -230,12 +230,16 @@ export default class VueThis$Store {
     this._statusBarItem.setStatus(0);
     let [storeAbsolutePath, storeInfo] = this.startFromEntry();
     const status: StatusBarItemStatus = storeAbsolutePath ? 1 : -1;
+
     this._stateProvider.setStoreInfo(storeInfo);
     this._mapStateProvider.setStoreInfo(storeInfo);
     this._gettersProvider.setStoreInfo(storeInfo);
     this._mapGettersProvider.setStoreInfo(storeInfo);
-    this._mapMutationsProvider.setStoreInfo(storeInfo);
     this._mutationsProvider.setStoreInfo(storeInfo);
+    this._mapMutationsProvider.setStoreInfo(storeInfo);
+    this._actionsProvider.setStoreInfo(storeInfo);
+    this._mapActionsProvider.setStoreInfo(storeInfo);
+    this._thisProvider.setStoreInfo(storeInfo);
     this._statusBarItem.setStatus(status);
   }
 

@@ -31,9 +31,7 @@ export function getFileContent(abPath: string): string {
   }
   return fileContent;
 }
-export function getFileLines(fileContent: string): string[] {
-  return fileContent.split('/n');
-}
+
 export function getAbsolutePath(base: string, relative: string): string {
   let ext: string = path.extname(base);
   if (ext && relative.length) {
@@ -47,10 +45,12 @@ export function getAbsolutePath(base: string, relative: string): string {
       abPath += '/index.js';
     }
   } else {
-    if (fs.existsSync(abPath + '.js')) {
-      abPath += '.js';
-    } else if (fs.existsSync(abPath + '/index.js')) {
-      abPath += '/index.js';
+    const fileStat = fs.statSync(abPath);
+    if (fileStat.isDirectory()) {
+      const indexJsPath = path.resolve(abPath, 'index.js')
+      if (fs.existsSync(indexJsPath)) {
+        abPath = indexJsPath;
+      }
     }
   }
   return abPath;
