@@ -21,12 +21,18 @@ export interface ModulesInfo extends FileInfo {
 export interface Module {
   namespace?: boolean;
 }
+/**
+ * 
+ * 
+ * @export
+ * @interface ModuleOrPathMap
+ */
 export interface ModuleOrPathMap {
-  [propname: string]: string;
+  [localIdentifier: string]: string;
 }
 
 export interface StoreAstMap {
   [propname: string]: BaseNode;
 }
-// -1 代表失败， 1代表成功
-export type Status = -1 | 1;
+// 生成store的树状信息状态，-1 代表失败， 1代表成功
+export type StatusBarItemStatus = -1 | 1 | 0;

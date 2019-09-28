@@ -8,24 +8,23 @@ import {
   ObjectProperty,
   Program,
   File,
+  isIdentifier,
+  isImportDeclaration,
+  isImportDefaultSpecifier,
 } from '@babel/types';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { Status, ModuleOrPathMap } from '../type';
+import { ModuleOrPathMap } from '../type';
 
 import { looksLike } from './traverseUtil';
 
-interface getFileContentResult {
-  status: Status;
-  fileContent: string;
-}
 /**
- * 传入文件内容返回对应ast
  *
+ * 传入文件内容返回对应ast
  * @export
  * @param {string} code
- * @returns
+ * @returns {File}
  */
 export function getAstOfCode(code: string): File {
   return parse(code, { sourceType: 'module' });
@@ -39,34 +38,35 @@ export function getAbsolutePath(base: string, relative: string = ''): string {
   return path.resolve(base, relative);
 }
 
-export function getFileContent(abPath: string): getFileContentResult {
+export function getFileContent(abPath: string): string {
   if (!fs.existsSync(abPath)) {
-    return { status: -1, fileContent: '' };
+    return '';
   }
-  let statObj = fs.statSync(abPath);
-  if (statObj.isDirectory()) {
+  let pathStat = fs.statSync(abPath);
+  if (pathStat.isDirectory()) {
     abPath = path.resolve(abPath, 'index.js');
   }
   if (fs.existsSync(abPath)) {
     let fileContent = fs.readFileSync(abPath, {
       encoding: 'utf8',
     });
-    return { status: 1, fileContent };
+    return fileContent;
   }
-  return { status: -1, fileContent: '' };
+  return '';
 }
 
 function getLocalFromModuleOrPathMap(
   mOrPMap: ModuleOrPathMap,
   moduleOrPath: string,
 ): string {
-  let localName: string = '';
-  Object.keys(mOrPMap).forEach(key => {
+  let localIdentifier: string = '';
+  Object.keys(mOrPMap).some(key => {
     if (mOrPMap[key] === moduleOrPath) {
-      localName = key;
+      localIdentifier = key;
+      return true;
     }
   });
-  return localName;
+  return localIdentifier;
 }
 
 /**
@@ -76,21 +76,20 @@ function getLocalFromModuleOrPathMap(
  * @returns 返回一个map内容是specifier以及对应的module或者path内容
  */
 export function getModuleOrPathMap(node: Program): ModuleOrPathMap {
-  let importDeclarationList: ImportDeclaration[] = node.body.filter(
-    item => item.type === 'ImportDeclaration',
+  let importDeclarationList: ImportDeclaration[] = node.body.filter(statment =>
+    isImportDeclaration(statment),
   ) as ImportDeclaration[];
   let modulelOrPathMap = importDeclarationList.reduce(
-    (acc: ModuleOrPathMap, cur) => {
+    (currentMap: ModuleOrPathMap, cur: ImportDeclaration) => {
       let moduleOrPath = cur.source.value;
-
       cur.specifiers
-        .filter(specifier => specifier.type === 'ImportDefaultSpecifier')
+        .filter(specifier => isImportDefaultSpecifier(specifier))
         .forEach(specifier => {
-          acc[specifier.local.name] = moduleOrPath;
+          currentMap[specifier.local.name] = moduleOrPath;
         });
-      return acc;
+      return currentMap;
     },
-    {},
+    Object.create(null),
   );
   return modulelOrPathMap;
 }
@@ -105,7 +104,7 @@ export function getModuleOrPathMap(node: Program): ModuleOrPathMap {
 export function getStoreEntryRelativePath(ast: File): string {
   let moduleOrPathMap: ModuleOrPathMap = {};
   let localVueIdentifier: string = '';
-  let storeRelativeEntry: string = '';
+  let storeRelativePath: string = '';
   traverse(ast, {
     Program(path) {
       let node: Program = path.node;
@@ -127,12 +126,12 @@ export function getStoreEntryRelativePath(ast: File): string {
         config.properties.forEach((property: ObjectProperty) => {
           let key: Identifier = property.key;
           let value: Identifier = property.value as Identifier;
-          if (key.name === 'store') {
-            storeRelativeEntry = moduleOrPathMap[value.name];
+          if (isIdentifier(value) && key.name === 'store') {
+            storeRelativePath = moduleOrPathMap[value.name];
           }
         });
       }
     },
   });
-  return storeRelativeEntry;
+  return storeRelativePath;
 }
