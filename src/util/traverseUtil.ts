@@ -13,9 +13,10 @@ import {
   ObjectExpression,
 } from '@babel/types';
 import { StoreAstMap } from '../type';
-import { ParseModuleParam } from '../traverse/modules';
+import { ParseModuleParam } from '../traverse/normal/modules';
 
 export function getFileContent(abPath: string): string {
+  let fileContent = '';
   if (!fs.existsSync(abPath)) {
     if (fs.existsSync(abPath + '.js')) {
       abPath += '.js';
@@ -23,9 +24,11 @@ export function getFileContent(abPath: string): string {
       abPath += '/index.js';
     }
   }
-  let fileContent = fs.readFileSync(abPath, {
-    encoding: 'utf8',
-  });
+  if (fs.existsSync(abPath) && fs.statSync(abPath).isFile()) {
+    fileContent = fs.readFileSync(abPath, {
+      encoding: 'utf8',
+    });
+  }
   return fileContent;
 }
 export function getFileLines(fileContent: string): string[] {

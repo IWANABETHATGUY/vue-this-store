@@ -15,7 +15,7 @@ import {
   getAbsolutePath,
   hasNuxtConfig,
 } from './util/commonUtil';
-import { parseModuleAst, StoreTreeInfo } from './traverse/modules';
+import { parseModuleAst, StoreTreeInfo } from './traverse/normal/modules';
 import { getVuexConfig } from './util/traverseUtil';
 import { VueThisStoreStatusBarItem } from './statusBarItem';
 import { generateWatcher } from './watcher';
@@ -253,11 +253,16 @@ export default class VueThis$Store {
    */
   private startFromEntry(): [string, StoreTreeInfo] {
     if (hasNuxtConfig(this._rootPath)) {
-      this.setEntrancePath(path.resolve(this._rootPath, 'nuxt.config.js'));
+      this.setEntrancePath(path.resolve(this._rootPath, 'store'));
       this._mode = 'nuxt';
+      return this.generateNuxtStoreInfo();
     } else {
       return this.generateNormalStoreInfo();
     }
+  }
+
+  generateNuxtStoreInfo(): [string, StoreTreeInfo] {
+    return [this._entrancePath, emptyModule];
   }
 
   private generateNormalStoreInfo(): [string, StoreTreeInfo] {

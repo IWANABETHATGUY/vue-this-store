@@ -6,7 +6,7 @@ import {
   CompletionItemProvider,
   CompletionContext,
 } from 'vscode';
-import { StoreTreeInfo } from '../traverse/modules';
+import { StoreTreeInfo } from '../traverse/normal/modules';
 import { getNextNamespace, CursorInfo } from '../util/completionUtil';
 import { getCursorInfoFromRegExp } from './mutationsProvider';
 import {

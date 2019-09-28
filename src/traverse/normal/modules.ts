@@ -5,7 +5,7 @@ import {
   getFileDefinationAstMap,
   getModuleOrPathMap,
   transformShorthand,
-} from '../util/traverseUtil';
+} from '../../util/traverseUtil';
 import {
   ObjectExpression,
   ObjectProperty,
@@ -16,7 +16,7 @@ import {
   BooleanLiteral,
   StringLiteral,
 } from '@babel/types';
-import { StoreAstMap, ModuleOrPathMap } from '../type';
+import { StoreAstMap, ModuleOrPathMap } from '../../type';
 import { walkFile, parseState } from './state';
 import { parseGetters } from './getters';
 import { walkMutationsFile, parseMutations } from './mutations';

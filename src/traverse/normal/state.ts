@@ -5,7 +5,7 @@ import {
   getFileDefinationAstMap,
   getModuleOrPathMap,
   transformShorthand,
-} from '../util/traverseUtil';
+} from '../../util/traverseUtil';
 import {
   ExportDefaultDeclaration,
   objectExpression,
@@ -13,7 +13,7 @@ import {
   ObjectProperty,
 } from '@babel/types';
 
-function walkFile(base: string, relative: string = '') {
+export function walkFile(base: string, relative: string = '') {
   let filename = getAbsolutePath(base, relative);
   let fileContent = getFileContent(filename);
   let ast = getAst(fileContent);
@@ -31,14 +31,14 @@ function walkFile(base: string, relative: string = '') {
   };
 }
 
-export function parseGetters(objAst: ObjectExpression, lileOfFile: string[]) {
-  let getterInfoList = [];
+export function parseState(objAst: ObjectExpression, lileOfFile: string[]) {
+  let stateInfoList = [];
   objAst.properties.forEach((property: ObjectProperty) => {
     let loc = property.loc;
-    getterInfoList.push({
+    stateInfoList.push({
       rowKey: property.key.name,
       defination: lileOfFile.slice(loc.start.line - 1, loc.end.line).join('\n'),
     });
   });
-  return getterInfoList;
+  return stateInfoList;
 }

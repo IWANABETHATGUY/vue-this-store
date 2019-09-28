@@ -1,4 +1,4 @@
-import { StoreTreeInfo } from '../traverse/modules';
+import { StoreTreeInfo } from '../traverse/normal/modules';
 import { getMutationsFromNameSpace } from './mutationsProvider';
 import { parse } from '@babel/parser';
 import generator from '@babel/generator';
@@ -24,7 +24,7 @@ import {
 } from 'vscode';
 import { getGettersFromNameSpace } from './gettersProvider';
 import { getActionsFromNameSpace } from './actionsProvider';
-import { parseState } from '../traverse/state';
+import { parseState } from '../traverse/normal/state';
 import { getStateFromNameSpace } from './stateProvider';
 type MapProperyInfo = {
   key: string;

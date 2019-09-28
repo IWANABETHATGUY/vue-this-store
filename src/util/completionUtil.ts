@@ -1,4 +1,4 @@
-import { StoreTreeInfo } from '../traverse/modules';
+import { StoreTreeInfo } from '../traverse/normal/modules';
 import * as vscode from 'vscode';
 import { ObjectProperty, File, ExpressionStatement, CallExpression } from '@babel/types';
 

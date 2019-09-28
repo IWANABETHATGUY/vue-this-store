@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { StoreTreeInfo } from '../traverse/modules';
+import { StoreTreeInfo } from '../traverse/normal/modules';
 import {
   getNextNamespace,
   getPositionIndex,

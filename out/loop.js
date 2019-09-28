@@ -12,7 +12,7 @@ const path = require("path");
 const fs = require("fs");
 const vscode_1 = require("vscode");
 const commonUtil_1 = require("./util/commonUtil");
-const modules_1 = require("./traverse/modules");
+const modules_1 = require("./traverse/normal/modules");
 const traverseUtil_1 = require("./util/traverseUtil");
 const statusBarItem_1 = require("./statusBarItem");
 const watcher_1 = require("./watcher");
@@ -135,12 +135,16 @@ class VueThis$Store {
      */
     startFromEntry() {
         if (commonUtil_1.hasNuxtConfig(this._rootPath)) {
-            this.setEntrancePath(path.resolve(this._rootPath, 'nuxt.config.js'));
+            this.setEntrancePath(path.resolve(this._rootPath, 'store'));
             this._mode = 'nuxt';
+            return this.generateNuxtStoreInfo();
         }
         else {
             return this.generateNormalStoreInfo();
         }
+    }
+    generateNuxtStoreInfo() {
+        return [this._entrancePath, emptyModule];
     }
     generateNormalStoreInfo() {
         if (!this.attemptEntryPath()) {
