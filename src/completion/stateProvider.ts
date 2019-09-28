@@ -77,10 +77,10 @@ export class StoreStateProvider implements CompletionItemProvider {
           fullNamespace,
         ).map(stateInfo => {
           let stateCompletion = new CompletionItem(
-            stateInfo.rowKey,
+            stateInfo.identifier,
             CompletionItemKind.Variable,
           );
-          stateCompletion.sortText = `1${stateInfo.rowKey}`;
+          stateCompletion.sortText = `1${stateInfo.identifier}`;
           stateCompletion.documentation = stateInfo.defination
           stateCompletion.detail = 'state';
           return stateCompletion;
@@ -140,12 +140,12 @@ export class storeMapStateProvider implements CompletionItemProvider {
           fullNamespace,
         ).map(stateInfo => {
           let stateCompletion = new CompletionItem(
-            stateInfo.rowKey,
+            stateInfo.identifier,
             CompletionItemKind.Variable,
           );
           stateCompletion.documentation = stateInfo.defination
           stateCompletion.detail = 'state';
-          stateCompletion.sortText = `1${stateInfo.rowKey}`
+          stateCompletion.sortText = `1${stateInfo.identifier}`
           return stateCompletion;
         });
       }

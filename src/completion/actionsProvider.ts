@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { StoreTreeInfo } from '../traverse/normal/modules';
+import { StoreTreeInfo, ActionInfo } from '../traverse/normal/modules';
 import {
   getNextNamespace,
   getPositionIndex,
@@ -58,7 +58,7 @@ function getDispatchCursorInfo(commitAst: File, relativePos: number) {
   return null;
 }
 export function getActionsFromNameSpace(obj: StoreTreeInfo, namespace: string) {
-  let actionInfoList = [];
+  let actionInfoList: ActionInfo[] = [];
   if (obj.namespace === namespace && obj.actions) {
     actionInfoList.push(...obj.actions);
   }
@@ -126,12 +126,12 @@ export class StoreActionsProvider implements vscode.CompletionItemProvider {
           fullNamespace,
         ).map(actionInfo => {
           let actionCompletion = new vscode.CompletionItem(
-            actionInfo.rowKey,
+            actionInfo.identifier,
             vscode.CompletionItemKind.Method,
           );
           actionCompletion.documentation = actionInfo.defination
           actionCompletion.detail = 'action';
-          actionCompletion.sortText = `1${actionInfo.rowKey}`;
+          actionCompletion.sortText = `1${actionInfo.identifier}`;
           return actionCompletion;
         });
       }
@@ -184,12 +184,12 @@ export class StoreMapActionsProvider implements vscode.CompletionItemProvider {
           fullNamespace,
         ).map(actionInfo => {
           let actionCompletion = new vscode.CompletionItem(
-            actionInfo.rowKey,
+            actionInfo.identifier,
             vscode.CompletionItemKind.Method,
           );
           actionCompletion.documentation = actionInfo.defination
           actionCompletion.detail = 'action';
-          actionCompletion.sortText = `1${actionInfo.rowKey}`;
+          actionCompletion.sortText = `1${actionInfo.identifier}`;
           return actionCompletion;
         });
       }

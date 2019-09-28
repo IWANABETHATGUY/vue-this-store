@@ -12,6 +12,7 @@ import {
   ObjectProperty,
 } from '@babel/types';
 import { getAstOfCode } from '../../util/commonUtil';
+import { GetterInfo } from './modules';
 
 export function walkFile(base: string, relative: string = '') {
   let filename = getAbsolutePath(base, relative);
@@ -32,11 +33,11 @@ export function walkFile(base: string, relative: string = '') {
 }
 
 export function parseState(objAst: ObjectExpression, lileOfFile: string[]) {
-  let stateInfoList = [];
+  let stateInfoList: GetterInfo[] = [];
   objAst.properties.forEach((property: ObjectProperty) => {
     let loc = property.loc;
     stateInfoList.push({
-      rowKey: property.key.name,
+      identifier: property.key.name,
       defination: lileOfFile.slice(loc.start.line - 1, loc.end.line).join('\n'),
     });
   });

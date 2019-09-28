@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { StoreTreeInfo } from '../traverse/normal/modules';
+import { StoreTreeInfo, MutationInfo } from '../traverse/normal/modules';
 import {
   getNextNamespace,
   getPositionIndex,
@@ -111,7 +111,7 @@ function getCommitCursorInfo(commitAst: File, relativePos: number) {
   return null;
 }
 export function getMutationsFromNameSpace(obj: StoreTreeInfo, namespace: string) {
-  let mutationInfoList = [];
+  let mutationInfoList: MutationInfo[] = [];
   if (obj.namespace === namespace && obj.mutations) {
     mutationInfoList.push(...obj.mutations);
   }
@@ -166,12 +166,12 @@ export class StoreMutationsProvider implements vscode.CompletionItemProvider {
           fullNamespace,
         ).map(mutationInfo => {
           let mutationCompletion = new vscode.CompletionItem(
-            mutationInfo.rowKey,
+            mutationInfo.identifier,
             vscode.CompletionItemKind.Method,
           );
           mutationCompletion.documentation = mutationInfo.defination
           mutationCompletion.detail = 'mutation';
-          mutationCompletion.sortText = `1${mutationInfo.rowKey}`;
+          mutationCompletion.sortText = `1${mutationInfo.identifier}`;
           return mutationCompletion;
         });
       }
@@ -226,12 +226,12 @@ export class StoreMapMutationsProvider
           fullNamespace,
         ).map(mutationInfo => {
           let mutationCompletion = new vscode.CompletionItem(
-            mutationInfo.rowKey,
+            mutationInfo.identifier,
             vscode.CompletionItemKind.Method,
           );
           mutationCompletion.documentation = mutationInfo.defination
           mutationCompletion.detail = 'mutation';
-          mutationCompletion.sortText = `1${mutationInfo.rowKey}`;
+          mutationCompletion.sortText = `1${mutationInfo.identifier}`;
           return mutationCompletion;
         });
       }

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { StoreTreeInfo } from '../traverse/normal/modules';
+import { StoreTreeInfo, GetterInfo } from '../traverse/normal/modules';
 import {
   getModuleFromPath,
   getNextNamespace,
@@ -8,7 +8,7 @@ import {
 import { getCursorInfoFromRegExp } from './mutationsProvider';
 
 export function getGettersFromNameSpace(obj: StoreTreeInfo, namespace: string) {
-  let getterInfoList = [];
+  let getterInfoList: GetterInfo[] = [];
   if (obj.namespace === namespace && obj.getters) {
     getterInfoList.push(...obj.getters);
   }
@@ -56,11 +56,11 @@ export class StoreGettersProvider implements vscode.CompletionItemProvider {
     return getters
       ? getters.map(getterInfo => {
           let getterCompletion = new vscode.CompletionItem(
-            getterInfo.rowKey,
+            getterInfo.identifier,
             vscode.CompletionItemKind.Variable,
           );
           getterCompletion.documentation = getterInfo.defination
-          getterCompletion.sortText = `1${getterInfo.rowKey}`;
+          getterCompletion.sortText = `1${getterInfo.identifier}`;
           return getterCompletion;
         })
       : [];
@@ -112,12 +112,12 @@ export class StoreMapGettersProvider implements vscode.CompletionItemProvider {
           fullNamespace,
         ).map(getterInfo => {
           let getterCompletion = new vscode.CompletionItem(
-            getterInfo.rowKey,
+            getterInfo.identifier,
             vscode.CompletionItemKind.Variable,
           );
           getterCompletion.documentation = getterInfo.defination
           getterCompletion.detail = 'getter';
-          getterCompletion.sortText = `1${getterInfo.rowKey}`;
+          getterCompletion.sortText = `1${getterInfo.identifier}`;
           return getterCompletion;
         });
       }

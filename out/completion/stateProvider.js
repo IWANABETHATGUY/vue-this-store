@@ -34,8 +34,8 @@ class StoreStateProvider {
             });
             if (!cursorInfo.isNamespace) {
                 stateCompletionList = getStateFromNameSpace(this.storeInfo, fullNamespace).map(stateInfo => {
-                    let stateCompletion = new vscode_1.CompletionItem(stateInfo.rowKey, vscode_1.CompletionItemKind.Variable);
-                    stateCompletion.sortText = `1${stateInfo.rowKey}`;
+                    let stateCompletion = new vscode_1.CompletionItem(stateInfo.identifier, vscode_1.CompletionItemKind.Variable);
+                    stateCompletion.sortText = `1${stateInfo.identifier}`;
                     stateCompletion.documentation = stateInfo.defination;
                     stateCompletion.detail = 'state';
                     return stateCompletion;
@@ -72,10 +72,10 @@ class storeMapStateProvider {
             });
             if (!cursorInfo.isNamespace) {
                 stateCompletionList = getStateFromNameSpace(this.storeInfo, fullNamespace).map(stateInfo => {
-                    let stateCompletion = new vscode_1.CompletionItem(stateInfo.rowKey, vscode_1.CompletionItemKind.Variable);
+                    let stateCompletion = new vscode_1.CompletionItem(stateInfo.identifier, vscode_1.CompletionItemKind.Variable);
                     stateCompletion.documentation = stateInfo.defination;
                     stateCompletion.detail = 'state';
-                    stateCompletion.sortText = `1${stateInfo.rowKey}`;
+                    stateCompletion.sortText = `1${stateInfo.identifier}`;
                     return stateCompletion;
                 });
             }

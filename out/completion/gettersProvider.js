@@ -45,9 +45,9 @@ class StoreGettersProvider {
         let getters = newModule.getters;
         return getters
             ? getters.map(getterInfo => {
-                let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Variable);
+                let getterCompletion = new vscode.CompletionItem(getterInfo.identifier, vscode.CompletionItemKind.Variable);
                 getterCompletion.documentation = getterInfo.defination;
-                getterCompletion.sortText = `1${getterInfo.rowKey}`;
+                getterCompletion.sortText = `1${getterInfo.identifier}`;
                 return getterCompletion;
             })
             : [];
@@ -79,10 +79,10 @@ class StoreMapGettersProvider {
             });
             if (!cursorInfo.isNamespace) {
                 getterCompletionList = getGettersFromNameSpace(this.storeInfo, fullNamespace).map(getterInfo => {
-                    let getterCompletion = new vscode.CompletionItem(getterInfo.rowKey, vscode.CompletionItemKind.Variable);
+                    let getterCompletion = new vscode.CompletionItem(getterInfo.identifier, vscode.CompletionItemKind.Variable);
                     getterCompletion.documentation = getterInfo.defination;
                     getterCompletion.detail = 'getter';
-                    getterCompletion.sortText = `1${getterInfo.rowKey}`;
+                    getterCompletion.sortText = `1${getterInfo.identifier}`;
                     return getterCompletion;
                 });
             }

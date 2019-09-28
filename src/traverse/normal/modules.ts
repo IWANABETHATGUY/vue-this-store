@@ -25,14 +25,38 @@ import { getAstOfCode } from '../../util/commonUtil';
 export interface StoreTreeInfo {
   namespace?: string;
   modules?: ModulesInfo;
-  state?: any[];
-  getters?: any[];
-  mutations?: any[];
-  actions?: any[];
+  state?: StateInfo[];
+  getters?: GetterInfo[];
+  mutations?: MutationInfo[];
+  actions?: ActionInfo[];
   [prop: string]: {};
 }
+
+export interface StateInfo {
+  identifier: string;
+  defination: string;
+}
+
+export interface GetterInfo {
+  identifier: string;
+  defination: string;
+}
+
+export interface MutationInfo {
+  identifier: string;
+  defination: string;
+  params: string[];
+  functionDeclarator: string;
+}
+
+export interface ActionInfo {
+  identifier: string;
+  defination: string;
+  params: string[];
+  functionDeclarator: string;
+}
 export interface ModulesInfo {
-  [prop: string]: StoreTreeInfo;
+  [module: string]: StoreTreeInfo;
 }
 export interface ParseModuleParam {
   objAst: ObjectExpression;

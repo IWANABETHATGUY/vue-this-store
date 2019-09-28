@@ -92,10 +92,10 @@ class StoreActionsProvider {
             });
             if (!cursorInfo.isNamespace) {
                 actionCompletionList = getActionsFromNameSpace(this.storeInfo, fullNamespace).map(actionInfo => {
-                    let actionCompletion = new vscode.CompletionItem(actionInfo.rowKey, vscode.CompletionItemKind.Method);
+                    let actionCompletion = new vscode.CompletionItem(actionInfo.identifier, vscode.CompletionItemKind.Method);
                     actionCompletion.documentation = actionInfo.defination;
                     actionCompletion.detail = 'action';
-                    actionCompletion.sortText = `1${actionInfo.rowKey}`;
+                    actionCompletion.sortText = `1${actionInfo.identifier}`;
                     return actionCompletion;
                 });
             }
@@ -128,10 +128,10 @@ class StoreMapActionsProvider {
             });
             if (!cursorInfo.isNamespace) {
                 getterCompletionList = getActionsFromNameSpace(this.storeInfo, fullNamespace).map(actionInfo => {
-                    let actionCompletion = new vscode.CompletionItem(actionInfo.rowKey, vscode.CompletionItemKind.Method);
+                    let actionCompletion = new vscode.CompletionItem(actionInfo.identifier, vscode.CompletionItemKind.Method);
                     actionCompletion.documentation = actionInfo.defination;
                     actionCompletion.detail = 'action';
-                    actionCompletion.sortText = `1${actionInfo.rowKey}`;
+                    actionCompletion.sortText = `1${actionInfo.identifier}`;
                     return actionCompletion;
                 });
             }
