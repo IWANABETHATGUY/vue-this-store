@@ -38,6 +38,7 @@ import {
 import { ThisProvider, ThisCompletionInfo } from './completion/thisProvider';
 import { MutationsSignatureProvider } from './signature/mutationsProvider';
 import { StatusBarItemStatus } from './type';
+import { getNuxtStoreInfoFromDirectory } from './traverse/nuxt';
 
 const emptyModule: StoreTreeInfo = {
   namespace: '',
@@ -266,7 +267,8 @@ export default class VueThis$Store {
   }
 
   generateNuxtStoreInfo(): [string, StoreTreeInfo] {
-    return [this._entrancePath, emptyModule];
+    const storeTreeInfo = getNuxtStoreInfoFromDirectory(this._entrancePath);
+    return [this._entrancePath, storeTreeInfo];
   }
 
   private generateNormalStoreInfo(): [string, StoreTreeInfo] {
