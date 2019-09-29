@@ -19,6 +19,7 @@ import {
 } from '@babel/types';
 import { parseNuxtState } from './state';
 import { parseNuxtMutationsOrActions } from './mutationsOrActions';
+import { parseNuxtGetters } from './getters';
 
 export function getNuxtStoreInfoFromDirectory(
   storeRootPath: string,
@@ -78,6 +79,9 @@ function getNuxtStoreInfoFromFile(FileRootPath: string): StoreTreeInfo {
               actions.push(
                 ...parseNuxtMutationsOrActions(firstDeclaration, fileContent),
               );
+              break;
+            case 'getters':
+              getters.push(...parseNuxtGetters(firstDeclaration, fileContent));
               break;
           }
         }
