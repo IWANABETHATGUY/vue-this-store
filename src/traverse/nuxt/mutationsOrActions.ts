@@ -1,4 +1,4 @@
-import { MutationInfo } from '../normal/modules';
+import { MutationInfo, ActionInfo } from '../normal/modules';
 import {
   VariableDeclarator,
   isObjectExpression,
@@ -8,11 +8,11 @@ import {
   BaseNode,
 } from '@babel/types';
 
-export function parseNuxtMutations(
+export function parseNuxtMutationsOrActions(
   declarator: VariableDeclarator,
   sourceCode: string,
-): MutationInfo[] {
-  const murtationInfoList: MutationInfo[] = [];
+): MutationInfo[] | ActionInfo[] {
+  let mOrAInfoList: MutationInfo[] | ActionInfo[] = [];
   if (isObjectExpression(declarator.init)) {
     const objectExpression = declarator.init;
     objectExpression.properties.forEach((property: ObjectMethod) => {
@@ -21,7 +21,7 @@ export function parseNuxtMutations(
         let paramList = params.map(param =>
           sourceCode.slice(param.start, param.end),
         );
-        murtationInfoList.push({
+        mOrAInfoList.push({
           functionDeclarator: `${property.key.name} (${paramList.join(', ')})`,
           params: paramList,
           identifier: property.key.name,
@@ -30,5 +30,5 @@ export function parseNuxtMutations(
       }
     });
   }
-  return murtationInfoList;
+  return mOrAInfoList;
 }

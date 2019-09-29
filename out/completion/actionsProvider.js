@@ -123,7 +123,7 @@ class StoreMapActionsProvider {
             let namespaceCompletionList = completionUtil_1.getNextNamespace(this.storeInfo, fullNamespace).map(nextNS => {
                 let NSCompletion = new vscode.CompletionItem(nextNS, vscode.CompletionItemKind.Module);
                 NSCompletion.detail = 'module';
-                NSCompletion.sortText = `1${nextNS}`;
+                NSCompletion.sortText = `0${nextNS}`;
                 return NSCompletion;
             });
             if (!cursorInfo.isNamespace) {

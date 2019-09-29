@@ -175,7 +175,7 @@ export class StoreMapActionsProvider implements vscode.CompletionItemProvider {
           vscode.CompletionItemKind.Module,
         );
         NSCompletion.detail = 'module';
-        NSCompletion.sortText = `1${nextNS}`;
+        NSCompletion.sortText = `0${nextNS}`;
         return NSCompletion;
       });
       if (!cursorInfo.isNamespace) {
