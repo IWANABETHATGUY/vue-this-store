@@ -18,6 +18,8 @@ import {
   isIdentifier,
 } from '@babel/types';
 import { parseNuxtState } from './state';
+import { parseNuxtMutationsOrActions } from './mutationsOrActions';
+import { parseNuxtGetters } from './getters';
 
 export function getNuxtStoreInfoFromDirectory(
   storeRootPath: string,
@@ -67,6 +69,19 @@ function getNuxtStoreInfoFromFile(FileRootPath: string): StoreTreeInfo {
           switch (name) {
             case 'state':
               state.push(...parseNuxtState(firstDeclaration, fileContent));
+              break;
+            case 'mutations':
+              mutations.push(
+                ...parseNuxtMutationsOrActions(firstDeclaration, fileContent),
+              );
+              break;
+            case 'actions':
+              actions.push(
+                ...parseNuxtMutationsOrActions(firstDeclaration, fileContent),
+              );
+              break;
+            case 'getters':
+              getters.push(...parseNuxtGetters(firstDeclaration, fileContent));
               break;
           }
         }
