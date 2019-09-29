@@ -29,7 +29,6 @@ export interface StoreTreeInfo {
   getters?: GetterInfo[];
   mutations?: MutationInfo[];
   actions?: ActionInfo[];
-  [prop: string]: {};
 }
 
 export interface StateInfo {

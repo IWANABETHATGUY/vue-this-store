@@ -1,17 +1,7 @@
 import { BaseNode } from '@babel/types';
 
-export interface StateInfo {
-  stateKey: string;
-  defination: string;
-}
-
 interface FileInfo {
   abPath: string;
-}
-export interface StoreInfo extends FileInfo {
-  state: StateInfo[];
-  modules?: ModulesInfo;
-  [propname: string]: any;
 }
 
 export interface ModulesInfo extends FileInfo {

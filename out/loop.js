@@ -22,6 +22,7 @@ const mutationsProvider_1 = require("./completion/mutationsProvider");
 const actionsProvider_1 = require("./completion/actionsProvider");
 const thisProvider_1 = require("./completion/thisProvider");
 const mutationsProvider_2 = require("./signature/mutationsProvider");
+const nuxt_1 = require("./traverse/nuxt");
 const emptyModule = {
     namespace: '',
     state: [],
@@ -147,7 +148,8 @@ class VueThis$Store {
         }
     }
     generateNuxtStoreInfo() {
-        return [this._entrancePath, emptyModule];
+        const storeTreeInfo = nuxt_1.getNuxtStoreInfoFromDirectory(this._entrancePath);
+        return [this._entrancePath, storeTreeInfo];
     }
     generateNormalStoreInfo() {
         if (!this.attemptEntryPath()) {
