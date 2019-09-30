@@ -27,7 +27,7 @@ class StoreGettersProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position) {
-        let reg = /this\n?\s*\.\$store\n?\s*\.getters((?:\n?\s*\.[\w\$]*)+)/g;
+        let reg = /this\n?\s*\.\$store\n?\s*\.getters.\s*((?:[\w\$]+(?:\s*\.)?)+)/g;
         let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, stateProvider_1.getStateCursorInfo, 'regexp');
         // debugger
         if (cursorInfo) {
