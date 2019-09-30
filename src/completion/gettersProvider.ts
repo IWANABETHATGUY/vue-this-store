@@ -73,7 +73,7 @@ export class StoreGettersProvider implements vscode.CompletionItemProvider {
           );
           getterCompletion.sortText = `1${getterInfo.identifier}`;
           getterCompletion.documentation = getterInfo.defination
-          getterCompletion.detail = 'state';
+          getterCompletion.detail = 'getter';
           return getterCompletion;
         });
       }
