@@ -77,11 +77,12 @@ function getCommitCursorInfo(commitAst: File, relativePos: number) {
   let firstArg = args[0];
   if (firstArg.type === 'StringLiteral') {
     if (relativePos >= firstArg.start && relativePos < firstArg.end) {
+      const namespaceList = firstArg.value.split('/');
       return {
         isNamespace: false,
-        namespace: firstArg.value
-          .split('/')
-          .filter(ns => ns.length)
+        namespace: namespaceList
+          .slice(0, namespaceList.length - 1)
+          .filter(Boolean)
           .join('.'),
         secondNameSpace: '',
       };
@@ -110,7 +111,10 @@ function getCommitCursorInfo(commitAst: File, relativePos: number) {
   }
   return null;
 }
-export function getMutationsFromNameSpace(obj: StoreTreeInfo, namespace: string) {
+export function getMutationsFromNameSpace(
+  obj: StoreTreeInfo,
+  namespace: string,
+) {
   let mutationInfoList: MutationInfo[] = [];
   if (obj.namespace === namespace && obj.mutations) {
     mutationInfoList.push(...obj.mutations);
@@ -169,7 +173,7 @@ export class StoreMutationsProvider implements vscode.CompletionItemProvider {
             mutationInfo.identifier,
             vscode.CompletionItemKind.Method,
           );
-          mutationCompletion.documentation = mutationInfo.defination
+          mutationCompletion.documentation = mutationInfo.defination;
           mutationCompletion.detail = 'mutation';
           mutationCompletion.sortText = `1${mutationInfo.identifier}`;
           return mutationCompletion;
@@ -229,7 +233,7 @@ export class StoreMapMutationsProvider
             mutationInfo.identifier,
             vscode.CompletionItemKind.Method,
           );
-          mutationCompletion.documentation = mutationInfo.defination
+          mutationCompletion.documentation = mutationInfo.defination;
           mutationCompletion.detail = 'mutation';
           mutationCompletion.sortText = `1${mutationInfo.identifier}`;
           return mutationCompletion;

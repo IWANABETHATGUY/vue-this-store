@@ -53,11 +53,12 @@ function getCommitCursorInfo(commitAst, relativePos) {
     let firstArg = args[0];
     if (firstArg.type === 'StringLiteral') {
         if (relativePos >= firstArg.start && relativePos < firstArg.end) {
+            const namespaceList = firstArg.value.split('/');
             return {
                 isNamespace: false,
-                namespace: firstArg.value
-                    .split('/')
-                    .filter(ns => ns.length)
+                namespace: namespaceList
+                    .slice(0, namespaceList.length - 1)
+                    .filter(Boolean)
                     .join('.'),
                 secondNameSpace: '',
             };

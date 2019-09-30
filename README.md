@@ -75,3 +75,4 @@
 ## TODO
 - [x] 没有做getter 的命名空间的补全
 - [x] module中定义的action补全有点问题
+- [ ] mapstate 参数为ObjectExpression，且value 为 StringLiteral时没有做
