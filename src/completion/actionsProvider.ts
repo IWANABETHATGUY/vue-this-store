@@ -26,11 +26,12 @@ function getDispatchCursorInfo(commitAst: File, relativePos: number) {
   let firstArg = args[0];
   if (firstArg.type === 'StringLiteral') {
     if (relativePos >= firstArg.start && relativePos < firstArg.end) {
+      const namespaceList = firstArg.value.split('/');
       return {
         isNamespace: false,
-        namespace: firstArg.value
-          .split('/')
-          .filter(ns => ns.length)
+        namespace: namespaceList
+          .slice(0, namespaceList.length - 1)
+          .filter(Boolean)
           .join('.'),
       };
     }
@@ -85,7 +86,6 @@ export class StoreActionsProvider implements vscode.CompletionItemProvider {
     token: vscode.CancellationToken,
   ): vscode.CompletionItem[] {
     let docContent = document.getText();
-    //TODO: export default 也需要判断是否export default的是一个已经定义过的变量，而不是一个obj字面量
     let reg = /((?:this\.)?(?:\$store\.)\n?dispatch\([\s\S]*?\))/g;
     let match = null;
     let matchList = [];
@@ -100,6 +100,7 @@ export class StoreActionsProvider implements vscode.CompletionItemProvider {
     let posIndex = getPositionIndex(document, position);
     let commitExpression = whichCommit(matchList, posIndex);
     if (!commitExpression) return undefined;
+    // debugger;
     let commitAst = parse(commitExpression[0]);
     let cursorInfo = getDispatchCursorInfo(
       commitAst,
@@ -107,6 +108,7 @@ export class StoreActionsProvider implements vscode.CompletionItemProvider {
     );
     if (cursorInfo) {
       let fullNamespace = cursorInfo.namespace;
+
       let actionCompletionList = [];
       let namespaceCompletionList = getNextNamespace(
         this.storeInfo,
@@ -129,7 +131,7 @@ export class StoreActionsProvider implements vscode.CompletionItemProvider {
             actionInfo.identifier,
             vscode.CompletionItemKind.Method,
           );
-          actionCompletion.documentation = actionInfo.defination
+          actionCompletion.documentation = actionInfo.defination;
           actionCompletion.detail = 'action';
           actionCompletion.sortText = `1${actionInfo.identifier}`;
           return actionCompletion;
@@ -187,7 +189,7 @@ export class StoreMapActionsProvider implements vscode.CompletionItemProvider {
             actionInfo.identifier,
             vscode.CompletionItemKind.Method,
           );
-          actionCompletion.documentation = actionInfo.defination
+          actionCompletion.documentation = actionInfo.defination;
           actionCompletion.detail = 'action';
           actionCompletion.sortText = `1${actionInfo.identifier}`;
           return actionCompletion;

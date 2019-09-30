@@ -12,11 +12,12 @@ function getDispatchCursorInfo(commitAst, relativePos) {
     let firstArg = args[0];
     if (firstArg.type === 'StringLiteral') {
         if (relativePos >= firstArg.start && relativePos < firstArg.end) {
+            const namespaceList = firstArg.value.split('/');
             return {
                 isNamespace: false,
-                namespace: firstArg.value
-                    .split('/')
-                    .filter(ns => ns.length)
+                namespace: namespaceList
+                    .slice(0, namespaceList.length - 1)
+                    .filter(Boolean)
                     .join('.'),
             };
         }
@@ -65,7 +66,6 @@ class StoreActionsProvider {
     }
     provideCompletionItems(document, position, token) {
         let docContent = document.getText();
-        //TODO: export default 也需要判断是否export default的是一个已经定义过的变量，而不是一个obj字面量
         let reg = /((?:this\.)?(?:\$store\.)\n?dispatch\([\s\S]*?\))/g;
         let match = null;
         let matchList = [];
@@ -79,6 +79,7 @@ class StoreActionsProvider {
         let commitExpression = completionUtil_1.whichCommit(matchList, posIndex);
         if (!commitExpression)
             return undefined;
+        // debugger;
         let commitAst = parser_1.parse(commitExpression[0]);
         let cursorInfo = getDispatchCursorInfo(commitAst, posIndex - commitExpression.index);
         if (cursorInfo) {
