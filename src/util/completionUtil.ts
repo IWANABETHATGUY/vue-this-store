@@ -1,6 +1,12 @@
 import { StoreTreeInfo } from '../traverse/normal/modules';
 import * as vscode from 'vscode';
-import { ObjectProperty, File, ExpressionStatement, CallExpression } from '@babel/types';
+import {
+  ObjectProperty,
+  File,
+  ExpressionStatement,
+  CallExpression,
+} from '@babel/types';
+import { getSecondMapNamespace } from '../completion/stateProvider';
 
 export interface CursorInfo {
   match?: boolean;
@@ -9,7 +15,10 @@ export interface CursorInfo {
   secondNameSpace: string;
 }
 
-export function getModuleFromPath(obj: StoreTreeInfo, path: string[] | undefined): StoreTreeInfo | undefined {
+export function getModuleFromPath(
+  obj: StoreTreeInfo,
+  path: string[] | undefined,
+): StoreTreeInfo | undefined {
   if (path === undefined) {
     return obj;
   }
@@ -29,7 +38,8 @@ export function getNextNamespace(obj: StoreTreeInfo, namespace: string) {
   if (
     curObjNamespace &&
     curObjNamespace.startsWith(namespace) &&
-    curObjNamespaceList.length === namespace.split('.').filter(item => item.length).length + 1
+    curObjNamespaceList.length ===
+      namespace.split('.').filter(item => item.length).length + 1
   ) {
     nextNamespaceList.push(curObjNamespaceList[curObjNamespaceList.length - 1]);
   }
@@ -41,7 +51,10 @@ export function getNextNamespace(obj: StoreTreeInfo, namespace: string) {
   }
   return nextNamespaceList;
 }
-export function getPositionIndex(doc: vscode.TextDocument, position: vscode.Position) {
+export function getPositionIndex(
+  doc: vscode.TextDocument,
+  position: vscode.Position,
+) {
   let docContent = doc.getText();
   let posIndex = 0;
   docContent.split('\n').some((line, index) => {
@@ -52,11 +65,21 @@ export function getPositionIndex(doc: vscode.TextDocument, position: vscode.Posi
   return posIndex;
 }
 
-export function whichCommit(resMatch: RegExpExecArray[], posIndex: number, equal: boolean = true) {
+export function whichCommit(
+  resMatch: RegExpExecArray[],
+  posIndex: number,
+  equal: boolean = true,
+) {
   if (equal) {
-    return resMatch.filter(match => posIndex >= match.index && posIndex <= match.index + match[0].length)[0];
+    return resMatch.filter(
+      match =>
+        posIndex >= match.index && posIndex <= match.index + match[0].length,
+    )[0];
   }
-  return resMatch.filter(match => posIndex >= match.index && posIndex < match.index + match[0].length)[0];
+  return resMatch.filter(
+    match =>
+      posIndex >= match.index && posIndex < match.index + match[0].length,
+  )[0];
 }
 
 export function getMapGMACursorInfo(mapGetterAst: File, relativePos: number) {
@@ -78,28 +101,33 @@ export function getMapGMACursorInfo(mapGetterAst: File, relativePos: number) {
       })[0];
       if (cursorAtExp && cursorAtExp.type === 'StringLiteral') {
         retCursorInfo.match = true;
-        retCursorInfo.secondNameSpace = cursorAtExp.value
-          .split('/')
-          .filter(ns => ns.length)
-          .join('.');
+        retCursorInfo.secondNameSpace = getSecondMapNamespace(
+          cursorAtExp.value,
+        );
       }
     } else if (firstArg.type === 'StringLiteral' && !retCursorInfo.match) {
-      let cursorAtExp = relativePos >= firstArg.start && relativePos < firstArg.end;
+      let cursorAtExp =
+        relativePos >= firstArg.start && relativePos < firstArg.end;
       if (cursorAtExp) {
         retCursorInfo.match = true;
         retCursorInfo.isNamespace = true;
-        retCursorInfo.namespace = firstArg.value;
+        retCursorInfo.namespace = getSecondMapNamespace(firstArg.value);
       }
     } else if (firstArg.type === 'ObjectExpression' && !retCursorInfo.match) {
-      let cursorAtExp = firstArg.properties.filter((property: ObjectProperty) => {
-        return relativePos >= property.start && relativePos < property.end;
-      })[0];
-      if (cursorAtExp && cursorAtExp.type === 'ObjectProperty' && cursorAtExp.value.type === 'StringLiteral') {
+      let cursorAtExp = firstArg.properties.filter(
+        (property: ObjectProperty) => {
+          return relativePos >= property.start && relativePos < property.end;
+        },
+      )[0];
+      if (
+        cursorAtExp &&
+        cursorAtExp.type === 'ObjectProperty' &&
+        cursorAtExp.value.type === 'StringLiteral'
+      ) {
         retCursorInfo.match = true;
-        retCursorInfo.secondNameSpace = cursorAtExp.value.value
-          .split('/')
-          .filter(ns => ns.length)
-          .join('.');
+        retCursorInfo.secondNameSpace = getSecondMapNamespace(
+          cursorAtExp.value.value,
+        );
       }
     }
   } else if (args.length === 2) {
@@ -110,7 +138,7 @@ export function getMapGMACursorInfo(mapGetterAst: File, relativePos: number) {
       if (relativePos >= firstArg.start && relativePos < firstArg.end) {
         retCursorInfo.match = true;
         retCursorInfo.isNamespace = true;
-        retCursorInfo.namespace = firstArg.value;
+        retCursorInfo.namespace = getSecondMapNamespace(firstArg.value);
       }
       if (secondArg.type === 'ArrayExpression' && !retCursorInfo.match) {
         let cursorAtExp = secondArg.elements.filter(item => {
@@ -119,15 +147,19 @@ export function getMapGMACursorInfo(mapGetterAst: File, relativePos: number) {
         if (cursorAtExp && cursorAtExp.type === 'StringLiteral') {
           retCursorInfo.match = true;
           retCursorInfo.namespace = firstArg.value;
-          retCursorInfo.secondNameSpace = cursorAtExp.value
-            .split('/')
-            .filter(ns => ns.length)
-            .join('.');
+          retCursorInfo.secondNameSpace = getSecondMapNamespace(
+            cursorAtExp.value,
+          );
         }
-      } else if (secondArg.type === 'ObjectExpression' && !retCursorInfo.match) {
-        let cursorAtProperty = secondArg.properties.filter((property: ObjectProperty) => {
-          return relativePos >= property.start && relativePos < property.end;
-        })[0];
+      } else if (
+        secondArg.type === 'ObjectExpression' &&
+        !retCursorInfo.match
+      ) {
+        let cursorAtProperty = secondArg.properties.filter(
+          (property: ObjectProperty) => {
+            return relativePos >= property.start && relativePos < property.end;
+          },
+        )[0];
         if (
           cursorAtProperty &&
           cursorAtProperty.type === 'ObjectProperty' &&
@@ -135,10 +167,9 @@ export function getMapGMACursorInfo(mapGetterAst: File, relativePos: number) {
         ) {
           retCursorInfo.match = true;
           retCursorInfo.namespace = firstArg.value;
-          retCursorInfo.secondNameSpace = cursorAtProperty.value.value
-            .split('/')
-            .filter(ns => ns.length)
-            .join('.');
+          retCursorInfo.secondNameSpace = getSecondMapNamespace(
+            cursorAtProperty.value.value,
+          );
         }
       }
     }

@@ -12,7 +12,8 @@ class StoreStateProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position) {
-        let reg = /this\n?\s*\.\$store\n?\s*\.state.\s*((?:[\w\$]+(?:\s*\.)?)+)/g;
+        let reg = /this\s*\.\$store\s*\.state\.\s*((?:[\w\$]+(?:\s*\.)?)*)/g;
+        // debugger
         let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, getStateCursorInfo, 'regexp');
         if (cursorInfo) {
             let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
@@ -112,7 +113,9 @@ function getStateCursorInfo(regExecArray) {
     return {
         isNamespace: false,
         namespace: '',
-        secondNameSpace: secondNameSpaceList.slice(0, secondNameSpaceList.length - 1).join('.')
+        secondNameSpace: secondNameSpaceList
+            .slice(0, secondNameSpaceList.length - 1)
+            .join('.'),
     };
 }
 exports.getStateCursorInfo = getStateCursorInfo;
@@ -131,10 +134,7 @@ function getMapStateCursorInfo(mapStateAst, relativePos) {
                 return {
                     isNamespace: false,
                     namespace: '',
-                    secondNameSpace: cursorAtExp.value
-                        .split('/')
-                        .filter(ns => ns.length)
-                        .join('.'),
+                    secondNameSpace: getSecondMapNamespace(cursorAtExp.value),
                 };
             }
         }
@@ -143,7 +143,7 @@ function getMapStateCursorInfo(mapStateAst, relativePos) {
             if (cursorAtExp) {
                 return {
                     isNamespace: true,
-                    namespace: firstArg.value,
+                    namespace: getSecondMapNamespace(firstArg.value),
                     secondNameSpace: '',
                 };
             }
@@ -159,7 +159,7 @@ function getMapStateCursorInfo(mapStateAst, relativePos) {
             if (relativePos >= firstArg.start && relativePos < firstArg.end) {
                 return {
                     isNamespace: true,
-                    namespace: firstArg.value,
+                    namespace: getSecondMapNamespace(firstArg.value),
                     secondNameSpace: '',
                 };
             }
@@ -171,10 +171,7 @@ function getMapStateCursorInfo(mapStateAst, relativePos) {
                     return {
                         isNamespace: false,
                         namespace: firstArg.value,
-                        secondNameSpace: cursorAtExp.value
-                            .split('/')
-                            .filter(ns => ns.length)
-                            .join('.'),
+                        secondNameSpace: getSecondMapNamespace(cursorAtExp.value),
                     };
                 }
             }
@@ -185,6 +182,11 @@ function getMapStateCursorInfo(mapStateAst, relativePos) {
     }
     return null;
 }
+function getSecondMapNamespace(value) {
+    const secondNameSpaceList = value.split('/').map(ns => ns.trim());
+    return secondNameSpaceList.slice(0, secondNameSpaceList.length - 1).join('.');
+}
+exports.getSecondMapNamespace = getSecondMapNamespace;
 function getObjectExpressionCursorInfo(mapStateAst, relativePos, arg, namespaceArg) {
     let triggerProperty = null;
     let cursorAtExp = arg.properties.filter(property => {

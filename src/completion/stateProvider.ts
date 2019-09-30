@@ -34,7 +34,8 @@ export class StoreStateProvider implements CompletionItemProvider {
     document: TextDocument,
     position: Position,
   ): CompletionItem[] {
-    let reg = /this\n?\s*\.\$store\n?\s*\.state.\s*((?:[\w\$]+(?:\s*\.)?)+)/g;
+    let reg = /this\s*\.\$store\s*\.state\.\s*((?:[\w\$]+(?:\s*\.)?)*)/g;
+    // debugger
     let cursorInfo = getCursorInfoFromRegExp(
       reg,
       document,
@@ -71,7 +72,7 @@ export class StoreStateProvider implements CompletionItemProvider {
             CompletionItemKind.Variable,
           );
           stateCompletion.sortText = `1${stateInfo.identifier}`;
-          stateCompletion.documentation = stateInfo.defination
+          stateCompletion.documentation = stateInfo.defination;
           stateCompletion.detail = 'state';
           return stateCompletion;
         });
@@ -97,7 +98,6 @@ export class storeMapStateProvider implements CompletionItemProvider {
   ): CompletionItem[] {
     console.time('mapState');
     let reg = /\bmapState\(([\'\"](.*)[\'\"](?:,\s*)?)?((\[[\s\S]*?\])|(\{[\s\S]*?\}))?\s*\)/g;
-
     let cursorInfo = getCursorInfoFromRegExp(
       reg,
       document,
@@ -133,9 +133,9 @@ export class storeMapStateProvider implements CompletionItemProvider {
             stateInfo.identifier,
             CompletionItemKind.Variable,
           );
-          stateCompletion.documentation = stateInfo.defination
+          stateCompletion.documentation = stateInfo.defination;
           stateCompletion.detail = 'state';
-          stateCompletion.sortText = `1${stateInfo.identifier}`
+          stateCompletion.sortText = `1${stateInfo.identifier}`;
           return stateCompletion;
         });
       }
@@ -173,15 +173,15 @@ export function getStateFromNameSpace(obj: StoreTreeInfo, namespace: string) {
   return [];
 }
 
-export function getStateCursorInfo(
-  regExecArray: RegExpExecArray,
-): CursorInfo {
+export function getStateCursorInfo(regExecArray: RegExpExecArray): CursorInfo {
   const secondNameSpaceList = regExecArray[1].split('.').map(ns => ns.trim());
 
   return {
     isNamespace: false,
     namespace: '',
-    secondNameSpace: secondNameSpaceList.slice(0, secondNameSpaceList.length - 1).join('.')
+    secondNameSpace: secondNameSpaceList
+      .slice(0, secondNameSpaceList.length - 1)
+      .join('.'),
   };
 }
 function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
@@ -191,7 +191,6 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
   let args = callExp.arguments;
   if (args.length === 1) {
     let firstArg = args[0];
-
     if (firstArg.type === 'ArrayExpression') {
       let cursorAtExp = firstArg.elements.filter(item => {
         return relativePos >= item.start && relativePos < item.end;
@@ -200,10 +199,7 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
         return {
           isNamespace: false,
           namespace: '',
-          secondNameSpace: cursorAtExp.value
-            .split('/')
-            .filter(ns => ns.length)
-            .join('.'),
+          secondNameSpace: getSecondMapNamespace(cursorAtExp.value),
         };
       }
     } else if (firstArg.type === 'StringLiteral') {
@@ -212,7 +208,7 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
       if (cursorAtExp) {
         return {
           isNamespace: true,
-          namespace: firstArg.value,
+          namespace: getSecondMapNamespace(firstArg.value),
           secondNameSpace: '',
         };
       }
@@ -226,7 +222,7 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
       if (relativePos >= firstArg.start && relativePos < firstArg.end) {
         return {
           isNamespace: true,
-          namespace: firstArg.value,
+          namespace: getSecondMapNamespace(firstArg.value),
           secondNameSpace: '',
         };
       }
@@ -238,10 +234,7 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
           return {
             isNamespace: false,
             namespace: firstArg.value,
-            secondNameSpace: cursorAtExp.value
-              .split('/')
-              .filter(ns => ns.length)
-              .join('.'),
+            secondNameSpace: getSecondMapNamespace(cursorAtExp.value),
           };
         }
       } else if (secondArg.type === 'ObjectExpression') {
@@ -255,6 +248,11 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
     }
   }
   return null;
+}
+
+export function getSecondMapNamespace(value: string): string {
+  const secondNameSpaceList = value.split('/').map(ns => ns.trim());
+  return secondNameSpaceList.slice(0, secondNameSpaceList.length - 1).join('.');
 }
 
 function getObjectExpressionCursorInfo(

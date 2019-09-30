@@ -35,7 +35,7 @@ export class StoreGettersProvider implements vscode.CompletionItemProvider {
     document: vscode.TextDocument,
     position: vscode.Position,
   ): vscode.CompletionItem[] {
-    let reg = /this\n?\s*\.\$store\n?\s*\.getters.\s*((?:[\w\$]+(?:\s*\.)?)+)/g;
+    let reg = /this\n?\s*\.\$store\n?\s*\.getters.\s*((?:[\w\$]+(?:\s*\.)?)*)/g;
     let cursorInfo = getCursorInfoFromRegExp(
       reg,
       document,
