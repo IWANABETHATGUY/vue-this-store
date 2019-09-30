@@ -12,12 +12,12 @@ class StoreStateProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position) {
-        let reg = /this\n?\s*\.\$store\n?\s*\.state((?:\n?\s*\.[\w\$]*)+)/g;
+        let reg = /this\n?\s*\.\$store\n?\s*\.state.\s*((?:[\w\$]+(?:\s*\.)?)+)/g;
         let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, getStateCursorInfo, 'regexp');
         if (cursorInfo) {
             let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
                 .map(item => item.split('/').join('.'))
-                .filter(item => item.length)
+                .filter(Boolean)
                 .join('.');
             let stateCompletionList = [];
             let namespaceCompletionList = getNextStateNamespace(this.storeInfo, fullNamespace).map(nextNS => {
@@ -108,14 +108,11 @@ function getStateFromNameSpace(obj, namespace) {
 }
 exports.getStateFromNameSpace = getStateFromNameSpace;
 function getStateCursorInfo(regExecArray) {
+    const secondNameSpaceList = regExecArray[1].split('.').map(ns => ns.trim());
     return {
         isNamespace: false,
         namespace: '',
-        secondNameSpace: regExecArray[1]
-            .split('.')
-            .map(ns => ns.trim())
-            .filter(ns => ns.length)
-            .join('.'),
+        secondNameSpace: secondNameSpaceList.slice(0, secondNameSpaceList.length - 1).join('.')
     };
 }
 exports.getStateCursorInfo = getStateCursorInfo;

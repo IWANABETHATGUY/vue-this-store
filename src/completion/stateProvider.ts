@@ -34,7 +34,7 @@ export class StoreStateProvider implements CompletionItemProvider {
     document: TextDocument,
     position: Position,
   ): CompletionItem[] {
-    let reg = /this\n?\s*\.\$store\n?\s*\.state((?:\n?\s*\.[\w\$]*)+)/g;
+    let reg = /this\n?\s*\.\$store\n?\s*\.state.\s*((?:[\w\$]+(?:\s*\.)?)+)/g;
     let cursorInfo = getCursorInfoFromRegExp(
       reg,
       document,
@@ -46,7 +46,7 @@ export class StoreStateProvider implements CompletionItemProvider {
     if (cursorInfo) {
       let fullNamespace = [cursorInfo.namespace, cursorInfo.secondNameSpace]
         .map(item => item.split('/').join('.'))
-        .filter(item => item.length)
+        .filter(Boolean)
         .join('.');
       let stateCompletionList: CompletionItem[] = [];
       let namespaceCompletionList: CompletionItem[] = getNextStateNamespace(
@@ -176,14 +176,12 @@ export function getStateFromNameSpace(obj: StoreTreeInfo, namespace: string) {
 export function getStateCursorInfo(
   regExecArray: RegExpExecArray,
 ): CursorInfo {
+  const secondNameSpaceList = regExecArray[1].split('.').map(ns => ns.trim());
+
   return {
     isNamespace: false,
     namespace: '',
-    secondNameSpace: regExecArray[1]
-      .split('.')
-      .map(ns => ns.trim())
-      .filter(ns => ns.length)
-      .join('.'),
+    secondNameSpace: secondNameSpaceList.slice(0, secondNameSpaceList.length - 1).join('.')
   };
 }
 function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
