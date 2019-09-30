@@ -79,7 +79,6 @@ class StoreActionsProvider {
         let commitExpression = completionUtil_1.whichCommit(matchList, posIndex);
         if (!commitExpression)
             return undefined;
-        // debugger;
         let commitAst = parser_1.parse(commitExpression[0]);
         let cursorInfo = getDispatchCursorInfo(commitAst, posIndex - commitExpression.index);
         if (cursorInfo) {

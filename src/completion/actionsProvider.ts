@@ -100,7 +100,6 @@ export class StoreActionsProvider implements vscode.CompletionItemProvider {
     let posIndex = getPositionIndex(document, position);
     let commitExpression = whichCommit(matchList, posIndex);
     if (!commitExpression) return undefined;
-    // debugger;
     let commitAst = parse(commitExpression[0]);
     let cursorInfo = getDispatchCursorInfo(
       commitAst,
