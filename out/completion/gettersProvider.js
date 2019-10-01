@@ -47,7 +47,7 @@ class StoreGettersProvider {
                     let getterCompletion = new vscode_1.CompletionItem(getterInfo.identifier, vscode_1.CompletionItemKind.Variable);
                     getterCompletion.sortText = `1${getterInfo.identifier}`;
                     getterCompletion.documentation = getterInfo.defination;
-                    getterCompletion.detail = 'state';
+                    getterCompletion.detail = 'getter';
                     return getterCompletion;
                 });
             }

@@ -21,7 +21,7 @@ import { parseGetters } from './getters';
 import { walkMutationsFile, parseMutations } from './mutations';
 import { walkActionsFile, parseActions } from './actions';
 import { getAstOfCode } from '../../util/commonUtil';
-
+// TODO:这里路径暂时设置成可选参数
 export interface StoreTreeInfo {
   namespace?: string;
   modules?: ModulesInfo;
@@ -29,26 +29,35 @@ export interface StoreTreeInfo {
   getters?: GetterInfo[];
   mutations?: MutationInfo[];
   actions?: ActionInfo[];
+  abPath?: string;
+}
+interface StorePropInfo {
+  parent?: StoreTreeInfo;
+  position?: StorePropPosition;
 }
 
-export interface StateInfo {
+interface StorePropPosition {
+  line: number;
+  column: number;
+}
+export interface StateInfo extends StorePropInfo{
   identifier: string;
   defination: string;
 }
 
-export interface GetterInfo {
+export interface GetterInfo extends StorePropInfo{
   identifier: string;
   defination: string;
 }
 
-export interface MutationInfo {
+export interface MutationInfo extends StorePropInfo{
   identifier: string;
   defination: string;
   params: string[];
   functionDeclarator: string;
 }
 
-export interface ActionInfo {
+export interface ActionInfo extends StorePropInfo{
   identifier: string;
   defination: string;
   params: string[];

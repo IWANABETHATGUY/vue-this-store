@@ -1,4 +1,4 @@
-import { StateInfo } from '../normal/modules';
+import { StateInfo, StoreTreeInfo } from '../normal/modules';
 import {
   VariableDeclarator,
   isArrowFunctionExpression,
@@ -13,6 +13,7 @@ import {
 export function parseNuxtState(
   declarator: VariableDeclarator,
   sourceCode: string,
+  parent: StoreTreeInfo,
 ): StateInfo[] {
   const stateInfoList: StateInfo[] = [];
   if (isArrowFunctionExpression(declarator.init)) {
@@ -24,6 +25,8 @@ export function parseNuxtState(
           stateInfoList.push({
             identifier: property.key.name,
             defination: sourceCode.slice(property.start, property.end),
+            position: property.loc.start,
+            parent,
           });
         }
       });
@@ -41,6 +44,8 @@ export function parseNuxtState(
               stateInfoList.push({
                 identifier: property.key.name,
                 defination: sourceCode.slice(property.start, property.end),
+                position: property.loc.start,
+                parent,
               });
             }
           });

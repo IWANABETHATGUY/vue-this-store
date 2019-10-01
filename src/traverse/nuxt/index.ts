@@ -50,7 +50,9 @@ export function getNuxtStoreInfoFromDirectory(
   return rootStoreInfo ? rootStoreInfo : {};
 }
 function getNuxtStoreInfoFromFile(FileRootPath: string): StoreTreeInfo {
-  console.log(FileRootPath);
+  const storeInfo: StoreTreeInfo = {
+    abPath: FileRootPath
+  };
   const namespace = path.basename(FileRootPath).split('.')[0];
   const fileContent: string = getFileContent(FileRootPath);
   const ast: File = getAstOfCode(fileContent);
@@ -68,32 +70,31 @@ function getNuxtStoreInfoFromFile(FileRootPath: string): StoreTreeInfo {
           const name = firstDeclaration.id.name;
           switch (name) {
             case 'state':
-              state.push(...parseNuxtState(firstDeclaration, fileContent));
+              state.push(...parseNuxtState(firstDeclaration, fileContent, storeInfo));
               break;
             case 'mutations':
               mutations.push(
-                ...parseNuxtMutationsOrActions(firstDeclaration, fileContent),
+                ...parseNuxtMutationsOrActions(firstDeclaration, fileContent, storeInfo),
               );
               break;
             case 'actions':
               actions.push(
-                ...parseNuxtMutationsOrActions(firstDeclaration, fileContent),
+                ...parseNuxtMutationsOrActions(firstDeclaration, fileContent, storeInfo),
               );
               break;
             case 'getters':
-              getters.push(...parseNuxtGetters(firstDeclaration, fileContent));
+              getters.push(...parseNuxtGetters(firstDeclaration, fileContent, storeInfo));
               break;
           }
         }
       }
     }
   });
-  return {
-    namespace,
-    state,
-    mutations,
-    getters,
-    actions,
-    modules,
-  };
+  storeInfo.actions = actions;
+  storeInfo.getters = getters;
+  storeInfo.modules = modules;
+  storeInfo.mutations = mutations;
+  storeInfo.namespace = namespace;
+  storeInfo.state = state;
+  return storeInfo;
 }
