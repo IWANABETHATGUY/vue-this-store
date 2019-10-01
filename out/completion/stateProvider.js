@@ -182,9 +182,10 @@ function getMapStateCursorInfo(mapStateAst, relativePos) {
     }
     return null;
 }
-function getSecondMapNamespace(value) {
+function getSecondMapNamespace(value, needLastNamespace = false) {
     const secondNameSpaceList = value.split('/').map(ns => ns.trim());
-    return secondNameSpaceList.slice(0, secondNameSpaceList.length - 1).join('.');
+    const len = secondNameSpaceList.length - +!needLastNamespace;
+    return secondNameSpaceList.slice(0, len).join('.');
 }
 exports.getSecondMapNamespace = getSecondMapNamespace;
 function getObjectExpressionCursorInfo(mapStateAst, relativePos, arg, namespaceArg) {

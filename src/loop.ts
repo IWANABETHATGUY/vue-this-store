@@ -39,7 +39,10 @@ import { ThisProvider, ThisCompletionInfo } from './completion/thisProvider';
 import { MutationsSignatureProvider } from './signature/mutationsProvider';
 import { StatusBarItemStatus } from './type';
 import { getNuxtStoreInfoFromDirectory } from './traverse/nuxt';
-import { StoreActionDefination } from './defination/action';
+import {
+  StoreActionDefination,
+  StoreMapActionDefination,
+} from './defination/action';
 import { StoreMutationDefination } from './defination/mutation';
 
 const emptyModule: StoreTreeInfo = {
@@ -75,8 +78,9 @@ export default class VueThis$Store {
     'src/app.js',
     'src/main.js',
   ];
-  _actionDefinationProvider: StoreActionDefination;
-  _mutationDefinationProvider: StoreMutationDefination;
+  private _actionDefinationProvider: StoreActionDefination;
+  private _mutationDefinationProvider: StoreMutationDefination;
+  private _mapActionDefinationProvider: StoreMapActionDefination;
   constructor(ctx: ExtensionContext, rootPath: string) {
     let timeStart = Date.now();
     this._extensionContext = ctx;
@@ -156,7 +160,7 @@ export default class VueThis$Store {
 
     this._actionDefinationProvider = new StoreActionDefination(storeInfo);
     this._mutationDefinationProvider = new StoreMutationDefination(storeInfo);
-
+    this._mapActionDefinationProvider = new StoreMapActionDefination(storeInfo);
     this._thisProvider = new ThisProvider(storeInfo, this.thisCompletionList);
 
     this._mutationSignatureProvider = new MutationsSignatureProvider(
@@ -246,16 +250,21 @@ export default class VueThis$Store {
         ],
         this._actionDefinationProvider,
       ),
-    ),
-      this._extensionContext.subscriptions.push(
-        languages.registerDefinitionProvider(
-          [
-            { language: 'javascript', scheme: 'file' },
-            { language: 'vue', scheme: 'file' },
-          ],
-          this._mutationDefinationProvider,
-        ),
-      );
+      languages.registerDefinitionProvider(
+        [
+          { language: 'javascript', scheme: 'file' },
+          { language: 'vue', scheme: 'file' },
+        ],
+        this._mutationDefinationProvider,
+      ),
+      languages.registerDefinitionProvider(
+        [
+          { language: 'javascript', scheme: 'file' },
+          { language: 'vue', scheme: 'file' },
+        ],
+        this._mapActionDefinationProvider,
+      ),
+    );
   }
 
   private restart() {

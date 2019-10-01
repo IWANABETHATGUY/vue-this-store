@@ -101,6 +101,7 @@ class VueThis$Store {
         this._mapActionsProvider = new actionsProvider_1.StoreMapActionsProvider(storeInfo);
         this._actionDefinationProvider = new action_1.StoreActionDefination(storeInfo);
         this._mutationDefinationProvider = new mutation_1.StoreMutationDefination(storeInfo);
+        this._mapActionDefinationProvider = new action_1.StoreMapActionDefination(storeInfo);
         this._thisProvider = new thisProvider_1.ThisProvider(storeInfo, this.thisCompletionList);
         this._mutationSignatureProvider = new mutationsProvider_2.MutationsSignatureProvider(this.thisCompletionList);
         this._watcher.on('change', () => {
@@ -120,11 +121,13 @@ class VueThis$Store {
         this._extensionContext.subscriptions.push(vscode_1.languages.registerDefinitionProvider([
             { language: 'javascript', scheme: 'file' },
             { language: 'vue', scheme: 'file' },
-        ], this._actionDefinationProvider)),
-            this._extensionContext.subscriptions.push(vscode_1.languages.registerDefinitionProvider([
-                { language: 'javascript', scheme: 'file' },
-                { language: 'vue', scheme: 'file' },
-            ], this._mutationDefinationProvider));
+        ], this._actionDefinationProvider), vscode_1.languages.registerDefinitionProvider([
+            { language: 'javascript', scheme: 'file' },
+            { language: 'vue', scheme: 'file' },
+        ], this._mutationDefinationProvider), vscode_1.languages.registerDefinitionProvider([
+            { language: 'javascript', scheme: 'file' },
+            { language: 'vue', scheme: 'file' },
+        ], this._mapActionDefinationProvider));
     }
     restart() {
         this._statusBarItem.setStatus(0);

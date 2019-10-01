@@ -250,9 +250,13 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
   return null;
 }
 
-export function getSecondMapNamespace(value: string): string {
+export function getSecondMapNamespace(
+  value: string,
+  needLastNamespace: boolean = false,
+): string {
   const secondNameSpaceList = value.split('/').map(ns => ns.trim());
-  return secondNameSpaceList.slice(0, secondNameSpaceList.length - 1).join('.');
+  const len = secondNameSpaceList.length - +!needLastNamespace;
+  return secondNameSpaceList.slice(0, len).join('.');
 }
 
 function getObjectExpressionCursorInfo(
