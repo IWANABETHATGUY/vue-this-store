@@ -40,6 +40,7 @@ import { MutationsSignatureProvider } from './signature/mutationsProvider';
 import { StatusBarItemStatus } from './type';
 import { getNuxtStoreInfoFromDirectory } from './traverse/nuxt';
 import { StoreActionDefination } from './defination/action';
+import { StoreMutationDefination } from './defination/mutation';
 
 const emptyModule: StoreTreeInfo = {
   namespace: '',
@@ -75,6 +76,7 @@ export default class VueThis$Store {
     'src/main.js',
   ];
   _actionDefinationProvider: StoreActionDefination;
+  _mutationDefinationProvider: StoreMutationDefination;
   constructor(ctx: ExtensionContext, rootPath: string) {
     let timeStart = Date.now();
     this._extensionContext = ctx;
@@ -153,6 +155,8 @@ export default class VueThis$Store {
     this._mapActionsProvider = new StoreMapActionsProvider(storeInfo);
 
     this._actionDefinationProvider = new StoreActionDefination(storeInfo);
+    this._mutationDefinationProvider = new StoreMutationDefination(storeInfo);
+
     this._thisProvider = new ThisProvider(storeInfo, this.thisCompletionList);
 
     this._mutationSignatureProvider = new MutationsSignatureProvider(
@@ -238,11 +242,20 @@ export default class VueThis$Store {
       languages.registerDefinitionProvider(
         [
           { language: 'javascript', scheme: 'file' },
-          { language: 'vue', scheme: 'file' }
+          { language: 'vue', scheme: 'file' },
         ],
-        this._actionDefinationProvider
-      )
-    )
+        this._actionDefinationProvider,
+      ),
+    ),
+      this._extensionContext.subscriptions.push(
+        languages.registerDefinitionProvider(
+          [
+            { language: 'javascript', scheme: 'file' },
+            { language: 'vue', scheme: 'file' },
+          ],
+          this._mutationDefinationProvider,
+        ),
+      );
   }
 
   private restart() {

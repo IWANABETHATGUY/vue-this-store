@@ -24,6 +24,7 @@ const thisProvider_1 = require("./completion/thisProvider");
 const mutationsProvider_2 = require("./signature/mutationsProvider");
 const nuxt_1 = require("./traverse/nuxt");
 const action_1 = require("./defination/action");
+const mutation_1 = require("./defination/mutation");
 const emptyModule = {
     namespace: '',
     state: [],
@@ -99,6 +100,7 @@ class VueThis$Store {
         this._actionsProvider = new actionsProvider_1.StoreActionsProvider(storeInfo);
         this._mapActionsProvider = new actionsProvider_1.StoreMapActionsProvider(storeInfo);
         this._actionDefinationProvider = new action_1.StoreActionDefination(storeInfo);
+        this._mutationDefinationProvider = new mutation_1.StoreMutationDefination(storeInfo);
         this._thisProvider = new thisProvider_1.ThisProvider(storeInfo, this.thisCompletionList);
         this._mutationSignatureProvider = new mutationsProvider_2.MutationsSignatureProvider(this.thisCompletionList);
         this._watcher.on('change', () => {
@@ -117,8 +119,12 @@ class VueThis$Store {
     registerDefinationProvider() {
         this._extensionContext.subscriptions.push(vscode_1.languages.registerDefinitionProvider([
             { language: 'javascript', scheme: 'file' },
-            { language: 'vue', scheme: 'file' }
-        ], this._actionDefinationProvider));
+            { language: 'vue', scheme: 'file' },
+        ], this._actionDefinationProvider)),
+            this._extensionContext.subscriptions.push(vscode_1.languages.registerDefinitionProvider([
+                { language: 'javascript', scheme: 'file' },
+                { language: 'vue', scheme: 'file' },
+            ], this._mutationDefinationProvider));
     }
     restart() {
         this._statusBarItem.setStatus(0);
