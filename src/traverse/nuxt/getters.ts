@@ -1,4 +1,4 @@
-import { GetterInfo } from '../normal/modules';
+import { GetterInfo, StoreTreeInfo } from '../normal/modules';
 import {
   VariableDeclarator,
   isObjectExpression,
@@ -8,6 +8,7 @@ import {
 export function parseNuxtGetters(
   declarator: VariableDeclarator,
   sourceCode: string,
+  parent: StoreTreeInfo
 ): GetterInfo[] {
   let gettersInfoList: GetterInfo[] = [];
   if (isObjectExpression(declarator.init)) {
@@ -17,6 +18,7 @@ export function parseNuxtGetters(
         gettersInfoList.push({
           identifier: property.key.name,
           defination: sourceCode.slice(property.start, property.end),
+          parent,
         });
       }
     });

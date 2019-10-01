@@ -1,4 +1,4 @@
-import { MutationInfo, ActionInfo } from '../normal/modules';
+import { MutationInfo, ActionInfo, StoreTreeInfo } from '../normal/modules';
 import {
   VariableDeclarator,
   isObjectExpression,
@@ -11,6 +11,7 @@ import {
 export function parseNuxtMutationsOrActions(
   declarator: VariableDeclarator,
   sourceCode: string,
+  parent: StoreTreeInfo,
 ): MutationInfo[] | ActionInfo[] {
   let mOrAInfoList: MutationInfo[] | ActionInfo[] = [];
   if (isObjectExpression(declarator.init)) {
@@ -26,6 +27,8 @@ export function parseNuxtMutationsOrActions(
           params: paramList,
           identifier: property.key.name,
           defination: sourceCode.slice(property.start, property.end),
+          position: property.loc.start,
+          parent,
         });
       }
     });
