@@ -82,7 +82,7 @@ export function whichCommit(
   )[0];
 }
 
-export function getMapGMACursorInfo(mapGetterAst: File, relativePos: number) {
+export function getMapGMACursorInfo(mapGetterAst: File, relativePos: number, needLastNamespace: boolean = false) {
   let program = mapGetterAst.program;
   let exp: ExpressionStatement = program.body[0] as ExpressionStatement;
   let callExp: CallExpression = exp.expression as CallExpression;
@@ -103,6 +103,7 @@ export function getMapGMACursorInfo(mapGetterAst: File, relativePos: number) {
         retCursorInfo.match = true;
         retCursorInfo.secondNameSpace = getSecondMapNamespace(
           cursorAtExp.value,
+          needLastNamespace
         );
       }
     } else if (firstArg.type === 'StringLiteral' && !retCursorInfo.match) {
@@ -111,7 +112,7 @@ export function getMapGMACursorInfo(mapGetterAst: File, relativePos: number) {
       if (cursorAtExp) {
         retCursorInfo.match = true;
         retCursorInfo.isNamespace = true;
-        retCursorInfo.namespace = getSecondMapNamespace(firstArg.value);
+        retCursorInfo.namespace = getSecondMapNamespace(firstArg.value, needLastNamespace);
       }
     } else if (firstArg.type === 'ObjectExpression' && !retCursorInfo.match) {
       let cursorAtExp = firstArg.properties.filter(
@@ -127,6 +128,7 @@ export function getMapGMACursorInfo(mapGetterAst: File, relativePos: number) {
         retCursorInfo.match = true;
         retCursorInfo.secondNameSpace = getSecondMapNamespace(
           cursorAtExp.value.value,
+          needLastNamespace
         );
       }
     }
@@ -138,7 +140,7 @@ export function getMapGMACursorInfo(mapGetterAst: File, relativePos: number) {
       if (relativePos >= firstArg.start && relativePos < firstArg.end) {
         retCursorInfo.match = true;
         retCursorInfo.isNamespace = true;
-        retCursorInfo.namespace = getSecondMapNamespace(firstArg.value);
+        retCursorInfo.namespace = getSecondMapNamespace(firstArg.value, needLastNamespace);
       }
       if (secondArg.type === 'ArrayExpression' && !retCursorInfo.match) {
         let cursorAtExp = secondArg.elements.filter(item => {
@@ -149,6 +151,7 @@ export function getMapGMACursorInfo(mapGetterAst: File, relativePos: number) {
           retCursorInfo.namespace = firstArg.value;
           retCursorInfo.secondNameSpace = getSecondMapNamespace(
             cursorAtExp.value,
+            needLastNamespace
           );
         }
       } else if (
@@ -169,6 +172,7 @@ export function getMapGMACursorInfo(mapGetterAst: File, relativePos: number) {
           retCursorInfo.namespace = firstArg.value;
           retCursorInfo.secondNameSpace = getSecondMapNamespace(
             cursorAtProperty.value.value,
+            needLastNamespace
           );
         }
       }
