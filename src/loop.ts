@@ -43,8 +43,11 @@ import {
   StoreActionDefination,
   StoreMapActionDefination,
 } from './defination/action';
-import { StoreMutationDefination, StoreMapMutationDefination } from './defination/mutation';
-
+import {
+  StoreMutationDefination,
+  StoreMapMutationDefination,
+} from './defination/mutation';
+import { StoreMapGettersDefination } from './defination/getter';
 const emptyModule: StoreTreeInfo = {
   namespace: '',
   state: [],
@@ -82,6 +85,7 @@ export default class VueThis$Store {
   private _mutationDefinationProvider: StoreMutationDefination;
   private _mapActionDefinationProvider: StoreMapActionDefination;
   private _mapMutationDefinationProvider: StoreMapMutationDefination;
+  private _mapGetterDefinationProvider: StoreMapGettersDefination;
   constructor(ctx: ExtensionContext, rootPath: string) {
     let timeStart = Date.now();
     this._extensionContext = ctx;
@@ -162,8 +166,10 @@ export default class VueThis$Store {
     this._actionDefinationProvider = new StoreActionDefination(storeInfo);
     this._mutationDefinationProvider = new StoreMutationDefination(storeInfo);
     this._mapActionDefinationProvider = new StoreMapActionDefination(storeInfo);
-    this._mapMutationDefinationProvider = new StoreMapMutationDefination(storeInfo);
-
+    this._mapMutationDefinationProvider = new StoreMapMutationDefination(
+      storeInfo,
+    );
+    this._mapGetterDefinationProvider = new StoreMapGettersDefination(storeInfo);
     this._thisProvider = new ThisProvider(storeInfo, this.thisCompletionList);
 
     this._mutationSignatureProvider = new MutationsSignatureProvider(
@@ -272,7 +278,14 @@ export default class VueThis$Store {
           { language: 'javascript', scheme: 'file' },
           { language: 'vue', scheme: 'file' },
         ],
-        this._mapMutationDefinationProvider
+        this._mapMutationDefinationProvider,
+      ),
+      languages.registerDefinitionProvider(
+        [
+          { language: 'javascript', scheme: 'file' },
+          { language: 'vue', scheme: 'file' },
+        ],
+        this._mapGetterDefinationProvider
       ),
     );
   }

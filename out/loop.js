@@ -25,6 +25,7 @@ const mutationsProvider_2 = require("./signature/mutationsProvider");
 const nuxt_1 = require("./traverse/nuxt");
 const action_1 = require("./defination/action");
 const mutation_1 = require("./defination/mutation");
+const getter_1 = require("./defination/getter");
 const emptyModule = {
     namespace: '',
     state: [],
@@ -103,6 +104,7 @@ class VueThis$Store {
         this._mutationDefinationProvider = new mutation_1.StoreMutationDefination(storeInfo);
         this._mapActionDefinationProvider = new action_1.StoreMapActionDefination(storeInfo);
         this._mapMutationDefinationProvider = new mutation_1.StoreMapMutationDefination(storeInfo);
+        this._mapGetterDefinationProvider = new getter_1.StoreMapGettersDefination(storeInfo);
         this._thisProvider = new thisProvider_1.ThisProvider(storeInfo, this.thisCompletionList);
         this._mutationSignatureProvider = new mutationsProvider_2.MutationsSignatureProvider(this.thisCompletionList);
         this._watcher.on('change', () => {
@@ -131,7 +133,10 @@ class VueThis$Store {
         ], this._mapActionDefinationProvider), vscode_1.languages.registerDefinitionProvider([
             { language: 'javascript', scheme: 'file' },
             { language: 'vue', scheme: 'file' },
-        ], this._mapMutationDefinationProvider));
+        ], this._mapMutationDefinationProvider), vscode_1.languages.registerDefinitionProvider([
+            { language: 'javascript', scheme: 'file' },
+            { language: 'vue', scheme: 'file' },
+        ], this._mapGetterDefinationProvider));
     }
     restart() {
         this._statusBarItem.setStatus(0);

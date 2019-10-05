@@ -19,6 +19,7 @@ export function parseNuxtGetters(
           identifier: property.key.name,
           defination: sourceCode.slice(property.start, property.end),
           parent,
+          position: {line: property.loc.start.line, column: property.loc.start.column}
         });
       }
     });
