@@ -40,28 +40,29 @@ interface StorePropPosition {
   line: number;
   column: number;
 }
-export interface StateInfo extends StorePropInfo{
+export interface StateInfo extends StorePropInfo {
   identifier: string;
   defination: string;
 }
 
-export interface GetterInfo extends StorePropInfo{
+export interface GetterInfo extends StorePropInfo {
   identifier: string;
   defination: string;
 }
 
-export interface MutationInfo extends StorePropInfo{
+export interface MutationInfo extends StorePropInfo {
   identifier: string;
   defination: string;
   params: string[];
   functionDeclarator: string;
 }
 
-export interface ActionInfo extends StorePropInfo{
+export interface ActionInfo extends StorePropInfo {
   identifier: string;
   defination: string;
   params: string[];
   functionDeclarator: string;
+  abPath?: string;
 }
 export interface ModulesInfo {
   [module: string]: StoreTreeInfo;
@@ -80,18 +81,18 @@ function getXXXInfo(
   if (property.shorthand) {
     let value: Identifier = property.value as Identifier;
     if (m2pmap[value.name]) {
-      let { export: importState, lineOfFile } = walkFileFn(
+      let { export: importState, lineOfFile, currentWorkFile } = walkFileFn(
         cwf,
         m2pmap[value.name],
       );
-      infoList = parseFn(importState, lineOfFile);
+      infoList = parseFn(importState, lineOfFile, currentWorkFile);
     } else if (defmap[value.name]) {
-      infoList = parseFn(defmap[value.name], lineOfFile);
+      infoList = parseFn(defmap[value.name], lineOfFile, cwf);
     }
   } else {
     if (property.value.type === 'ObjectExpression') {
       let value: ObjectExpression = property.value;
-      infoList = parseFn(value, lineOfFile);
+      infoList = parseFn(value, lineOfFile, cwf);
     }
   }
   return infoList;
@@ -161,6 +162,7 @@ export function parseModuleAst(
   { objAst, m2pmap, defmap, cwf, lineOfFile }: ParseModuleParam,
   infoObj: StoreTreeInfo,
 ) {
+  infoObj.abPath = cwf;
   objAst.properties.forEach((property: ObjectProperty) => {
     let config = { property, m2pmap, defmap, cwf, lineOfFile };
     switch (property.key.name) {
@@ -168,7 +170,11 @@ export function parseModuleAst(
         infoObj.state = getXXXInfo(config, walkFile, parseState);
         break;
       case 'actions':
-        infoObj.actions = getXXXInfo(config, walkActionsFile, parseActions);
+        infoObj.actions = getXXXInfo(
+          config,
+          walkActionsFile,
+          parseActions,
+        );
         break;
       case 'getters':
         infoObj.getters = getXXXInfo(config, walkFile, parseGetters);
