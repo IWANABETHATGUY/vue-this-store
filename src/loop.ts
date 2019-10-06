@@ -48,6 +48,7 @@ import {
   StoreMapMutationDefination,
 } from './defination/mutation';
 import { StoreMapGettersDefination } from './defination/getter';
+import { StoreMapStateDefination } from './defination/state';
 const emptyModule: StoreTreeInfo = {
   namespace: '',
   state: [],
@@ -86,6 +87,7 @@ export default class VueThis$Store {
   private _mapActionDefinationProvider: StoreMapActionDefination;
   private _mapMutationDefinationProvider: StoreMapMutationDefination;
   private _mapGetterDefinationProvider: StoreMapGettersDefination;
+  private _mapStateDefinationProvider: StoreMapStateDefination;
   constructor(ctx: ExtensionContext, rootPath: string) {
     let timeStart = Date.now();
     this._extensionContext = ctx;
@@ -169,7 +171,11 @@ export default class VueThis$Store {
     this._mapMutationDefinationProvider = new StoreMapMutationDefination(
       storeInfo,
     );
-    this._mapGetterDefinationProvider = new StoreMapGettersDefination(storeInfo);
+    this._mapGetterDefinationProvider = new StoreMapGettersDefination(
+      storeInfo,
+    );
+    this._mapStateDefinationProvider = new StoreMapStateDefination(storeInfo);
+
     this._thisProvider = new ThisProvider(storeInfo, this.thisCompletionList);
 
     this._mutationSignatureProvider = new MutationsSignatureProvider(
@@ -285,7 +291,14 @@ export default class VueThis$Store {
           { language: 'javascript', scheme: 'file' },
           { language: 'vue', scheme: 'file' },
         ],
-        this._mapGetterDefinationProvider
+        this._mapGetterDefinationProvider,
+      ),
+      languages.registerDefinitionProvider(
+        [
+          { language: 'javascript', scheme: 'file' },
+          { language: 'vue', scheme: 'file' },
+        ],
+        this._mapStateDefinationProvider,
       ),
     );
   }
