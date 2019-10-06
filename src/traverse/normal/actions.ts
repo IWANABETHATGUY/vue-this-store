@@ -15,10 +15,12 @@ import {
   VariableDeclarator,
   StringLiteral,
   BaseNode,
+  isObjectProperty,
+  isArrowFunctionExpression,
 } from '@babel/types';
 import traverse from '@babel/traverse';
 import { getAstOfCode } from '../../util/commonUtil';
-import { ActionInfo } from './modules';
+import { ActionInfo, StoreTreeInfo } from './modules';
 function evalFromPath(base: string, relative: string, evalMap) {
   let filename = getAbsolutePath(base, relative);
   let fileContent = getFileContent(filename);
@@ -83,21 +85,25 @@ export function walkActionsFile(base: string, relative: string = '') {
       ? (exportDefault.declaration as ObjectExpression)
       : (objectExpression([]) as ObjectExpression),
     lineOfFile: fileContent.split('\n'),
+    currentWorkFile: filename,
   };
 }
 
-export function parseActions(objAst: ObjectExpression, lineOfFile: string[]) {
+export function parseActions(
+  objAst: ObjectExpression,
+  lineOfFile: string[],
+  cwf: string,
+) {
   let actionInfoList: ActionInfo[] = [];
   const content = lineOfFile.join('\n');
-  // debugger;
   objAst.properties.forEach((property: ObjectMethod | ObjectProperty) => {
     let loc = property.loc;
     let params: BaseNode[];
     if (property.type === 'ObjectMethod') {
       params = property.params;
     } else if (
-      property.type === 'ObjectProperty' &&
-      property.value.type === 'ArrowFunctionExpression'
+      isObjectProperty(property) &&
+      isArrowFunctionExpression(property.value)
     ) {
       params = property.value.params;
     }
@@ -107,9 +113,11 @@ export function parseActions(objAst: ObjectExpression, lineOfFile: string[]) {
       identifier: property.key.name,
       defination: lineOfFile.slice(loc.start.line - 1, loc.end.line).join('\n'),
       params: paramList,
-      functionDeclarator: `${(property.key as Identifier).name} (${paramList.join(
-        ', ',
-      )})`,
+      functionDeclarator: `${
+        (property.key as Identifier).name
+      } (${paramList.join(', ')})`,
+      position: property.loc.start,
+      abPath: cwf,
     });
   });
   return actionInfoList;

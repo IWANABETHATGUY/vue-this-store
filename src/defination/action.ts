@@ -5,13 +5,11 @@ import {
   CancellationToken,
   ProviderResult,
   Location,
-  Disposable,
   Uri,
 } from 'vscode';
-import { StoreTreeInfo, ActionInfo } from '../traverse/normal/modules';
+import { StoreTreeInfo } from '../traverse/normal/modules';
 import { Nullable } from '../type';
-import { getMapGMACursorInfo, whichCommit } from '../util/completionUtil';
-import { getCursorInfoFromRegExp } from '../completion/mutationsProvider';
+import { getMapGMACursorInfo } from '../util/completionUtil';
 import { getAstOfCode } from '../util/commonUtil';
 export class StoreActionDefination implements DefinitionProvider {
   private storeInfo: StoreTreeInfo;
@@ -132,7 +130,7 @@ export class StoreMapActionDefination implements DefinitionProvider {
           });
           if (action) {
             return new Location(
-              Uri.file(action.parent.abPath),
+              Uri.file(action.parent ? action.parent.abPath : action.abPath),
               new Position(action.position.line - 1, action.position.column),
             );
           }
