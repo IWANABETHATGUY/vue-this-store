@@ -7,7 +7,7 @@ import {
   CompletionContext,
 } from 'vscode';
 import { StoreTreeInfo } from '../traverse/normal/modules';
-import { getNextNamespace, CursorInfo } from '../util/completionUtil';
+import { CursorInfo } from '../util/completionUtil';
 import { getCursorInfoFromRegExp } from './mutationsProvider';
 import {
   File,
@@ -18,6 +18,10 @@ import {
   ObjectProperty,
   StringLiteral,
   ObjectExpression,
+  isObjectMethod,
+  isArrowFunctionExpression,
+  isFunctionExpression,
+  isStringLiteral,
 } from '@babel/types';
 import traverse from '@babel/traverse';
 import generator from '@babel/generator';
@@ -266,7 +270,7 @@ function getObjectExpressionCursorInfo(
   namespaceArg?: StringLiteral,
 ) {
   let triggerProperty: ObjectProperty | ObjectMethod = null;
-  let cursorAtExp = arg.properties.filter(property => {
+  arg.properties.some(property => {
     let flag =
       (property.type === 'ObjectMethod' ||
         property.type === 'ObjectProperty') &&
@@ -274,71 +278,104 @@ function getObjectExpressionCursorInfo(
       relativePos <= property.end;
     if (flag) {
       triggerProperty = property as ObjectProperty | ObjectMethod;
+      return true;
     }
-    return flag;
-  })[0];
+  });
 
-  if (cursorAtExp) {
-    if (
-      triggerProperty &&
-      triggerProperty.type === 'ObjectMethod' &&
-      triggerProperty.params.length === 0
-    ) {
-      return null;
-    }
+  if (triggerProperty) {
     let retCursorInfo = {
       match: false,
       isNamespace: false,
       namespace: '',
       secondNameSpace: '',
     };
-    traverse(mapStateAst, {
-      Identifier(path) {
-        let node: Identifier = path.node as Identifier;
-        if (relativePos >= node.start && relativePos <= node.end) {
-          let cur = path;
-          while (cur.parent.type === 'MemberExpression') {
-            cur = cur.parentPath;
-          }
-          let file = generator(cur.node, {}).code;
-          let namespaceList = file.slice(0, -1).split('.');
-          if (namespaceList.length) {
-            switch (triggerProperty.type) {
-              case 'ObjectMethod':
-                if (
-                  (triggerProperty.params[0] as Identifier).name ===
-                  namespaceList[0]
-                ) {
-                  retCursorInfo.match = true;
-                }
-                break;
-              case 'ObjectProperty':
-                switch (triggerProperty.value.type) {
-                  case 'ArrowFunctionExpression':
-                  case 'FunctionExpression':
-                    let functionExpression = triggerProperty.value;
-                    if (
-                      (functionExpression.params[0] as Identifier).name ===
-                      namespaceList[0]
-                    ) {
-                      retCursorInfo.match = true;
-                    }
-                }
-            }
-            if (retCursorInfo.match) {
-              retCursorInfo.secondNameSpace = namespaceList.slice(1).join('.');
-              if (namespaceArg) {
-                retCursorInfo.namespace = namespaceArg.value;
-              }
-            }
-            path.stop();
-          }
-        }
-      },
-    });
+    if (
+      isObjectMethod(triggerProperty) ||
+      isArrowFunctionExpression(triggerProperty.value) ||
+      isFunctionExpression(triggerProperty.value)
+    ) {
+      FunctionLikeCursorInfo(
+        mapStateAst,
+        relativePos,
+        triggerProperty,
+        retCursorInfo,
+        namespaceArg,
+      );
+    } else {
+      if (isStringLiteral(triggerProperty.value)) {
+        retCursorInfo.secondNameSpace = triggerProperty.value.value
+          .split('/')
+          .slice(0, -1)
+          .join('.');
+        retCursorInfo.match = true;
+      }
+      if (namespaceArg) {
+        retCursorInfo.namespace = namespaceArg.value;
+      }
+    }
+
     if (retCursorInfo.match) {
       return retCursorInfo;
     }
     return null;
   }
+}
+
+function FunctionLikeCursorInfo(
+  mapStateAst: File,
+  relativePos: number,
+  triggerProperty: ObjectMethod | ObjectProperty,
+  retCursorInfo: {
+    match: boolean;
+    isNamespace: boolean;
+    namespace: string;
+    secondNameSpace: string;
+  },
+  namespaceArg: StringLiteral,
+) {
+  traverse(mapStateAst, {
+    Identifier(path) {
+      let node: Identifier = path.node as Identifier;
+      if (relativePos >= node.start && relativePos <= node.end) {
+        let cur = path;
+        while (cur.parent.type === 'MemberExpression') {
+          cur = cur.parentPath;
+        }
+        let file = generator(cur.node, {}).code;
+        let namespaceList = file.slice(0, -1).split('.');
+        if (namespaceList.length) {
+          switch (triggerProperty.type) {
+            case 'ObjectMethod':
+              if (
+                (triggerProperty.params[0] as Identifier).name ===
+                namespaceList[0]
+              ) {
+                retCursorInfo.match = true;
+              }
+              break;
+            case 'ObjectProperty':
+              switch (triggerProperty.value.type) {
+                case 'ArrowFunctionExpression':
+                case 'FunctionExpression':
+                  let functionExpression = triggerProperty.value;
+                  if (
+                    (functionExpression.params[0] as Identifier).name ===
+                    namespaceList[0]
+                  ) {
+                    retCursorInfo.match = true;
+                  }
+                  break;
+              }
+          }
+          if (retCursorInfo.match) {
+            retCursorInfo.secondNameSpace = namespaceList.slice(1).join('.');
+            if (namespaceArg) {
+              retCursorInfo.namespace = namespaceArg.value;
+            }
+          }
+          path.stop();
+        }
+      }
+    },
+  });
 }

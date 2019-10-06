@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const vscode_1 = require("vscode");
 const mutationsProvider_1 = require("./mutationsProvider");
+const types_1 = require("@babel/types");
 const traverse_1 = require("@babel/traverse");
 const generator_1 = require("@babel/generator");
 class StoreStateProvider {
@@ -190,72 +191,87 @@ function getSecondMapNamespace(value, needLastNamespace = false) {
 exports.getSecondMapNamespace = getSecondMapNamespace;
 function getObjectExpressionCursorInfo(mapStateAst, relativePos, arg, namespaceArg) {
     let triggerProperty = null;
-    let cursorAtExp = arg.properties.filter(property => {
+    arg.properties.some(property => {
         let flag = (property.type === 'ObjectMethod' ||
             property.type === 'ObjectProperty') &&
             relativePos >= property.start &&
             relativePos <= property.end;
         if (flag) {
             triggerProperty = property;
+            return true;
         }
-        return flag;
-    })[0];
-    if (cursorAtExp) {
-        if (triggerProperty &&
-            triggerProperty.type === 'ObjectMethod' &&
-            triggerProperty.params.length === 0) {
-            return null;
-        }
+    });
+    if (triggerProperty) {
         let retCursorInfo = {
             match: false,
             isNamespace: false,
             namespace: '',
             secondNameSpace: '',
         };
-        traverse_1.default(mapStateAst, {
-            Identifier(path) {
-                let node = path.node;
-                if (relativePos >= node.start && relativePos <= node.end) {
-                    let cur = path;
-                    while (cur.parent.type === 'MemberExpression') {
-                        cur = cur.parentPath;
-                    }
-                    let file = generator_1.default(cur.node, {}).code;
-                    let namespaceList = file.slice(0, -1).split('.');
-                    if (namespaceList.length) {
-                        switch (triggerProperty.type) {
-                            case 'ObjectMethod':
-                                if (triggerProperty.params[0].name ===
-                                    namespaceList[0]) {
-                                    retCursorInfo.match = true;
-                                }
-                                break;
-                            case 'ObjectProperty':
-                                switch (triggerProperty.value.type) {
-                                    case 'ArrowFunctionExpression':
-                                    case 'FunctionExpression':
-                                        let functionExpression = triggerProperty.value;
-                                        if (functionExpression.params[0].name ===
-                                            namespaceList[0]) {
-                                            retCursorInfo.match = true;
-                                        }
-                                }
-                        }
-                        if (retCursorInfo.match) {
-                            retCursorInfo.secondNameSpace = namespaceList.slice(1).join('.');
-                            if (namespaceArg) {
-                                retCursorInfo.namespace = namespaceArg.value;
-                            }
-                        }
-                        path.stop();
-                    }
-                }
-            },
-        });
+        if (types_1.isObjectMethod(triggerProperty) ||
+            types_1.isArrowFunctionExpression(triggerProperty.value) ||
+            types_1.isFunctionExpression(triggerProperty.value)) {
+            FunctionLikeCursorInfo(mapStateAst, relativePos, triggerProperty, retCursorInfo, namespaceArg);
+        }
+        else {
+            if (types_1.isStringLiteral(triggerProperty.value)) {
+                retCursorInfo.secondNameSpace = triggerProperty.value.value
+                    .split('/')
+                    .slice(0, -1)
+                    .join('.');
+                retCursorInfo.match = true;
+            }
+            if (namespaceArg) {
+                retCursorInfo.namespace = namespaceArg.value;
+            }
+        }
         if (retCursorInfo.match) {
             return retCursorInfo;
         }
         return null;
     }
+}
+function FunctionLikeCursorInfo(mapStateAst, relativePos, triggerProperty, retCursorInfo, namespaceArg) {
+    traverse_1.default(mapStateAst, {
+        Identifier(path) {
+            let node = path.node;
+            if (relativePos >= node.start && relativePos <= node.end) {
+                let cur = path;
+                while (cur.parent.type === 'MemberExpression') {
+                    cur = cur.parentPath;
+                }
+                let file = generator_1.default(cur.node, {}).code;
+                let namespaceList = file.slice(0, -1).split('.');
+                if (namespaceList.length) {
+                    switch (triggerProperty.type) {
+                        case 'ObjectMethod':
+                            if (triggerProperty.params[0].name ===
+                                namespaceList[0]) {
+                                retCursorInfo.match = true;
+                            }
+                            break;
+                        case 'ObjectProperty':
+                            switch (triggerProperty.value.type) {
+                                case 'ArrowFunctionExpression':
+                                case 'FunctionExpression':
+                                    let functionExpression = triggerProperty.value;
+                                    if (functionExpression.params[0].name ===
+                                        namespaceList[0]) {
+                                        retCursorInfo.match = true;
+                                    }
+                                    break;
+                            }
+                    }
+                    if (retCursorInfo.match) {
+                        retCursorInfo.secondNameSpace = namespaceList.slice(1).join('.');
+                        if (namespaceArg) {
+                            retCursorInfo.namespace = namespaceArg.value;
+                        }
+                    }
+                    path.stop();
+                }
+            }
+        },
+    });
 }
 //# sourceMappingURL=stateProvider.js.map
