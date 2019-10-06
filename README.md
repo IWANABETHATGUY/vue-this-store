@@ -71,8 +71,3 @@
 ## 补充
 
 之后会持续维护这个项目，如果对你有帮助，给个 star 吧^\_^.
-
-## TODO
-- [x] 没有做getter 的命名空间的补全
-- [x] module中定义的action补全有点问题
-- [ ] mapstate 参数为ObjectExpression，且value 为 StringLiteral时没有做
