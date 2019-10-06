@@ -50,7 +50,7 @@ class storeMapStateProvider {
     setStoreInfo(newStoreInfo) {
         this.storeInfo = newStoreInfo;
     }
-    provideCompletionItems(document, position, token, context) {
+    provideCompletionItems(document, position, _, context) {
         console.time('mapState');
         let reg = /\bmapState\(([\'\"](.*)[\'\"](?:,\s*)?)?((\[[\s\S]*?\])|(\{[\s\S]*?\}))?\s*\)/g;
         let cursorInfo = mutationsProvider_1.getCursorInfoFromRegExp(reg, document, position, getMapStateCursorInfo, 'ast', context.triggerCharacter === '.');
@@ -120,7 +120,7 @@ function getStateCursorInfo(regExecArray) {
     };
 }
 exports.getStateCursorInfo = getStateCursorInfo;
-function getMapStateCursorInfo(mapStateAst, relativePos) {
+function getMapStateCursorInfo(mapStateAst, relativePos, needLastNamespace = false) {
     let program = mapStateAst.program;
     let exp = program.body[0];
     let callExp = exp.expression;
@@ -135,7 +135,7 @@ function getMapStateCursorInfo(mapStateAst, relativePos) {
                 return {
                     isNamespace: false,
                     namespace: '',
-                    secondNameSpace: getSecondMapNamespace(cursorAtExp.value),
+                    secondNameSpace: getSecondMapNamespace(cursorAtExp.value, needLastNamespace),
                 };
             }
         }
@@ -144,13 +144,13 @@ function getMapStateCursorInfo(mapStateAst, relativePos) {
             if (cursorAtExp) {
                 return {
                     isNamespace: true,
-                    namespace: getSecondMapNamespace(firstArg.value),
+                    namespace: getSecondMapNamespace(firstArg.value, needLastNamespace),
                     secondNameSpace: '',
                 };
             }
         }
         else if (firstArg.type === 'ObjectExpression') {
-            return getObjectExpressionCursorInfo(mapStateAst, relativePos, firstArg);
+            return getObjectExpressionCursorInfo(mapStateAst, relativePos, firstArg, needLastNamespace);
         }
     }
     else if (args.length === 2) {
@@ -160,7 +160,7 @@ function getMapStateCursorInfo(mapStateAst, relativePos) {
             if (relativePos >= firstArg.start && relativePos < firstArg.end) {
                 return {
                     isNamespace: true,
-                    namespace: getSecondMapNamespace(firstArg.value),
+                    namespace: getSecondMapNamespace(firstArg.value, needLastNamespace),
                     secondNameSpace: '',
                 };
             }
@@ -172,24 +172,25 @@ function getMapStateCursorInfo(mapStateAst, relativePos) {
                     return {
                         isNamespace: false,
                         namespace: firstArg.value,
-                        secondNameSpace: getSecondMapNamespace(cursorAtExp.value),
+                        secondNameSpace: getSecondMapNamespace(cursorAtExp.value, needLastNamespace),
                     };
                 }
             }
             else if (secondArg.type === 'ObjectExpression') {
-                return getObjectExpressionCursorInfo(mapStateAst, relativePos, secondArg, firstArg);
+                return getObjectExpressionCursorInfo(mapStateAst, relativePos, secondArg, needLastNamespace, firstArg);
             }
         }
     }
     return null;
 }
+exports.getMapStateCursorInfo = getMapStateCursorInfo;
 function getSecondMapNamespace(value, needLastNamespace = false) {
     const secondNameSpaceList = value.split('/').map(ns => ns.trim());
     const len = secondNameSpaceList.length - +!needLastNamespace;
     return secondNameSpaceList.slice(0, len).join('.');
 }
 exports.getSecondMapNamespace = getSecondMapNamespace;
-function getObjectExpressionCursorInfo(mapStateAst, relativePos, arg, namespaceArg) {
+function getObjectExpressionCursorInfo(mapStateAst, relativePos, arg, needLastNamespace, namespaceArg) {
     let triggerProperty = null;
     arg.properties.some(property => {
         let flag = (property.type === 'ObjectMethod' ||
@@ -211,14 +212,12 @@ function getObjectExpressionCursorInfo(mapStateAst, relativePos, arg, namespaceA
         if (types_1.isObjectMethod(triggerProperty) ||
             types_1.isArrowFunctionExpression(triggerProperty.value) ||
             types_1.isFunctionExpression(triggerProperty.value)) {
-            FunctionLikeCursorInfo(mapStateAst, relativePos, triggerProperty, retCursorInfo, namespaceArg);
+            FunctionLikeCursorInfo(mapStateAst, relativePos, triggerProperty, retCursorInfo, namespaceArg, !needLastNamespace);
         }
         else {
             if (types_1.isStringLiteral(triggerProperty.value)) {
-                retCursorInfo.secondNameSpace = triggerProperty.value.value
-                    .split('/')
-                    .slice(0, -1)
-                    .join('.');
+                const secondNamespaceList = triggerProperty.value.value.split('/');
+                retCursorInfo.secondNameSpace = secondNamespaceList.slice(0, secondNamespaceList.length - Number(!needLastNamespace)).join('.');
                 retCursorInfo.match = true;
             }
             if (namespaceArg) {
@@ -231,7 +230,7 @@ function getObjectExpressionCursorInfo(mapStateAst, relativePos, arg, namespaceA
         return null;
     }
 }
-function FunctionLikeCursorInfo(mapStateAst, relativePos, triggerProperty, retCursorInfo, namespaceArg) {
+function FunctionLikeCursorInfo(mapStateAst, relativePos, triggerProperty, retCursorInfo, namespaceArg, needCut = true) {
     traverse_1.default(mapStateAst, {
         Identifier(path) {
             let node = path.node;
@@ -241,7 +240,7 @@ function FunctionLikeCursorInfo(mapStateAst, relativePos, triggerProperty, retCu
                     cur = cur.parentPath;
                 }
                 let file = generator_1.default(cur.node, {}).code;
-                let namespaceList = file.slice(0, -1).split('.');
+                let namespaceList = file.slice(0, file.length - Number(needCut)).split('.');
                 if (namespaceList.length) {
                     switch (triggerProperty.type) {
                         case 'ObjectMethod':

@@ -5,6 +5,7 @@ import {
   CompletionItemKind,
   CompletionItemProvider,
   CompletionContext,
+  CancellationToken,
 } from 'vscode';
 import { StoreTreeInfo } from '../traverse/normal/modules';
 import { CursorInfo } from '../util/completionUtil';
@@ -97,7 +98,7 @@ export class storeMapStateProvider implements CompletionItemProvider {
   public provideCompletionItems(
     document: TextDocument,
     position: Position,
-    token,
+    _: CancellationToken,
     context: CompletionContext,
   ): CompletionItem[] {
     console.time('mapState');
@@ -188,7 +189,12 @@ export function getStateCursorInfo(regExecArray: RegExpExecArray): CursorInfo {
       .join('.'),
   };
 }
-function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
+
+export function getMapStateCursorInfo(
+  mapStateAst: File,
+  relativePos: number,
+  needLastNamespace: boolean = false,
+) {
   let program = mapStateAst.program;
   let exp: ExpressionStatement = program.body[0] as ExpressionStatement;
   let callExp: CallExpression = exp.expression as CallExpression;
@@ -203,7 +209,10 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
         return {
           isNamespace: false,
           namespace: '',
-          secondNameSpace: getSecondMapNamespace(cursorAtExp.value),
+          secondNameSpace: getSecondMapNamespace(
+            cursorAtExp.value,
+            needLastNamespace,
+          ),
         };
       }
     } else if (firstArg.type === 'StringLiteral') {
@@ -212,12 +221,17 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
       if (cursorAtExp) {
         return {
           isNamespace: true,
-          namespace: getSecondMapNamespace(firstArg.value),
+          namespace: getSecondMapNamespace(firstArg.value, needLastNamespace),
           secondNameSpace: '',
         };
       }
     } else if (firstArg.type === 'ObjectExpression') {
-      return getObjectExpressionCursorInfo(mapStateAst, relativePos, firstArg);
+      return getObjectExpressionCursorInfo(
+        mapStateAst,
+        relativePos,
+        firstArg,
+        needLastNamespace,
+      );
     }
   } else if (args.length === 2) {
     let firstArg = args[0];
@@ -226,7 +240,7 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
       if (relativePos >= firstArg.start && relativePos < firstArg.end) {
         return {
           isNamespace: true,
-          namespace: getSecondMapNamespace(firstArg.value),
+          namespace: getSecondMapNamespace(firstArg.value, needLastNamespace),
           secondNameSpace: '',
         };
       }
@@ -238,7 +252,10 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
           return {
             isNamespace: false,
             namespace: firstArg.value,
-            secondNameSpace: getSecondMapNamespace(cursorAtExp.value),
+            secondNameSpace: getSecondMapNamespace(
+              cursorAtExp.value,
+              needLastNamespace,
+            ),
           };
         }
       } else if (secondArg.type === 'ObjectExpression') {
@@ -246,6 +263,7 @@ function getMapStateCursorInfo(mapStateAst: File, relativePos: number) {
           mapStateAst,
           relativePos,
           secondArg,
+          needLastNamespace,
           firstArg,
         );
       }
@@ -267,6 +285,7 @@ function getObjectExpressionCursorInfo(
   mapStateAst: File,
   relativePos: number,
   arg: ObjectExpression,
+  needLastNamespace: boolean,
   namespaceArg?: StringLiteral,
 ) {
   let triggerProperty: ObjectProperty | ObjectMethod = null;
@@ -300,13 +319,12 @@ function getObjectExpressionCursorInfo(
         triggerProperty,
         retCursorInfo,
         namespaceArg,
+        !needLastNamespace
       );
     } else {
       if (isStringLiteral(triggerProperty.value)) {
-        retCursorInfo.secondNameSpace = triggerProperty.value.value
-          .split('/')
-          .slice(0, -1)
-          .join('.');
+        const secondNamespaceList = triggerProperty.value.value.split('/');
+        retCursorInfo.secondNameSpace = secondNamespaceList.slice(0, secondNamespaceList.length - Number(!needLastNamespace)).join('.');
         retCursorInfo.match = true;
       }
       if (namespaceArg) {
@@ -332,6 +350,7 @@ function FunctionLikeCursorInfo(
     secondNameSpace: string;
   },
   namespaceArg: StringLiteral,
+  needCut: boolean = true
 ) {
   traverse(mapStateAst, {
     Identifier(path) {
@@ -342,7 +361,7 @@ function FunctionLikeCursorInfo(
           cur = cur.parentPath;
         }
         let file = generator(cur.node, {}).code;
-        let namespaceList = file.slice(0, -1).split('.');
+        let namespaceList = file.slice(0, file.length - Number(needCut)).split('.');
         if (namespaceList.length) {
           switch (triggerProperty.type) {
             case 'ObjectMethod':
