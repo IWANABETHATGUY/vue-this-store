@@ -77,7 +77,7 @@ export class StoreMapStateDefination implements DefinitionProvider {
           });
           if (state) {
             return new Location(
-              Uri.file(state.parent.abPath),
+              Uri.file(state.parent ? state.parent.abPath : state.abPath),
               new Position(state.position.line - 1, state.position.column),
             );
           }

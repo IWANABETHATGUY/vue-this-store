@@ -75,7 +75,7 @@ export class StoreMapGettersDefination implements DefinitionProvider {
           });
           if (getter) {
             return new Location(
-              Uri.file(getter.parent.abPath),
+              Uri.file(getter.parent ? getter.parent.abPath : getter.abPath),
               new Position(getter.position.line - 1, getter.position.column),
             );
           }

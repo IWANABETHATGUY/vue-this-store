@@ -131,7 +131,7 @@ export class StoreMapMutationDefination implements DefinitionProvider {
           });
           if (mutation) {
             return new Location(
-              Uri.file(mutation.parent.abPath),
+              Uri.file(mutation.parent ? mutation.parent.abPath : mutation.abPath),
               new Position(mutation.position.line - 1, mutation.position.column),
             );
           }

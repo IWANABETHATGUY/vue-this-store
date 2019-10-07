@@ -84,10 +84,11 @@ export function walkMutationsFile(base: string, relative: string = '') {
       ? (exportDefault.declaration as ObjectExpression)
       : (objectExpression([]) as ObjectExpression),
     lineOfFile: fileContent.split('\n'),
+    currentWorkFile: filename,
   };
 }
 
-export function parseMutations(objAst: ObjectExpression, lineOfFile: string[]) {
+export function parseMutations(objAst: ObjectExpression, lineOfFile: string[], cwf: string) {
   let mutationInfoList: MutationInfo[] = [];
   const content = lineOfFile.join('\n');
   // debugger;
@@ -111,6 +112,8 @@ export function parseMutations(objAst: ObjectExpression, lineOfFile: string[]) {
       functionDeclarator: `${(property.key as Identifier).name} (${paramList.join(
         ', ',
       )})`,
+      position: property.loc.start,
+      abPath: cwf
     });
   });
   return mutationInfoList;

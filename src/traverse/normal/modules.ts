@@ -34,6 +34,7 @@ export interface StoreTreeInfo {
 interface StorePropInfo {
   parent?: StoreTreeInfo;
   position?: StorePropPosition;
+  abPath?: string;
 }
 
 interface StorePropPosition {
@@ -62,7 +63,6 @@ export interface ActionInfo extends StorePropInfo {
   defination: string;
   params: string[];
   functionDeclarator: string;
-  abPath?: string;
 }
 export interface ModulesInfo {
   [module: string]: StoreTreeInfo;
@@ -72,10 +72,14 @@ export interface ParseModuleParam {
   [prop: string]: any;
 }
 
+export interface ParseStoreInfoFunction {
+  (objAst: ObjectExpression, lileOfFile: string[], cwf: string): any;
+}
+
 function getXXXInfo(
   { property, m2pmap, defmap, cwf, lineOfFile },
   walkFileFn: Function,
-  parseFn: Function,
+  parseFn: ParseStoreInfoFunction,
 ) {
   let infoList = [];
   if (property.shorthand) {
@@ -170,11 +174,7 @@ export function parseModuleAst(
         infoObj.state = getXXXInfo(config, walkFile, parseState);
         break;
       case 'actions':
-        infoObj.actions = getXXXInfo(
-          config,
-          walkActionsFile,
-          parseActions,
-        );
+        infoObj.actions = getXXXInfo(config, walkActionsFile, parseActions);
         break;
       case 'getters':
         infoObj.getters = getXXXInfo(config, walkFile, parseGetters);
