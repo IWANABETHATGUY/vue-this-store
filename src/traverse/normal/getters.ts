@@ -29,16 +29,19 @@ function walkFile(base: string, relative: string = '') {
       ? (exportDefault.declaration as ObjectExpression)
       : (objectExpression([]) as ObjectExpression),
     lineOfFile: fileContent.split('\n'),
+    currentWorkFile: filename,
   };
 }
 
-export function parseGetters(objAst: ObjectExpression, lileOfFile: string[]) {
+export function parseGetters(objAst: ObjectExpression, lileOfFile: string[], cwf: string) {
   let getterInfoList: GetterInfo[] = [];
   objAst.properties.forEach((property: ObjectProperty) => {
     let loc = property.loc;
     getterInfoList.push({
       identifier : property.key.name,
       defination: lileOfFile.slice(loc.start.line - 1, loc.end.line).join('\n'),
+      position: property.loc.start,
+      abPath: cwf
     });
   });
   return getterInfoList;

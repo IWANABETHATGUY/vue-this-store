@@ -5,13 +5,11 @@ import {
   CancellationToken,
   ProviderResult,
   Location,
-  Disposable,
   Uri,
 } from 'vscode';
-import { StoreTreeInfo, ActionInfo } from '../traverse/normal/modules';
+import { StoreTreeInfo } from '../traverse/normal/modules';
 import { Nullable } from '../type';
-import { getMapGMACursorInfo, whichCommit } from '../util/completionUtil';
-import { getCursorInfoFromRegExp } from '../completion/mutationsProvider';
+import { getMapGMACursorInfo } from '../util/completionUtil';
 import { getAstOfCode } from '../util/commonUtil';
 
 export class StoreMapGettersDefination implements DefinitionProvider {
@@ -27,7 +25,7 @@ export class StoreMapGettersDefination implements DefinitionProvider {
     position: Position,
     token: CancellationToken,
   ): ProviderResult<Location | Location[]> {
-    console.time('mapGettersDefination')
+    console.time('mapGettersDefination');
     let reg = /\bmapGetters\((?:'[^']*'|"[^"]*"\s*\,)?\s*(?:[\s\S]*?)\)/g;
     const sourceCode: string = document.getText();
     let regExec: RegExpExecArray = null;
@@ -50,8 +48,10 @@ export class StoreMapGettersDefination implements DefinitionProvider {
       if (cursorInfo) {
         let namespaceList = [cursorInfo.namespace, cursorInfo.secondNameSpace]
           .map(item => item.split('/').join('.'))
-          .filter(Boolean).join('.').split('.');
-        const clickPrefixNamespace = !cursorInfo.secondNameSpace
+          .filter(Boolean)
+          .join('.')
+          .split('.');
+        const clickPrefixNamespace = !cursorInfo.secondNameSpace;
         const lastModule: Nullable<StoreTreeInfo> = namespaceList
           .slice(0, namespaceList.length - Number(!clickPrefixNamespace))
           .reduce((pre, cur) => {
@@ -61,21 +61,22 @@ export class StoreMapGettersDefination implements DefinitionProvider {
             }
             return pre;
           }, this.storeInfo);
-        if (lastModule && lastModule.getters) {
-          console.timeEnd('mapGettersDefination')
+        if (lastModule) {
+          console.timeEnd('mapGettersDefination');
           if (clickPrefixNamespace) {
             return new Location(
               Uri.file(lastModule.abPath),
               new Position(0, 0),
             );
           }
+          if (!lastModule.getters) return null;
           const getterName = namespaceList.pop();
           const getter = lastModule.getters.find(act => {
             return act.identifier === getterName;
           });
           if (getter) {
             return new Location(
-              Uri.file(getter.parent.abPath),
+              Uri.file(getter.parent ? getter.parent.abPath : getter.abPath),
               new Position(getter.position.line - 1, getter.position.column),
             );
           }
