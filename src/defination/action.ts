@@ -116,7 +116,7 @@ export class StoreMapActionDefination implements DefinitionProvider {
             }
             return pre;
           }, this.storeInfo);
-        if (lastModule && lastModule.actions) {
+        if (lastModule) {
           console.timeEnd('mapActionsDefination')
           if (clickPrefixNamespace) {
             return new Location(
@@ -124,6 +124,7 @@ export class StoreMapActionDefination implements DefinitionProvider {
               new Position(0, 0),
             );
           }
+          if (!lastModule.actions) return null;
           const actionName = namespaceList.pop();
           const action = lastModule.actions.find(act => {
             return act.identifier === actionName;

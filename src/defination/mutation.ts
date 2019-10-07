@@ -60,7 +60,7 @@ export class StoreMutationDefination implements DefinitionProvider {
         if (mutation) {
           return new Location(
             Uri.file(mutation.parent.abPath),
-            new Position(mutation.position.line - 1, mutation.position.column)
+            new Position(mutation.position.line - 1, mutation.position.column),
           );
         }
       }
@@ -68,7 +68,6 @@ export class StoreMutationDefination implements DefinitionProvider {
     return null;
   }
 }
-
 
 export class StoreMapMutationDefination implements DefinitionProvider {
   private storeInfo: StoreTreeInfo;
@@ -83,7 +82,7 @@ export class StoreMapMutationDefination implements DefinitionProvider {
     position: Position,
     token: CancellationToken,
   ): ProviderResult<Location | Location[]> {
-    console.time('mapMutationsDefination')
+    console.time('mapMutationsDefination');
     let reg = /\bmapMutations\((?:'[^']*'|"[^"]*"\s*\,)?\s*(?:[\s\S]*?)\)/g;
     const sourceCode: string = document.getText();
     let regExec: RegExpExecArray = null;
@@ -106,8 +105,10 @@ export class StoreMapMutationDefination implements DefinitionProvider {
       if (cursorInfo) {
         let namespaceList = [cursorInfo.namespace, cursorInfo.secondNameSpace]
           .map(item => item.split('/').join('.'))
-          .filter(Boolean).join('.').split('.');
-        const clickPrefixNamespace = !cursorInfo.secondNameSpace
+          .filter(Boolean)
+          .join('.')
+          .split('.');
+        const clickPrefixNamespace = !cursorInfo.secondNameSpace;
         const lastModule: Nullable<StoreTreeInfo> = namespaceList
           .slice(0, namespaceList.length - Number(!clickPrefixNamespace))
           .reduce((pre, cur) => {
@@ -117,22 +118,28 @@ export class StoreMapMutationDefination implements DefinitionProvider {
             }
             return pre;
           }, this.storeInfo);
-        if (lastModule && lastModule.mutations) {
-          console.timeEnd('mapMutationsDefination')
+        if (lastModule) {
+          console.timeEnd('mapMutationsDefination');
           if (clickPrefixNamespace) {
             return new Location(
               Uri.file(lastModule.abPath),
               new Position(0, 0),
             );
           }
+          if (!lastModule.mutations) return null;
           const mutationName = namespaceList.pop();
           const mutation = lastModule.mutations.find(act => {
             return act.identifier === mutationName;
           });
           if (mutation) {
             return new Location(
-              Uri.file(mutation.parent ? mutation.parent.abPath : mutation.abPath),
-              new Position(mutation.position.line - 1, mutation.position.column),
+              Uri.file(
+                mutation.parent ? mutation.parent.abPath : mutation.abPath,
+              ),
+              new Position(
+                mutation.position.line - 1,
+                mutation.position.column,
+              ),
             );
           }
         }
