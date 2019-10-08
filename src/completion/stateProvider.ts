@@ -39,7 +39,7 @@ export class StoreStateProvider implements CompletionItemProvider {
     document: TextDocument,
     position: Position,
   ): CompletionItem[] {
-    let reg = /this\s*\.\$store\s*\.state\.\s*((?:[\w\$]+(?:\s*\.)?)*)/g;
+    let reg = /\b(?:this\s*\.\$store\s*\.)?state\.\s*((?:[\w\$]+(?:\s*\.)?)*)/g;
     // debugger
     let cursorInfo = getCursorInfoFromRegExp(
       reg,

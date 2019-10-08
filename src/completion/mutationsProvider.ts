@@ -141,7 +141,7 @@ export class StoreMutationsProvider implements vscode.CompletionItemProvider {
     position: vscode.Position,
     token: vscode.CancellationToken,
   ): vscode.CompletionItem[] {
-    let reg = /((?:this\.)?(?:\$store\.)\n?commit\([\s\S]*?\))/g;
+    let reg = /\b((?:this\.)?(?:\$store\.)?commit\([\s\S]*?\))/g;
     let cursorInfo = getCursorInfoFromRegExp(
       reg,
       document,
