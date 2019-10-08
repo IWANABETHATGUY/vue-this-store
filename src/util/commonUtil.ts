@@ -96,10 +96,10 @@ export function getModuleOrPathMap(node: Program): ModuleOrPathMap {
 
 /**
  * 获取store入口文件中的相对路径
- *
+ * 
  * @export
- * @param {any} File
- * @returns {string}
+ * @param {File} ast 
+ * @returns {string} 
  */
 export function getStoreEntryRelativePath(ast: File): string {
   let moduleOrPathMap: ModuleOrPathMap = {};

@@ -117,7 +117,19 @@ class VueThis$Store {
         this.registerDefinationProvider();
     }
     registerCompletionProvider() {
-        this._extensionContext.subscriptions.unshift(vscode_1.languages.registerCompletionItemProvider('vue', this._stateProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapStateProvider, "'", '"', '/', '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._gettersProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapGettersProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mutationsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapMutationsProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._actionsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapActionsProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._thisProvider, '.'));
+        this._extensionContext.subscriptions.unshift(vscode_1.languages.registerCompletionItemProvider([
+            { language: 'javascript', scheme: 'file' },
+            { language: 'vue', scheme: 'file' },
+        ], this._stateProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapStateProvider, "'", '"', '/', '.'), vscode_1.languages.registerCompletionItemProvider([
+            { language: 'javascript', scheme: 'file' },
+            { language: 'vue', scheme: 'file' },
+        ], this._gettersProvider, '.'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapGettersProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider([
+            { language: 'javascript', scheme: 'file' },
+            { language: 'vue', scheme: 'file' },
+        ], this._mutationsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapMutationsProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider([
+            { language: 'javascript', scheme: 'file' },
+            { language: 'vue', scheme: 'file' },
+        ], this._actionsProvider, '"', "'", '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._mapActionsProvider, "'", '"', '/'), vscode_1.languages.registerCompletionItemProvider('vue', this._thisProvider, '.'));
     }
     registerSignatureProvider() {
         this._extensionContext.subscriptions.unshift(vscode_1.languages.registerSignatureHelpProvider('*', this._mutationSignatureProvider, '(', ','));

@@ -108,7 +108,7 @@ class StoreMutationsProvider {
         this.storeInfo = newStoreInfo;
     }
     provideCompletionItems(document, position, token) {
-        let reg = /((?:this\.)?(?:\$store\.)\n?commit\([\s\S]*?\))/g;
+        let reg = /\b((?:this\.)?(?:\$store\.)?commit\([\s\S]*?\))/g;
         let cursorInfo = getCursorInfoFromRegExp(reg, document, position, getCommitCursorInfo, 'ast');
         if (cursorInfo) {
             let fullNamespace = cursorInfo.namespace;

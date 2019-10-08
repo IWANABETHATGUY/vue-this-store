@@ -192,7 +192,14 @@ export default class VueThis$Store {
   }
   private registerCompletionProvider() {
     this._extensionContext.subscriptions.unshift(
-      languages.registerCompletionItemProvider('vue', this._stateProvider, '.'),
+      languages.registerCompletionItemProvider(
+        [
+          { language: 'javascript', scheme: 'file' },
+          { language: 'vue', scheme: 'file' },
+        ],
+        this._stateProvider,
+        '.',
+      ),
       languages.registerCompletionItemProvider(
         'vue',
         this._mapStateProvider,
@@ -202,7 +209,10 @@ export default class VueThis$Store {
         '.',
       ),
       languages.registerCompletionItemProvider(
-        'vue',
+        [
+          { language: 'javascript', scheme: 'file' },
+          { language: 'vue', scheme: 'file' },
+        ],
         this._gettersProvider,
         '.',
       ),
@@ -214,7 +224,10 @@ export default class VueThis$Store {
         '/',
       ),
       languages.registerCompletionItemProvider(
-        'vue',
+        [
+          { language: 'javascript', scheme: 'file' },
+          { language: 'vue', scheme: 'file' },
+        ],
         this._mutationsProvider,
         '"',
         "'",
@@ -228,7 +241,10 @@ export default class VueThis$Store {
         '/',
       ),
       languages.registerCompletionItemProvider(
-        'vue',
+        [
+          { language: 'javascript', scheme: 'file' },
+          { language: 'vue', scheme: 'file' },
+        ],
         this._actionsProvider,
         '"',
         "'",
