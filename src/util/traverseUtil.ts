@@ -10,8 +10,10 @@ import {
   Identifier,
   ExportDefaultDeclaration,
   ObjectExpression,
+  isImportDeclaration,
+  isVariableDeclaration,
 } from '@babel/types';
-import { StoreAstMap } from '../type';
+import { StoreAstMap, ModuleOrPathMap } from '../type';
 import { ParseModuleParam } from '../traverse/normal/modules';
 import { getAstOfCode } from './commonUtil';
 
@@ -47,7 +49,7 @@ export function getAbsolutePath(base: string, relative: string): string {
   } else {
     const fileStat = fs.statSync(abPath);
     if (fileStat.isDirectory()) {
-      const indexJsPath = path.resolve(abPath, 'index.js')
+      const indexJsPath = path.resolve(abPath, 'index.js');
       if (fs.existsSync(indexJsPath)) {
         abPath = indexJsPath;
       }
@@ -62,18 +64,18 @@ export function getAbsolutePath(base: string, relative: string): string {
  * @param {any} Program
  * @returns
  */
-export function getModuleOrPathMap(ast: File) {
+export function getModuleOrPathMap(ast: File): ModuleOrPathMap {
   let node: Program = ast.program;
-  let importDeclarationList = node.body.filter(
-    item => item.type === 'ImportDeclaration',
-  ) as ImportDeclaration[];
+  let importDeclarationList: ImportDeclaration[] = <ImportDeclaration[]>(
+    node.body.filter(item => isImportDeclaration(item))
+  );
   let modulelOrPathMap = importDeclarationList.reduce((acc, cur) => {
     let moduleOrPath = cur.source.value;
     cur.specifiers.forEach(specifier => {
       acc[specifier.local.name] = moduleOrPath;
     });
     return acc;
-  }, {});
+  }, Object.create(null));
   return modulelOrPathMap;
 }
 
@@ -86,10 +88,11 @@ export function getModuleOrPathMap(ast: File) {
 export function getFileDefinationAstMap(ast: File): StoreAstMap {
   let program: Program = ast.program;
   let storeAstMap = {};
-  let variableDeclarationList: VariableDeclaration[] = program.body.filter(
-    item =>
-      item.type === 'VariableDeclaration' && item.declarations.length === 1,
-  ) as VariableDeclaration[];
+  let variableDeclarationList: VariableDeclaration[] = <VariableDeclaration[]>(
+    program.body.filter(
+      item => isVariableDeclaration(item) && item.declarations.length === 1,
+    )
+  );
   variableDeclarationList.forEach(varDeclation => {
     let firstDeclarator = varDeclation.declarations[0];
     if (firstDeclarator.init.type !== 'ObjectExpression') {

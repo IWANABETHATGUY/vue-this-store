@@ -381,7 +381,7 @@ export default class VueThis$Store {
       this._entrancePath,
       storeRelativePath,
     );
-    let { objAst, m2pmap, defmap, cwf, lineOfFile } = getVuexConfig(
+    let { objAst, m2pmap, defmap, cwf, lineOfFile } = getVuexConfig(    
       storeAbsolutePath,
     );
     try {
