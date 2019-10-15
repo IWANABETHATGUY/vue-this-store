@@ -86,7 +86,7 @@ export class StoreActionsProvider implements vscode.CompletionItemProvider {
     token: vscode.CancellationToken,
   ): vscode.CompletionItem[] {
     let docContent = document.getText();
-    let reg = /((?:this\.)?(?:\$store\.)\n?dispatch\([\s\S]*?\))/g;
+    let reg = /\b((?:this\.)?(?:\$store\.)?dispatch\([\s\S]*?\))/g;
     let match = null;
     let matchList = [];
 

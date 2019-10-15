@@ -66,7 +66,7 @@ class StoreActionsProvider {
     }
     provideCompletionItems(document, position, token) {
         let docContent = document.getText();
-        let reg = /((?:this\.)?(?:\$store\.)\n?dispatch\([\s\S]*?\))/g;
+        let reg = /\b((?:this\.)?(?:\$store\.)?dispatch\([\s\S]*?\))/g;
         let match = null;
         let matchList = [];
         while ((match = reg.exec(docContent))) {
