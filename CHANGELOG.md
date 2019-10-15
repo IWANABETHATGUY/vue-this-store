@@ -1,3 +1,6 @@
+## 0.1.0
+  - 新增对于nuxt 项目的vue，store支持
+  - 新增$store dispatch,commit中跳转,map*的跳转
 ## 0.0.7
 - 添加了this对于getter，action，mutation，state的提示，对于mapMutation得到的新方法，提供了signature help功能
 ## 0.0.6

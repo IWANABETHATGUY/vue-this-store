@@ -49,6 +49,8 @@
 - 支持 mapActions 参数为数组和对象提示
   ![mapActions](https://vuethisstore.flatpeach.xyz/mapAction.gif)
 - 监听你 store 文件夹的变动，当文件发生变动，会重新收集定义信息，提示也会更新
+- 支持dispatch，commit, map* 的变量函数跳转
+- ![map*Defination](https://vuethisstore.flatpeach.xyz/mapStateDefination.gif)
 
 ## 一些提示
 
